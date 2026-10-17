@@ -17,10 +17,15 @@ permissions:
 env:
   GIT_TERMINAL_PROMPT: '0'
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   validate:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     name: 1. Validar, testar e gerar cobertura
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64, windows-portela-dev]
     timeout-minutes: 20
     steps:
       - name: Obter código
@@ -32,13 +37,18 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - name: Conferir Docker com containers Linux
+        run: |
+          test "$(docker info --format '{{.OSType}}')" = linux || { echo "O runner precisa de acesso ao Docker com containers Linux." >&2; exit 1; }
       - name: Instalar dependências
         run: npm ci --no-audit --no-fund
       - name: Validar TypeScript e scripts de deploy
         run: |
           npm run typecheck
           for file in scripts/ci/*.sh; do bash -n "$file"; done
-          shellcheck -S warning scripts/ci/*.sh
+          mount_path="$(pwd)"
+          if command -v cygpath >/dev/null 2>&1; then mount_path=$(cygpath -m "$mount_path"); fi
+          MSYS_NO_PATHCONV=1 docker run --rm --mount "type=bind,source=$mount_path,target=/src,readonly" --workdir /src koalaman/shellcheck:stable -S warning scripts/ci/*.sh
       - name: Validar HTML de entrada
         run: npm run validate:html
       - name: Testar com cobertura real
@@ -48,7 +58,7 @@ jobs:
       - name: Obter backend para testes isolados
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: arnaldoportela/o-espertinho-backend
+          repository: Portela-Dev/o-espertinho-backend
           ref: ${{ vars.E2E_BACKEND_REF || 'develop' }}
           path: .ci-backend
           persist-credentials: false
@@ -56,8 +66,12 @@ jobs:
         run: |
           npm --prefix .ci-backend ci --no-audit --no-fund
           npm --prefix .ci-backend run build
-          node node_modules/playwright/cli.js install --with-deps chromium
+          node node_modules/playwright/cli.js install chromium
       - name: Testar aplicação web compilada em navegador
+        env:
+          E2E_BROWSER_CHANNEL: chromium
+          CI_API_PORT: '3100'
+          CI_WEB_PORT: '4300'
         run: node scripts/ci/test-web.mjs
       - name: Publicar cobertura e relatórios
         if: always()
@@ -76,7 +90,7 @@ jobs:
     name: 2. SonarQube e Quality Gate
     needs: validate
     if: github.ref == 'refs/heads/develop' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    runs-on: ${{ fromJSON(vars.SONAR_RUNNER_LABELS || '["self-hosted","Windows","X64","android-build"]') }}
+    runs-on: [self-hosted, Windows, X64, windows-portela-dev]
     timeout-minutes: 15
     concurrency:
       group: sonar-${{ github.repository }}-develop
@@ -130,9 +144,10 @@ jobs:
             -Dsonar.qualitygate.timeout=300
 
   image:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     name: 3. Compilar e validar imagem Docker
     needs: validate
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64, windows-portela-dev]
     timeout-minutes: 30
     steps:
       - name: Obter código
@@ -143,6 +158,9 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
+      - name: Conferir Docker com containers Linux
+        run: |
+          test "$(docker info --format '{{.OSType}}')" = linux || { echo "O runner precisa de acesso ao Docker com containers Linux." >&2; exit 1; }
       - name: Compilar, testar e empacotar
         run: bash scripts/ci/package-image.sh
       - name: Publicar imagem e manifesto com SHA-256
@@ -159,7 +177,7 @@ jobs:
     name: 4. Deploy independente por SSH
     needs: [validate, sonarqube, image]
     if: github.ref == 'refs/heads/develop' && ((github.event_name == 'push' && vars.VPS_AUTO_DEPLOY == 'true') || (github.event_name == 'workflow_dispatch' && inputs.deploy))
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64, windows-portela-dev]
     timeout-minutes: 30
     environment: production
     concurrency:

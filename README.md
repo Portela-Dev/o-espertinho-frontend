@@ -2,7 +2,7 @@
 
 Angular 22 com pÃ¡ginas pÃºblicas SSR e rotas pessoais/admin renderizadas no navegador.
 
-Este Ã© o repositÃ³rio `o-espertinho-frontend`. Projetos relacionados: [backend](https://github.com/arnaldoportela/o-espertinho-backend) e [extrator](https://github.com/arnaldoportela/o-espertinho-jobs).
+Este Ã© o repositÃ³rio `o-espertinho-frontend`. Projetos relacionados: [backend](https://github.com/Portela-Dev/o-espertinho-backend) e [extrator](https://github.com/Portela-Dev/o-espertinho-jobs).
 
 ## Primeiro uso
 
