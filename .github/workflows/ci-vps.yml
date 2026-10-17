@@ -104,7 +104,9 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:SONAR_TOKEN)) { throw 'Configure SONAR_TOKEN nos secrets do repositório.' }
           if ([string]::IsNullOrWhiteSpace($env:SONAR_HOST_URL)) { throw 'Configure SONAR_HOST_URL nas variables do repositório.' }
           if (-not (Test-Path -LiteralPath 'reports/coverage/lcov.info')) { throw 'Cobertura do commit não encontrada.' }
-          $status = Invoke-RestMethod -Uri ($env:SONAR_HOST_URL.TrimEnd('/') + '/api/system/status') -TimeoutSec 30
+          $headers = @{ 'ngrok-skip-browser-warning' = 'true'; Accept = 'application/json' }
+          $response = Invoke-WebRequest -UseBasicParsing -Uri ($env:SONAR_HOST_URL.TrimEnd('/') + '/api/system/status') -Headers $headers -TimeoutSec 30
+          try { $status = $response.Content | ConvertFrom-Json } catch { throw 'A URL do SonarQube não retornou JSON. Confira o túnel ngrok e sua configuração de acesso.' }
           if ($status.status -ne 'UP') { throw 'SonarQube indisponível.' }
       - name: Preparar verificação de assinatura do scanner
         run: |
