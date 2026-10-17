@@ -1,0 +1,25 @@
+services:
+  frontend:
+    image: ${APP_IMAGE:?Use a imagem validada pelo CI}
+    init: true
+    restart: unless-stopped
+    env_file: ${VPS_ENV_FILE:?Caminho absoluto do .env na VPS}
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: '4200'
+    ports:
+      - '127.0.0.1:4200:4200'
+    networks: [internal]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4200/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+networks:
+  internal:
+    external: true
+    name: espertinho-internal
