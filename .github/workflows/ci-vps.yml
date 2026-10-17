@@ -17,6 +17,10 @@ permissions:
 env:
   GIT_TERMINAL_PROMPT: '0'
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   validate:
     name: 1. Validar, testar e gerar cobertura
@@ -48,7 +52,7 @@ jobs:
       - name: Obter backend para testes isolados
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: arnaldoportela/o-espertinho-backend
+          repository: Portela-Dev/o-espertinho-backend
           ref: ${{ vars.E2E_BACKEND_REF || 'develop' }}
           path: .ci-backend
           persist-credentials: false
@@ -58,6 +62,10 @@ jobs:
           npm --prefix .ci-backend run build
           node node_modules/playwright/cli.js install --with-deps chromium
       - name: Testar aplicação web compilada em navegador
+        env:
+          E2E_BROWSER_CHANNEL: chromium
+          CI_API_PORT: '3100'
+          CI_WEB_PORT: '4300'
         run: node scripts/ci/test-web.mjs
       - name: Publicar cobertura e relatórios
         if: always()
@@ -76,7 +84,7 @@ jobs:
     name: 2. SonarQube e Quality Gate
     needs: validate
     if: github.ref == 'refs/heads/develop' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    runs-on: ${{ fromJSON(vars.SONAR_RUNNER_LABELS || '["self-hosted","Windows","X64","android-build"]') }}
+    runs-on: [self-hosted, Windows, X64, windows-portela-dev]
     timeout-minutes: 15
     concurrency:
       group: sonar-${{ github.repository }}-develop
@@ -104,7 +112,9 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:SONAR_TOKEN)) { throw 'Configure SONAR_TOKEN nos secrets do repositório.' }
           if ([string]::IsNullOrWhiteSpace($env:SONAR_HOST_URL)) { throw 'Configure SONAR_HOST_URL nas variables do repositório.' }
           if (-not (Test-Path -LiteralPath 'reports/coverage/lcov.info')) { throw 'Cobertura do commit não encontrada.' }
-          $status = Invoke-RestMethod -Uri ($env:SONAR_HOST_URL.TrimEnd('/') + '/api/system/status') -TimeoutSec 30
+          $headers = @{ 'ngrok-skip-browser-warning' = 'true'; Accept = 'application/json' }
+          $response = Invoke-WebRequest -UseBasicParsing -Uri ($env:SONAR_HOST_URL.TrimEnd('/') + '/api/system/status') -Headers $headers -TimeoutSec 30
+          try { $status = $response.Content | ConvertFrom-Json } catch { throw 'A URL do SonarQube não retornou JSON. Confira o túnel ngrok e sua configuração de acesso.' }
           if ($status.status -ne 'UP') { throw 'SonarQube indisponível.' }
       - name: Preparar verificação de assinatura do scanner
         run: |
