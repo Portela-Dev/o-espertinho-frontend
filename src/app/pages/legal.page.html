@@ -1,0 +1,114 @@
+<article class="page-width prose legal-page">
+<p class="eyebrow">O ESPERTINHO</p>
+@switch(view){
+@case('about'){
+<h1>Sobre o Espertinho</h1>
+<p>O Espertinho é um serviço brasileiro de descoberta e organização de ofertas de lojas e marketplaces. Você pode consultar produtos sem criar uma conta ou entrar com Google para salvar favoritos, filtros e catálogos pessoais.</p>
+<h2>Como funciona a curadoria</h2>
+<p>Os produtos e links são cadastrados e revisados pela administração. As informações podem ser obtidas de páginas de lojas, integrações e verificações automatizadas. A seleção não representa todos os produtos, vendedores ou preços disponíveis no mercado. Os destaques são editoriais; resultados também podem ser ordenados pelos filtros disponíveis.</p>
+<p>Consultas periódicas ajudam a acompanhar preço e disponibilidade, mas não são uma reserva de estoque nem uma verificação em tempo real. Confira o horário da última atualização. A indicação “Atualização pendente” significa que a consulta não foi concluída e que o último dado conhecido pode estar desatualizado.</p>
+<h2>Transparência sobre links de afiliado</h2>
+<p>Os links para lojas podem ser links de afiliado: o responsável pelo O Espertinho pode receber comissão por compras qualificadas, conforme as regras do respectivo programa. Essa remuneração não acrescenta uma cobrança do O Espertinho à compra e não garante que o preço anunciado seja o menor do mercado.</p>
+<p>Como participante do Programa de Associados da Amazon, sou remunerado pelas compras qualificadas efetuadas.</p>
+<p>A presença de marcas, imagens ou links identifica as lojas e os produtos apresentados. Ela não significa que o O Espertinho seja uma loja oficial ou representante dos vendedores.</p>
+<h2>Onde a compra acontece</h2>
+<p>A compra ocorre no site ou aplicativo de destino. A loja, o marketplace e o vendedor apresentam as condições de pagamento, frete, entrega, garantia e atendimento da compra. O Espertinho não recebe pagamentos por esses produtos, não mantém estoque e não realiza entregas.</p>
+<p>O serviço é responsável pelas próprias atividades, informações e tratamento de dados, na forma da legislação aplicável. Essa divisão de funções não elimina direitos do consumidor nem responsabilidades legalmente atribuíveis ao O Espertinho.</p>
+<h2>Encontrou um erro?</h2>
+<p>Informe o link da página e o problema pelo contato abaixo. Você também pode comunicar conteúdo inadequado, uso indevido de marca ou imagem, suspeita de fraude e falhas de segurança. Não envie senhas, códigos de acesso ou dados de cartão.</p>
+<p>Consulte os <a routerLink="/termos">Termos de Uso</a> e a <a routerLink="/privacidade">Política de Privacidade</a> para conhecer as regras do serviço e o tratamento de dados.</p>
+}
+@case('privacy'){
+<h1>Política de Privacidade</h1>
+<p class="legal-small muted">Versão {{info.version}} · Atualizada em {{info.updated}}</p>
+<p>Esta política explica o tratamento de dados pessoais no O Espertinho, de acordo com a Lei Geral de Proteção de Dados Pessoais (LGPD). O canal de contato do responsável pelo serviço e pelo tratamento está ao final desta página. A leitura desta política não representa consentimento genérico para qualquer uso dos seus dados.</p>
+<h2>1. Dados utilizados e suas finalidades</h2>
+<ul>
+<li><strong>Conta Google:</strong> identificador da conta, nome, e-mail verificado e foto de perfil, quando fornecida. Servem para autenticar você, identificar sua conta e exibir seu perfil. Não recebemos sua senha do Google nem acesso geral aos seus e-mails, arquivos ou compras.</li>
+<li><strong>Organização pessoal:</strong> favoritos, critérios de filtros salvos, nomes, descrições e itens dos catálogos. Servem para manter os recursos solicitados por você. Esses conteúdos não são publicados para os demais usuários; o acesso técnico deve se limitar às necessidades de operação, suporte, segurança e obrigações legais.</li>
+<li><strong>Sessão e segurança:</strong> identificadores aleatórios de sessão, informações de autenticação e tokens de proteção contra requisições indevidas. Servem para manter o acesso e proteger a aplicação. Informações técnicas de conexão também podem ser processadas temporariamente para limitar requisições e conter abuso.</li>
+<li><strong>Métricas de cliques:</strong> oferta, marketplace, contexto do clique no site e horário. A tabela dessas métricas não inclui conta Google, identificador do usuário, sessão ou IP, e não é usada para atribuir compras a pessoas. Os totais não equivalem a compradores ou visitantes únicos.</li>
+<li><strong>Atendimento:</strong> e-mail e informações que você enviar ao entrar em contato, utilizadas para responder, investigar o relato e atender solicitações.</li>
+</ul>
+<p>O tráfego de internet envolve o recebimento de informações técnicas, como IP, pelos serviços de rede que entregam as páginas. A ausência de IP na tabela de cliques não significa que Google, lojas, redes de distribuição de imagens ou a infraestrutura de hospedagem não recebam informações de conexão.</p>
+<h2>2. Fundamentos do tratamento</h2>
+<p>O funcionamento da conta e dos recursos que você solicita se baseia na execução da relação de prestação do serviço. Segurança, prevenção de abuso e avaliação do funcionamento podem se apoiar em legítimo interesse, com necessidade, proporcionalidade e respeito aos seus direitos. Obrigações legais e regulatórias, atendimento a autoridades competentes e exercício regular de direitos possuem fundamentos próprios na LGPD.</p>
+<p>Quando uma atividade depender de consentimento, ele deverá ser solicitado de forma específica e poderá ser revogado. Uma nova finalidade incompatível com as informadas exige avaliação e informação próprias; não é autorizada apenas pela existência desta política.</p>
+<h2>3. Cookies e preferência de aparência</h2>
+<div class="table-wrap"><table><caption>Armazenamento utilizado pela aplicação</caption><thead><tr><th>Identificador</th><th>Finalidade</th><th>Duração</th></tr></thead><tbody>
+<tr><td><code>espertinho.sid</code></td><td>Cookie essencial de sessão e autenticação. Pode existir também durante a navegação sem login.</td><td>Até 30 dias na sessão autenticada, com renovação durante o uso; 12 horas na navegação anônima.</td></tr>
+<tr><td><code>espertinho.signed_out</code></td><td>Registra a escolha de sair para impedir acesso automático.</td><td>Até 30 dias; removido ao entrar manualmente.</td></tr>
+<tr><td><code>XSRF-TOKEN</code></td><td>Cookie essencial de proteção de operações na aplicação.</td><td>Até 30 dias na sessão autenticada, com renovação durante o uso; 12 horas na navegação anônima.</td></tr>
+<tr><td><code>espertinho-theme</code></td><td>Preferência de tema claro ou escuro, gravada no armazenamento local após sua escolha.</td><td>Sem expiração automática; até ser alterada ou apagada no navegador.</td></tr>
+</tbody></table></div>
+<p>O navegador também guarda os indicadores <code>espertinho-auth-returning</code> e <code>espertinho-auth-signed-out</code>, que identificam um retorno e a escolha de sair. Eles não contêm tokens, senhas ou dados do perfil e permanecem até nova escolha ou limpeza do armazenamento. O Google One Tap pode tentar restaurar o acesso de quem já entrou neste navegador, respeitando a saída explícita. O Google pode exigir confirmação e gerenciar seus próprios cookies, como <code>g_state</code>, conforme suas configurações e políticas.</p>
+<p>Você pode administrar cookies e armazenamento nas configurações do navegador. Bloquear cookies essenciais pode impedir login e operações protegidas. A aplicação não instala, nesta versão, ferramentas próprias de publicidade comportamental ou análise de audiência de terceiros. O login Google e os sites de destino podem utilizar suas próprias tecnologias, conforme as políticas deles.</p>
+<h2>4. Compartilhamento e serviços externos</h2>
+<p>O Google participa da autenticação. Ao carregar o botão de login, fotos, logos e imagens de produtos, seu navegador pode se comunicar diretamente com os servidores dos respectivos fornecedores. Esses acessos podem transmitir informações técnicas da conexão. Consulte a <a href="https://policies.google.com/privacy?hl=pt-BR" target="_blank" rel="noopener noreferrer">Política de Privacidade do Google</a>.</p>
+<p>Ao abrir uma oferta, você passa a acessar o ambiente da loja. O link pode conter identificadores do programa de afiliados para atribuir comissões ao responsável pelo site, mas a aplicação não acrescenta sua identidade Google ou identificador de conta a esse link. Dados fornecidos na compra são tratados pelos responsáveis pelo ambiente de destino, conforme suas políticas.</p>
+<p>Prestadores que efetivamente apoiem a operação devem receber apenas os dados necessários às suas funções. Dados também podem ser fornecidos quando houver obrigação legal, determinação válida ou necessidade legítima de defesa de direitos. Não comercializamos os dados de cadastro, favoritos, filtros ou catálogos como uma base de contatos.</p>
+<h2>5. Processamento fora do Brasil</h2>
+<p>Serviços externos, como o Google e servidores de imagens, podem processar informações fora do Brasil. O país e as condições dependem do fornecedor e do serviço acessado. Quando houver transferência internacional sob responsabilidade do O Espertinho, devem ser observadas as hipóteses e salvaguardas aplicáveis da LGPD e da regulamentação da ANPD. Uma política de privacidade, por si só, não substitui essas exigências.</p>
+@if(info.hostingDescription){<p>{{info.hostingDescription}}</p>}
+<p>Você pode solicitar esclarecimentos sobre os operadores efetivamente utilizados e os fluxos internacionais relacionados aos seus dados pelo canal desta política.</p>
+<h2>6. Conservação e exclusão</h2>
+<p>O perfil e os dados de organização são mantidos enquanto a conta estiver ativa. Em <a routerLink="/minha-conta">Minha conta</a>, usuários comuns podem excluir a conta e os respectivos favoritos, filtros, catálogos e sessões autenticadas. Também é possível solicitar a exclusão pelo canal de privacidade. A conta que administra o serviço precisa transferir essa função antes da exclusão por autoatendimento.</p>
+<p>As sessões autenticadas têm validade de até 30 dias e são renovadas durante o uso, no máximo uma vez por dia. Sessões anônimas duram 12 horas. Sair ou excluir a conta invalida a sessão e bloqueia a tentativa automática de acesso; os registros vencidos são removidos pela rotina de manutenção. Métricas de cliques, auditoria administrativa e registros de sincronização seguem uma rotina de eliminação dos registros com mais de 365 dias. Métricas sem vínculo com a conta não são identificadas como suas para exclusão individual.</p>
+<p>A retenção por obrigação legal, determinação válida ou exercício regular de direitos será limitada ao necessário, com acesso restrito e fundamento aplicável. Eventuais cópias de segurança exigem procedimento de retenção e eliminação próprio. O canal de privacidade pode esclarecer os prazos efetivamente aplicáveis, inclusive a backups e registros de infraestrutura.</p>
+<h2>7. Seus direitos e como exercê-los</h2>
+<p>Você pode solicitar confirmação de tratamento, acesso, correção, informações sobre compartilhamento e, nas hipóteses legais, anonimização, bloqueio, eliminação, portabilidade, oposição e revogação de consentimento. Também pode pedir esclarecimentos sobre eventuais decisões exclusivamente automatizadas que afetem seus interesses.</p>
+<p>Envie sua solicitação ao e-mail abaixo, preferencialmente a partir do endereço associado à conta. Podemos pedir confirmação de identidade proporcional ao pedido para evitar acesso por terceiros; não envie documentos ou dados sensíveis sem necessidade e orientação. O exercício de direitos é gratuito. Os prazos e as condições aplicáveis serão informados no atendimento; para confirmação e acesso, a LGPD prevê resposta simplificada imediata ou declaração completa em até 15 dias, observadas as regras aplicáveis.</p>
+<p>Se entender que a resposta não resolveu o problema, você pode procurar a <a href="https://www.gov.br/anpd/pt-br/canais_atendimento/cidadao-titular-de-dados/denuncia-peticao-de-titular-referente-lgpd" target="_blank" rel="noopener noreferrer">ANPD</a> e os órgãos de defesa do consumidor, conforme o caso.</p>
+<h2>8. Segurança e incidentes</h2>
+<p>A aplicação utiliza controles de acesso, validação de autenticação, proteção de sessão e de operações e separação entre áreas públicas, pessoais e administrativas. Nenhuma medida torna um sistema imune a falhas. Em caso de incidente, cabe ao responsável avaliar o impacto, adotar medidas de contenção e realizar as comunicações exigidas pela legislação aos titulares e à ANPD.</p>
+<h2>9. Crianças e adolescentes</h2>
+<p>O serviço não é apresentado como uma experiência infantil nem utiliza perfis de crianças para publicidade comportamental. Responsáveis podem entrar em contato sobre dados de menores. Relatos desse tipo serão avaliados com prioridade, observando o melhor interesse, a LGPD e as normas de proteção de crianças e adolescentes no ambiente digital. Uma classificação etária declarada não dispensa as proteções legalmente aplicáveis.</p>
+<h2>10. Atualizações desta política</h2>
+<p>Alterações serão identificadas pela data e versão desta página. Mudanças relevantes nas finalidades ou no tratamento exigem informação adequada e, quando necessário, uma nova manifestação específica do titular.</p>
+<p class="legal-small">Referências: <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm" target="_blank" rel="noopener noreferrer">LGPD</a>, <a href="https://www.gov.br/anpd/pt-br/centrais-de-conteudo/materiais-educativos-e-publicacoes/guia-orientativo-cookies-e-protecao-de-dados-pessoais.pdf" target="_blank" rel="noopener noreferrer">orientações da ANPD sobre cookies</a> e <a href="https://www.gov.br/anpd/pt-br/assuntos/assuntos-internacionais/transferencia-internacional-de-dados" target="_blank" rel="noopener noreferrer">transferências internacionais</a>.</p>
+}
+@case('terms'){
+<h1>Termos de Uso</h1>
+<p class="legal-small muted">Versão {{info.version}} · Atualizados em {{info.updated}}</p>
+<p>Estes termos descrevem o uso do O Espertinho. Ao criar uma conta e utilizar seus recursos, você concorda com as regras aplicáveis ao serviço. O tratamento de dados é explicado separadamente na <a routerLink="/privacidade">Política de Privacidade</a>; a aceitação dos termos não é consentimento irrestrito para tratar dados.</p>
+<h2>1. Objeto e acesso</h2>
+<p>O serviço permite descobrir produtos e ofertas de terceiros e organizar favoritos, filtros e catálogos. A navegação pública é gratuita e o login Google é opcional. Não há cobrança de assinatura ou processamento de pedidos de compra nesta versão. Funcionalidades futuras ou serviços pagos dependem de condições próprias, informadas antes de qualquer contratação.</p>
+<p>A criação e gestão de conta destinam-se a pessoas maiores de 18 anos ou a quem tenha a representação ou assistência legal exigida para o ato. Não utilize identidade alheia nem forneça informações falsas. As proteções de crianças e adolescentes previstas em lei permanecem aplicáveis.</p>
+<h2>2. Conta, conteúdos pessoais e segurança</h2>
+<p>O acesso depende da validação da sua conta Google. Cuide dos mecanismos de segurança dessa conta e comunique suspeitas de acesso indevido. Você pode organizar e excluir seus conteúdos pelos recursos disponíveis. Não inclua senhas, documentos pessoais, dados de cartão ou informações sensíveis nas descrições de catálogos ou filtros.</p>
+<p>Não são permitidos fraude, tentativa de acessar contas ou dados de terceiros, exploração maliciosa de falhas, distribuição de conteúdo ilícito ou uso que comprometa a segurança e a disponibilidade do serviço. Essas regras não impedem pesquisa responsável de segurança ou usos permitidos por lei.</p>
+<h2>3. Informações sobre produtos e preços</h2>
+<p>Informações podem variar conforme vendedor, variante do produto, forma de pagamento, região, frete, cupom, estoque e requisitos da loja. Uma faixa de preços pode reunir ofertas de vendedores diferentes. Consulte a data da última atualização e confira as condições no destino antes de concluir a compra. O serviço não assegura menor preço absoluto nem reserva de preço ou estoque.</p>
+<p>Erros e divergências podem ser comunicados ao contato abaixo para análise e correção. Nenhuma disposição destes termos afasta obrigações legais relativas à informação, publicidade e oferta, nem permite alterar direitos que a lei assegure ao consumidor.</p>
+<h2>4. Compra no ambiente de terceiros</h2>
+<p>O link abre o site ou aplicativo do marketplace. Identifique o vendedor e confira as condições de contratação nesse ambiente. Pagamento, emissão de documento fiscal, entrega, cancelamento, troca, devolução e garantia devem ser tratados inicialmente com os responsáveis pela venda e pelos serviços envolvidos, sem prejuízo das responsabilidades que a legislação atribuir a cada participante.</p>
+<p>O Espertinho não solicita pagamento para liberar uma oferta. Caso receba uma cobrança que utilize indevidamente o nome do serviço, procure o canal abaixo antes de fornecer dados ou valores.</p>
+<h2>5. Afiliação e publicidade</h2>
+<p>O responsável pelo serviço pode receber comissão por compras qualificadas realizadas a partir dos links divulgados. A comissão depende das regras e da atribuição do programa. Ela não é uma cobrança adicional do O Espertinho para o usuário. Não prometemos comissão, cashback, pontos, sorteios ou recompensa ao visitante por clicar, cadastrar-se ou comprar.</p>
+<p>Como participante do Programa de Associados da Amazon, sou remunerado pelas compras qualificadas efetuadas.</p>
+<p>Imagens, descrições, marcas e demais conteúdos de terceiros pertencem aos respectivos titulares. Certos conteúdos fornecidos pela Amazon são apresentados como disponibilizados e podem ser alterados ou removidos. Essa informação não reduz deveres legais relativos ao conteúdo que o próprio O Espertinho divulga.</p>
+<h2>6. Uso de conteúdo e comunicação de irregularidades</h2>
+<p>Não reproduza conteúdo protegido, marcas ou identidade visual em condições que violem direitos ou induzam terceiros a confusão. Permanecem preservados os usos autorizados por seus titulares e os permitidos pela legislação.</p>
+<p>Relatos de violação de direitos, conteúdo inadequado, oferta enganosa ou falha de segurança podem ser enviados ao contato abaixo. Informe a URL, descreva o fato e apresente elementos suficientes para análise. Evite divulgar publicamente dados pessoais ou detalhes que facilitem exploração de uma falha.</p>
+<h2>7. Restrições e continuidade</h2>
+<p>Acesso pode ser limitado para conter abuso, cumprir determinação válida ou realizar manutenção. Quando cabível, o motivo e os meios de contestação serão informados, salvo impedimento legal ou necessidade justificada de segurança. Você pode solicitar esclarecimentos e revisão pelo canal de atendimento.</p>
+<p>Recursos podem ser ajustados ou descontinuados. Mudanças relevantes serão informadas de forma adequada; quando viável e aplicável, será oferecida oportunidade de obter seus dados e encerrar a conta. Não prometemos disponibilidade ininterrupta.</p>
+<h2>8. Responsabilidades e direitos preservados</h2>
+<p>O responsável pelo O Espertinho responde por suas atividades nos limites e condições previstos em lei. Estes termos não excluem responsabilidade legal, não transferem ao usuário obrigações que não lhe pertençam e não exigem renúncia a direitos de proteção de dados ou de consumo.</p>
+<p>Não há obrigação de aceitar arbitragem, foro exclusivo distante do consumidor ou limitação genérica de indenização. Permanecem disponíveis os canais administrativos e judiciais competentes, inclusive o foro do domicílio do consumidor quando aplicável.</p>
+<h2>9. Legislação e alterações</h2>
+<p>Aplicam-se as leis brasileiras, especialmente o <a href="https://www.planalto.gov.br/ccivil_03/leis/l8078compilado.htm" target="_blank" rel="noopener noreferrer">Código de Defesa do Consumidor</a>, quando caracterizada relação de consumo, o <a href="https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2014/lei/l12965.htm" target="_blank" rel="noopener noreferrer">Marco Civil da Internet</a> e a LGPD. As normas de comércio eletrônico e de proteção de crianças e adolescentes serão observadas nas situações em que incidirem.</p>
+<p>Esta página informa a versão e a data de atualização. Mudanças substanciais nas condições do serviço exigem comunicação adequada; não se presume aceitação retroativa nem autorização para reduzir direitos legais.</p>
+}
+@default{
+<h1>Esse caminho ainda não tem achados.</h1><p>A página que você procura não foi encontrada.</p>
+}}
+@if(view==='about'||view==='privacy'||view==='terms'){
+<section class="legal-contact" aria-labelledby="legal-contact-title"><h2 id="legal-contact-title">Responsável e canais de atendimento</h2>
+@if(info.controllerName){<p><strong>{{info.controllerName}}</strong>@if(info.registration){<br>{{info.registration}}}@if(info.publicAddress){<br>{{info.publicAddress}}}</p>}
+<p>Dúvidas sobre o serviço, correções, direitos de titulares de dados e relatos de irregularidades: <a [href]="'mailto:'+info.email">{{info.email}}</a>.</p>
+</section>
+<nav class="legal-links" aria-label="Informações do serviço"><a routerLink="/sobre">Sobre o Espertinho</a><a routerLink="/privacidade">Privacidade</a><a routerLink="/termos">Termos de Uso</a></nav>
+}
+<a routerLink="/" class="button dark">Voltar a explorar ↗</a>
+</article>

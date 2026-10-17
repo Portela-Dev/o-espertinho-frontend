@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.angular/
+.env
+.env.*
+!.env.example
+.local/
+.auth/
+playwright-report/
+test-results/
+*.log
+*.pem
+*.key
