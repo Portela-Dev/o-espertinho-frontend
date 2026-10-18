@@ -1,4 +1,4 @@
-import {test,expect,Page} from '@playwright/test';
+import {test,expect,Page} from './coverage';
 const baseURL=process.env['E2E_BASE_URL']||'http://localhost:4200';
 async function login(page:Page,token='admin'){
   await page.addInitScript((credential)=>{(window as any).google={accounts:{id:{initialize(o:any){(window as any).__e2eGoogleCallback=o.callback;},renderButton(el:HTMLElement){const b=document.createElement('button');b.className='button outline';b.textContent='Continuar com Google (teste)';b.onclick=()=>{(window as any).__e2eGoogleCallback({credential});};el.appendChild(b);}}}};},token);

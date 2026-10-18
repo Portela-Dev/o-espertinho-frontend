@@ -1,6 +1,6 @@
 import {spawn} from 'node:child_process';
-import {mkdir,open} from 'node:fs/promises';
-import {resolve} from 'node:path';
+import {mkdir,open,rm} from 'node:fs/promises';
+import {resolve,dirname} from 'node:path';
 import {setTimeout as pause} from 'node:timers/promises';
 
 const backend=resolve(process.env.E2E_BACKEND_DIR||'.ci-backend');
@@ -8,6 +8,11 @@ const apiPort=Number(process.env.CI_API_PORT||3000),webPort=Number(process.env.C
 const base=`http://localhost:${webPort}`;
 const children=[],logs=[];
 await mkdir('reports/web',{recursive:true});
+if(process.env.COLLECT_BROWSER_COVERAGE){
+ const raw=resolve('coverage/browser-raw');
+ if(dirname(raw)!==resolve('coverage'))throw new Error('Diretório de cobertura inválido.');
+ await rm(raw,{recursive:true,force:true});
+}
 async function start(args,cwd,env,name){
  const log=await open(`reports/web/${name}.log`,'w');logs.push(log);
  const child=spawn(process.execPath,args,{cwd,env:{...process.env,...env},stdio:['ignore',log.fd,log.fd],windowsHide:true});

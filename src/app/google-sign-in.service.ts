@@ -8,7 +8,8 @@ export class GoogleSignIn {
  private document=inject(DOCUMENT);private browser=isPlatformBrowser(inject(PLATFORM_ID));private loading?:Promise<void>;private clientId='';private manualElement?:HTMLElement;private suppressed=false;
  onCredential?:(credential:string,automatic:boolean)=>void;
  async prepare(clientId:string){
-  if(!this.browser)return;this.reauthClientId=clientId;
+  if(!this.browser){return;}
+  this.reauthClientId=clientId;
   if(!this.loading)this.loading=this.load().catch(e=>{this.loading=undefined;throw e;});await this.loading;
   if(this.clientId===clientId)return;
   window.google!.accounts.id.initialize({client_id:clientId,auto_select:true,use_fedcm_for_prompt:true,callback:(r:GoogleCredential)=>{

@@ -1,4 +1,4 @@
-import {test,expect,Page,APIRequestContext} from '@playwright/test';
+import {test,expect,Page,APIRequestContext} from './coverage';
 const origin=process.env['E2E_BASE_URL']||'http://localhost:4200';
 async function login(page:Page,token='admin'){
  await page.addInitScript(credential=>{(window as any).google={accounts:{id:{initialize(o:any){(window as any).__accessLogin=o.callback;},renderButton(el:HTMLElement){const b=document.createElement('button');b.textContent='Google acesso teste';b.onclick=()=>(window as any).__accessLogin({credential});el.appendChild(b);}}}};},token);
