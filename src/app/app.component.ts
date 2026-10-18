@@ -1,9 +1,10 @@
 import {Component,inject,OnInit} from '@angular/core';
 import {RouterLink,RouterLinkActive,RouterOutlet,Router} from '@angular/router';
+import {AdminReauth} from './components/admin-reauth';
 import {Api} from './api.service';
 import {ThemeService} from './theme.service';
 import {UserAvatar} from './components/user-avatar';
-@Component({selector:'app-root',imports:[RouterLink,RouterLinkActive,RouterOutlet,UserAvatar],template:`
+@Component({selector:'app-root',imports:[RouterLink,RouterLinkActive,RouterOutlet,UserAvatar,AdminReauth],template:`
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
   <div class="topline">Um bom achado começa com uma boa escolha. <span>Ofertas revisadas por pessoas, para pessoas.</span></div>
   <header class="site-header"><div class="header-inner">
@@ -13,6 +14,7 @@ import {UserAvatar} from './components/user-avatar';
   </div></header>
   @if(api.error()){<div class="toast error" role="alert"><span>{{api.error()}}</span><button type="button" (click)="api.clear()" aria-label="Fechar mensagem">×</button></div>}
   @if(api.notice()){<div class="toast" role="status"><span>{{api.notice()}}</span><button type="button" (click)="api.clear()" aria-label="Fechar mensagem">×</button></div>}
+  <admin-reauth />
   <main id="conteudo"><router-outlet /></main>
   <footer class="site-footer"><div class="footer-inner"><div><a routerLink="/" class="brand">O Espertinho.</a><p>Menos procura. Mais boas escolhas.</p></div><div class="footer-links"><a routerLink="/sobre">Sobre o Espertinho</a><a routerLink="/privacidade">Privacidade</a><a routerLink="/termos">Termos de uso</a></div></div><div class="disclosure">Como participante do Programa de Associados da Amazon, sou remunerado pelas compras qualificadas efetuadas. Podemos receber comissão pelas compras realizadas nos links de outras lojas, sem custo adicional para você.</div></footer>
 `})

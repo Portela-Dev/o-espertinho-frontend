@@ -38,6 +38,8 @@ jobs:
           cache: npm
       - name: Instalar dependências
         run: npm ci --no-audit --no-fund
+      - name: Auditar dependências de produção
+        run: npm audit --omit=dev --audit-level=high
       - name: Validar TypeScript e scripts de deploy
         run: |
           npm run typecheck

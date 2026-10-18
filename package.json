@@ -13,7 +13,8 @@
     "start": "node dist/espertinho/server/server.mjs",
     "test:e2e": "playwright test",
     "test:coverage": "c8 node --experimental-strip-types --test test/*.test.mjs",
-    "validate:html": "html-validate src/index.html"
+    "validate:html": "html-validate src/index.html",
+    "prebuild": "node scripts/prepare-csp.mjs"
   },
   "dependencies": {
     "@angular/common": "~22.2.3",
@@ -25,7 +26,6 @@
     "@angular/router": "~22.2.3",
     "@angular/ssr": "~22.2.2",
     "express": "^5.1.0",
-    "http-proxy-middleware": "^3.0.5",
     "rxjs": "~7.8.2",
     "tslib": "^2.8.1"
   },
