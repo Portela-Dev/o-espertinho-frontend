@@ -14,10 +14,13 @@ test('vitrine acrescenta lotes pela rolagem, mantém itens no erro e termina sem
  expect(calls).toEqual([1,2,2,3]);expect(await page.locator('product-card h3').allTextContents()).toHaveLength(52);
 });
 test('nova busca descarta respostas antigas e reinicia a rolagem',async({page})=>{
- await page.route('**/api/products?**',async route=>{const u=new URL(route.request().url()),q=u.searchParams.get('q')||'';if(q==='antiga')await new Promise(resolve=>setTimeout(resolve,800));await route.fulfill({json:{items:[{...product(1),name:q||'Inicial'}],page:1,pageSize:24,total:1}});});
+ let releaseOld!:()=>void,oldStarted!:()=>void;
+ const oldGate=new Promise<void>(resolve=>{releaseOld=resolve;}),started=new Promise<void>(resolve=>{oldStarted=resolve;});
+ await page.route('**/api/products?**',async route=>{const u=new URL(route.request().url()),q=u.searchParams.get('q')||'';if(q==='antiga'){oldStarted();await oldGate;}await route.fulfill({json:{items:[{...product(1),name:q||'Inicial'}],page:1,pageSize:24,total:1}});});
  await page.goto('/');await expect(page.locator('product-card h3')).toHaveText('Inicial');
- await page.getByRole('textbox',{name:'Buscar ofertas'}).fill('antiga');await page.locator('.search-bar button').click();await expect(page).toHaveURL(/q=antiga/);
- await page.getByRole('textbox',{name:'Buscar ofertas'}).fill('nova');await page.locator('.search-bar button').click();await expect(page.locator('product-card h3')).toHaveText('nova');await page.waitForTimeout(900);await expect(page.locator('product-card h3')).toHaveText('nova');
+ await page.getByRole('textbox',{name:'Buscar ofertas'}).fill('antiga');await page.locator('.search-bar button').click();await started;
+ await page.getByRole('textbox',{name:'Buscar ofertas'}).fill('nova');await page.locator('.search-bar button').click();await expect(page.locator('product-card h3')).toHaveText('nova');
+ const oldResponse=page.waitForResponse(response=>new URL(response.url()).searchParams.get('q')==='antiga');releaseOld();await (await oldResponse).finished();await page.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>resolve())));await expect(page.locator('product-card h3')).toHaveText('nova');
 });
 test('catálogos e filtros salvos usam rolagem infinita e reiniciam ao navegar',async({page})=>{
  await login(page);

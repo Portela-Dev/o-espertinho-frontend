@@ -1,4 +1,4 @@
-import {PagedData,PageResult} from '../paged-data';
+import {PagedData} from '../paged-data';
 import {InfiniteScroll} from '../components/infinite-scroll';
 import {CategoryBreadcrumb} from '../components/category-breadcrumb';
 import {Component,inject,signal,OnInit,DestroyRef} from '@angular/core';
@@ -13,5 +13,5 @@ import {OfferCard} from '../components/offer-card';
 export class ProductPage implements OnInit{
  api=inject(Api);route=inject(ActivatedRoute);destroy=inject(DestroyRef);title=inject(Title);meta=inject(Meta);product=signal<Product|null>(null);productId='';feed=new PagedData<Offer>(async page=>{const p=await this.api.get<Product&{page:number;pageSize:number}>('/products/'+this.productId,{paginate:true,page});return {...p,items:p.offers??[],total:p.offer_count};},result=>{this.product.set(result as unknown as Product);});loading=signal(true);failed=signal(false);imageFailed=signal(false);sequence=0;
  ngOnInit(){this.route.paramMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(p=>void this.load(p.get('id')!));}
- async load(id:string){const seq=++this.sequence;this.loading.set(true);this.failed.set(false);this.imageFailed.set(false);try{this.productId=id;await this.feed.reset();if(this.feed.failed())throw new Error('Product load failed');const p=this.product()!;if(seq!==this.sequence)return;this.product.set(p);this.title.setTitle(p.name+' | O Espertinho');this.meta.updateTag({name:'description',content:p.description||p.name});}catch(e:any){if(seq!==this.sequence)return;this.product.set(null);this.failed.set(e?.status!==404);this.title.setTitle('Produto indisponível | O Espertinho');}finally{if(seq===this.sequence)this.loading.set(false);}}
+ async load(id:string){const seq=++this.sequence;this.loading.set(true);this.failed.set(false);this.imageFailed.set(false);try{this.productId=id;await this.feed.reset();if(this.feed.failed()){throw new Error('Product load failed');}const p=this.product()!;if(seq!==this.sequence){return;}this.product.set(p);this.title.setTitle(p.name+' | O Espertinho');this.meta.updateTag({name:'description',content:p.description||p.name});}catch(e:any){if(seq!==this.sequence){return;}this.product.set(null);this.failed.set(e?.status!==404);this.title.setTitle('Produto indisponível | O Espertinho');}finally{if(seq===this.sequence)this.loading.set(false);}}
 }

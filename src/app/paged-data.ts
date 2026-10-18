@@ -7,8 +7,8 @@ export class PagedData<T extends {id:string}> {
  private generation=0;
  constructor(private readonly request:(page:number)=>Promise<PageResult<T>>,private readonly accepted?:(result:PageResult<T>)=>void){}
  reset(){return this.load(1,false);}
- next(){if(this.loading()||!this.hasMore())return Promise.resolve();return this.load(this.page()+1,true);}
- go(page:number){if(this.loading())return Promise.resolve();return this.load(page,false);}
+ next(){if(this.loading()||!this.hasMore()){return Promise.resolve();}return this.load(this.page()+1,true);}
+ go(page:number){if(this.loading()){return Promise.resolve();}return this.load(page,false);}
  private async load(page:number,append:boolean){
   const generation=append?this.generation:++this.generation;
   this.loading.set(true);this.failed.set(false);

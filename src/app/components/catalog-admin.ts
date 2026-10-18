@@ -18,7 +18,21 @@ export class CatalogAdmin implements OnChanges {
  editingClassification=signal<any>(null);classificationDraft={category:'',subcategory:''};
  fields=[{id:'title',name:'Nome do produto'},{id:'price',name:'Preço da oferta'},{id:'originalPrice',name:'Preço de referência'},{id:'images',name:'Imagens'},{id:'description',name:'Descrição'},{id:'specifications',name:'Características'},{id:'conditions',name:'Condições da oferta'},{id:'category',name:'Categoria'},{id:'externalId',name:'Identificador do produto'},{id:'productUrl',name:'URL do produto'}];
  ngOnChanges(){void this.load();}
- async load(){this.productId=this.route.snapshot.queryParamMap.get('product')||this.productId;this.selected=this.route.snapshot.queryParamMap.get('marketplace')||this.selected;this.loading.set(true);this.failed.set(false);try{if(this.section==='marketplaces'){await this.marketFeed.reset();return;}const markets=await this.api.get<Market[]>('/admin/catalog-marketplaces');this.markets.set(markets);for(const m of markets)storeNames[m.id]=m.name;if(!markets.some(m=>m.id===this.selected))this.selected=markets[0]?.id||'';if(this.section==='selectors'&&this.selected)await this.loadProfile();if(this.section==='links')await this.linkFeed.reset();}catch(e){this.api.fail(e);this.failed.set(true);}finally{this.loading.set(false);}}
+ async load(){
+  this.productId=this.route.snapshot.queryParamMap.get('product')||this.productId;
+  this.selected=this.route.snapshot.queryParamMap.get('marketplace')||this.selected;
+  this.loading.set(true);this.failed.set(false);
+  try{
+   if(this.section==='marketplaces'){await this.marketFeed.reset();return;}
+   const markets=await this.api.get<Market[]>('/admin/catalog-marketplaces');this.markets.set(markets);
+   for(const market of markets){storeNames[market.id]=market.name;}
+   if(!markets.some(market=>market.id===this.selected)){this.selected=markets[0]?.id||'';}
+   if(this.section==='selectors'&&this.selected){await this.loadProfile();}
+   if(this.section==='links'){await this.linkFeed.reset();}
+  }catch(error){this.api.fail(error);this.failed.set(true);}
+  finally{this.loading.set(false);}
+ }
+
  async act(work:()=>Promise<void>,message:string){if(this.busy())return;this.busy.set(true);try{await work();this.api.success(message);}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
  clearPreview(){this.specPage=1;this.evidencePage=1;this.preview.set(null);this.authorized=false;}
  async selectMarket(){this.clearPreview();if(this.section==='selectors')await this.act(()=>this.loadProfile(),'Seletores carregados.');}
@@ -33,9 +47,9 @@ export class CatalogAdmin implements OnChanges {
  async saveMarket(){await this.act(async()=>{const d=this.marketDraft;await this.api.send(this.editing?'PUT':'POST','/admin/catalog-marketplaces'+(this.editing?'/'+d.id:''),{id:d.id,name:d.name,websiteUrl:d.websiteUrl,logoUrl:d.logoUrl,allowedHosts:d.hosts.split(/[\n,]/).map(s=>s.trim().toLowerCase()).filter(Boolean),scrapingEnabled:d.scrapingEnabled});this.marketModal.set(false);await this.load();},'Marketplace salvo. Configure seus seletores na aba Seletores.');}
  async deleteMarket(){const m=this.deleting();if(!m)return;await this.act(async()=>{await this.api.send('DELETE','/admin/catalog-marketplaces/'+m.id);this.deleting.set(null);await this.load();},'Marketplace excluído.');}
  openClassification(link:any){this.reassignProductId=link.product_id;this.editingClassification.set(link);}
- async saveClassification(){const link=this.editingClassification();if(!link)return;await this.act(async()=>{await this.api.send('PUT','/admin/offers/'+link.id+'/product',{productId:this.reassignProductId,expectedUpdatedAt:link.updated_at});this.editingClassification.set(null);await this.linkFeed.go(this.linkFeed.page()||1);},'Produto vinculado. A oferta voltou para revisão.');}
- async deleteLink(){const link=this.deletingLink();if(!link)return;await this.act(async()=>{await this.api.send('DELETE','/admin/offers/'+link.id,{expectedUpdatedAt:link.updated_at});this.deletingLink.set(null);await this.linkFeed.go(this.linkFeed.page()||1);},'Oferta excluída.');}
+ async saveClassification(){const link=this.editingClassification();if(!link){return;}await this.act(async()=>{await this.api.send('PUT','/admin/offers/'+link.id+'/product',{productId:this.reassignProductId,expectedUpdatedAt:link.updated_at});this.editingClassification.set(null);await this.linkFeed.go(this.linkFeed.page()||1);},'Produto vinculado. A oferta voltou para revisão.');}
+ async deleteLink(){const link=this.deletingLink();if(!link){return;}await this.act(async()=>{await this.api.send('DELETE','/admin/offers/'+link.id,{expectedUpdatedAt:link.updated_at});this.deletingLink.set(null);await this.linkFeed.go(this.linkFeed.page()||1);},'Oferta excluída.');}
  async extractLink(){this.clearPreview();await this.act(async()=>{this.preview.set(await this.api.send('POST','/admin/link-imports/preview',{marketplaceId:this.selected,productId:this.productId,sellerName:this.sellerName,url:this.linkUrl}));},'Prévia gerada. Confira os dados antes de cadastrar.');}
- async confirmLink(){const preview=this.preview();if(!preview?.canConfirm||!this.authorized)return;await this.act(async()=>{await this.api.send('POST','/admin/link-imports/confirm',{previewId:preview.previewId,authorizedContent:true});this.clearPreview();this.linkUrl='';await this.linkFeed.go(this.linkFeed.page()||1);},'Oferta cadastrada como pendente. Publique pela revisão de ofertas.');}
+ async confirmLink(){const preview=this.preview();if(!preview?.canConfirm||!this.authorized){return;}await this.act(async()=>{await this.api.send('POST','/admin/link-imports/confirm',{previewId:preview.previewId,authorizedContent:true});this.clearPreview();this.linkUrl='';await this.linkFeed.go(this.linkFeed.page()||1);},'Oferta cadastrada como pendente. Publique pela revisão de ofertas.');}
  fieldLabel(field:string){return this.fields.find(f=>f.id===field)?.name||field;}
 }
