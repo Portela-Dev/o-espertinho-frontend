@@ -119,3 +119,21 @@ test('tarja laranja usa o mínimo diário completo e só destaca preços atuais 
  cheapest=false;await page.reload();await expect(page.locator('offer-card').first().locator('price-history-chart .dot')).toHaveCount(9);await expect(page.locator('offer-card .low-price-ribbon')).toHaveCount(0);cheapest=true;
  await page.route('**/api/products/'+target[0].id,async route=>{const response=await route.fetch(),body=await response.json();for(const o of body.offers)o.availability_status='unavailable';await route.fulfill({response,json:body});});await page.reload();await expect(page.locator('offer-card').first().locator('price-history-chart .dot')).toHaveCount(9);await expect(page.locator('offer-card .low-price-ribbon')).toHaveCount(0);
 });
+
+test('admin cancela atualização, preserva histórico da rodada e pode solicitar outra',async({page})=>{
+ await login(page);await page.goto('/admin/updates');
+ await page.getByLabel('Ativar execuções automáticas').uncheck();
+ await page.getByLabel('Pausa entre consultas (milissegundos)').fill('100');
+ const saved=page.waitForResponse(r=>r.url().endsWith('/api/admin/offer-refresh')&&r.request().method()==='PUT');
+ await page.getByRole('button',{name:'Salvar periodicidade'}).click();expect((await saved).status()).toBe(200);
+ const begin=page.getByRole('button',{name:'Atualizar links agora'});
+ await expect(begin).toBeEnabled();await begin.click();
+ await expect(page.getByRole('button',{name:'Cancelar execução',exact:true})).toBeVisible();await expect(begin).toBeDisabled();
+ await page.getByRole('button',{name:'Cancelar execução',exact:true}).click();
+ const dialog=page.getByRole('alertdialog',{name:'Cancelar esta atualização?'});
+ await expect(dialog).toContainText('Os preços já atualizados serão preservados.');await dialog.getByRole('button',{name:'Manter execução'}).click();await expect(dialog).not.toBeVisible();
+ await page.getByRole('button',{name:'Cancelar execução',exact:true}).click();await dialog.getByRole('button',{name:'Confirmar cancelamento'}).click();
+ await expect(page.locator('.toast[role=status]')).toContainText('Atualização cancelada');await expect(begin).toBeEnabled();await expect(page.getByRole('cell',{name:'Cancelada',exact:true})).toHaveCount(1);
+ await begin.click();await expect(page.getByRole('button',{name:'Cancelar execução',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Cancelar execução',exact:true}).click();await dialog.getByRole('button',{name:'Confirmar cancelamento'}).click();await expect(begin).toBeEnabled();await expect(page.getByRole('cell',{name:'Cancelada',exact:true})).toHaveCount(2);
+});
