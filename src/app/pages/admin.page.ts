@@ -1,3 +1,6 @@
+import {PagedData} from '../paged-data';
+import {Pagination} from '../components/pagination';
+import {InfiniteScroll} from '../components/infinite-scroll';
 import {Component,inject,signal,OnInit,DestroyRef} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {DatePipe,CurrencyPipe} from '@angular/common';
@@ -11,22 +14,22 @@ import {ProductPicker} from '../components/product-picker';
 import {CatalogAdmin} from '../components/catalog-admin';
 import {Api} from '../api.service';
 import {Offer,storeNames} from '../models';
-@Component({imports:[UsersAdmin,OfferRefreshAdmin,ProductsAdmin,ProductPicker,CatalogAdmin,FormsModule,RouterLink,RouterLinkActive,DatePipe,CurrencyPipe],templateUrl:'./admin.page.html'})
+@Component({imports:[Pagination,InfiniteScroll,UsersAdmin,OfferRefreshAdmin,ProductsAdmin,ProductPicker,CatalogAdmin,FormsModule,RouterLink,RouterLinkActive,DatePipe,CurrencyPipe],templateUrl:'./admin.page.html'})
 export class AdminPage implements OnInit {
   api=inject(Api);route=inject(ActivatedRoute);destroy=inject(DestroyRef);title=inject(Title);section=signal('overview');loading=signal(false);failed=signal(false);busy=signal(false);names=storeNames;
-  stats=signal<any>(null);offers=signal<Offer[]>([]);rules=signal<any[]>([]);runs=signal<any[]>([]);logs=signal<any[]>([]);
-  days=30;reviewStatus='pending';offerPage=1;
+  stats=signal<any>(null);offerFeed=new PagedData<Offer>(page=>this.api.get('/admin/offers',{paginate:true,status:this.reviewStatus,page}));offers=this.offerFeed.items;rules=signal<any[]>([]);runs=signal<any[]>([]);logFeed=new PagedData<any>(page=>this.api.get('/admin/audit',{paginate:true,page}));logs=this.logFeed.items;
+  topPage=1;metricPage=1;days=30;reviewStatus='pending';offerPage=1;
   ruleModal=signal(false);rule={marketplaceId:'amazon',name:'',keywords:'',category:'Tecnologia',maxReais:null as number|null,minDiscount:0,intervalMinutes:360,enabled:true};
   manualModal=signal(false);editModal=signal(false);editing:Offer|null=null;confirmAction=signal<{message:string;successMessage?:string;action:()=>Promise<void>}|null>(null);
   manual={marketplaceId:'mercadolivre',externalId:'',title:'',description:'',category:'Tecnologia',subcategory:'',imageUrl:'',productUrl:'',affiliateUrl:'',price:0,originalPrice:null as number|null,conditions:'',expiresAt:'',authorizedContent:false,featured:false};
   editDraft={title:'',description:'',category:'',subcategory:'',conditions:'',featured:false,price:0,originalPrice:null as number|null,expiresAt:''};asin='';importProductId='';manualProductId='';asinCategory='Tecnologia';meli={itemId:'',affiliateUrl:'',category:'Outros',authorizedContent:false};
   heading(){return ({users:'Usuários',profiles:'Perfis de acesso',updates:'Atualização de ofertas',products:'Produtos',overview:'Visão geral',marketplaces:'Marketplaces',selectors:'Seletores',links:'Cadastro de links',offers:'Revisão de ofertas',rules:'Buscas automáticas',activity:'Atividade'} as Record<string,string>)[this.section()]||'Administração';}
-  ngOnInit(){const outcome=this.route.snapshot.queryParamMap.get('meli_oauth');if(outcome&&this.api.browser){history.replaceState(null,'',location.pathname);if(outcome==='success')this.api.success('Conta do Mercado Livre conectada. Os tokens serão renovados automaticamente.');else this.api.fail(new Error(outcome==='denied'?'Autorização cancelada. Você pode conectar novamente.':outcome==='invalid'?'A conexão expirou ou pertence a outra sessão. Inicie novamente.':'Não foi possível conectar. Confira as credenciais, a URI de retorno e as opções OAuth no DevCenter.'));}this.route.paramMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(p=>{const s=p.get('section')||'overview';this.section.set(['users','profiles','updates','products','overview','marketplaces','offers','rules','activity','selectors','links'].includes(s)?s:'overview');this.title.setTitle(this.heading()+' | Admin | O Espertinho');void this.load();});}
+  ngOnInit(){const outcome=this.route.snapshot.queryParamMap.get('meli_oauth');if(outcome&&this.api.browser){history.replaceState(null,'',location.pathname);if(outcome==='success')this.api.success('Conta do Mercado Livre conectada. Os tokens serão renovados automaticamente.');else this.api.fail(new Error(outcome==='denied'?'Autorização cancelada. Você pode conectar novamente.':outcome==='invalid'?'A conexão expirou ou pertence a outra sessão. Inicie novamente.':'Não foi possível conectar. Confira as credenciais, a URI de retorno e as opções OAuth no DevCenter.'));}this.route.paramMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(p=>{const s=p.get('section')||'overview';this.topPage=1;this.metricPage=1;this.section.set(['users','profiles','updates','products','overview','marketplaces','offers','rules','activity','selectors','links'].includes(s)?s:'overview');this.title.setTitle(this.heading()+' | Admin | O Espertinho');void this.load();});}
   async load(){this.loading.set(true);this.failed.set(false);try{switch(this.section()){
-    case'overview':this.stats.set(await this.api.get('/admin/stats',{days:this.days}));break;
-    case'offers':this.offers.set(await this.api.get<Offer[]>('/admin/offers',{status:this.reviewStatus,page:this.offerPage}));break;
+    case'overview':{const stats:any=await this.api.get('/admin/stats',{days:this.days,paginate:true,topPage:this.topPage,pageSize:5});this.stats.set(stats);this.topPage=stats.topPage;break;}
+    case'offers':await this.offerFeed.reset();if(this.offerFeed.failed())throw new Error('Não foi possível carregar as ofertas.');break;
     case'rules':{const [rules,runs]=await Promise.all([this.api.get<any[]>('/admin/rules'),this.api.get<any[]>('/admin/runs')]);this.rules.set(rules);this.runs.set(runs);break;}
-    case'activity':this.logs.set(await this.api.get<any[]>('/admin/audit'));break;
+    case'activity':await this.logFeed.reset();break;
   }}catch(e){this.failed.set(true);this.api.fail(e);}finally{this.loading.set(false);}}
   async act(fn:()=>Promise<unknown>,message:string,reload=true){if(this.busy())return;this.busy.set(true);try{await fn();this.api.success(message);if(reload)await this.load();}catch(e){this.api.fail(e);if(reload)await this.load();}finally{this.busy.set(false);}}
   openRule(){this.rule={marketplaceId:'amazon',name:'',keywords:'',category:'Tecnologia',maxReais:null,minDiscount:0,intervalMinutes:360,enabled:true};this.ruleModal.set(true);}
