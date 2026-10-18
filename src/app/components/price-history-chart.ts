@@ -21,7 +21,7 @@ import {PriceHistoryPlot} from './price-history-plot';
  <p class="note">{{history.startDate|date:'dd/MM/yyyy'}} a {{history.endDate|date:'dd/MM/yyyy'}} · {{history.intervalDays===1?'Pontos diários':'Pontos a cada '+history.intervalDays+' dias'}} · Horário de Brasília</p>
  <div class="details-plot"><price-history-plot [points]="history.series.points"/></div>
  <p class="note">{{kind()==='product'?'Em cada dia, consideramos o menor preço observado entre os links vinculados ao produto.':'Preços observados neste link.'}} Cada ponto mostra o último dia registrado no intervalo. Lacunas indicam falta de observação ou indisponibilidade; não são preenchidas com preços presumidos. Passe sobre um ponto ou use Tab para consultar seu valor.</p>
- <details><summary>Ver registros diários ({{history.series.daily?.length||0}})</summary><div class="history-table"><table><thead><tr><th>Dia</th><th>Preço registrado</th></tr></thead><tbody>@for(day of (history.series.daily||[]).slice((dailyPage-1)*15,dailyPage*15);track day.date){<tr><td>{{day.date|date:'dd/MM/yyyy'}}</td><td>{{day.priceCents===null?'Indisponível':(day.priceCents/100|currency:'BRL')}}</td></tr>}</tbody></table></div><app-pagination [page]="dailyPage" [total]="history.series.daily?.length||0" [size]="15" (pageChange)="dailyPage=$event" label="Registros diários de preços"/></details>
+ <details><summary>Ver registros diários ({{history.series.daily?.length||0}})</summary><div class="history-table"><table><thead><tr><th>Dia</th><th>Preço registrado</th></tr></thead><tbody>@for(day of (history.series.daily||[]).slice((dailyPage-1)*dailySize,dailyPage*dailySize);track day.date){<tr><td>{{day.date|date:'dd/MM/yyyy'}}</td><td>{{day.priceCents===null?'Indisponível':(day.priceCents/100|currency:'BRL')}}</td></tr>}</tbody></table></div><app-pagination [page]="dailyPage" [total]="history.series.daily?.length||0" [size]="dailySize" (pageChange)="dailyPage=$event" (sizeChange)="dailySize=$event;dailyPage=1" label="Registros diários de preços"/></details>
  }
  <p class="note">Preços observados podem variar por vendedor e condições da loja. O preço final é confirmado no marketplace.</p>
  }
@@ -42,6 +42,6 @@ export class PriceHistoryChart {
  open(){this.period='90';this.to=this.today();this.from=this.compact()?.startDate??this.to;this.expanded.set(true);this.dialog.nativeElement.showModal();void this.loadDetail();}
  close(){this.detailSeq++;this.dialog.nativeElement.close();this.expanded.set(false);}
  changePeriod(value:string){this.period=value;if(value!=='custom')void this.loadDetail();}
- dailyPage=1;
+ dailySize=15;dailyPage=1;
  async loadDetail(){this.dailyPage=1;const seq=++this.detailSeq;this.detailLoading.set(true);this.detailError.set('');try{const r=await this.history.detail(this.kind(),this.entityId(),this.period==='custom'?{from:this.from,to:this.to}:{days:Number(this.period)});if(seq===this.detailSeq){this.detail.set(r);this.from=r.startDate;this.to=r.endDate;}}catch(e:any){if(seq===this.detailSeq)this.detailError.set(e?.error?.error??'Não foi possível carregar o histórico. Tente novamente.');}finally{if(seq===this.detailSeq)this.detailLoading.set(false);}}
 }

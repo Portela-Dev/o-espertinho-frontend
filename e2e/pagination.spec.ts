@@ -64,3 +64,14 @@ test('primeiro lote pode ser repetido e o botão de carregar mais mantém o foco
  await page.goto('/filtros');await page.locator('app-infinite-scroll').getByRole('button',{name:'Tentar novamente'}).click();await expect(page.locator('.saved-filter-card')).toHaveCount(20);
  const more=page.locator('app-infinite-scroll').getByRole('button',{name:'Carregar mais'});await more.focus();await expect(more).toBeFocused();await more.press('Enter');await expect(page.locator('.saved-filter-card')).toHaveCount(22);await expect(page.locator('app-infinite-scroll button')).toHaveCount(0);
 });
+
+test('quantidade por página reinicia a lista e preserva a pesquisa, sem seletor nos cards',async({page})=>{
+ await login(page);const requests:URL[]=[];
+ await page.route('**/api/admin/products?**',async route=>{const url=new URL(route.request().url());requests.push(url);const size=Number(url.searchParams.get('pageSize')||20),p=Number(url.searchParams.get('page')||1);await route.fulfill({json:{items:Array.from({length:Math.min(size,37-(p-1)*size)},(_,i)=>({...product((p-1)*size+i+1),sku:'ESP_TEST',link_count:0,available_count:0})),total:37,page:p,pageSize:size}});});
+ await page.goto('/admin/products');const pager=page.getByRole('navigation',{name:'Produtos',exact:true});await expect(page.locator('products-admin tbody tr')).toHaveCount(20);
+ await page.getByRole('textbox',{name:'Pesquisar produtos'}).fill('paginado');await page.getByRole('button',{name:'Pesquisar',exact:true}).click();
+ await pager.getByLabel('Itens por página').selectOption('5');await expect(page.locator('products-admin tbody tr')).toHaveCount(5);await expect(pager).toContainText('Página 1 de 8');await pager.getByRole('button',{name:'Próxima'}).click();await expect(pager).toContainText('Página 2 de 8');
+ await pager.getByLabel('Itens por página').selectOption('25');await expect(page.locator('products-admin tbody tr')).toHaveCount(25);await expect(pager).toContainText('Página 1 de 2');expect(requests.at(-1)!.searchParams.get('q')).toBe('paginado');expect(requests.at(-1)!.searchParams.get('pageSize')).toBe('25');
+ await page.goto('/admin/users');const users=page.getByRole('navigation',{name:'Usuários',exact:true});const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/admin/users'&&new URL(r.url()).searchParams.get('pageSize')==='50');await users.getByLabel('Itens por página').selectOption('50');expect((await response).status()).toBe(200);await expect(users.getByLabel('Itens por página')).toHaveValue('50');
+ await page.goto('/');await expect(page.locator('product-card')).not.toHaveCount(0);await expect(page.locator('app-infinite-scroll select')).toHaveCount(0);
+});
