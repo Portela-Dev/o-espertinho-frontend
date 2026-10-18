@@ -23,7 +23,12 @@ for(const filename of raw){
   if(!script.startsWith(browser+sep))throw new Error('Caminho de cobertura fora do build.');
   let sourceMap;
   try{sourceMap=JSON.parse(await readFile(script+'.map','utf8'));}
-  catch(error){if(error.code==='ENOENT')continue;throw error;}
+  catch(error){
+   if(error.code==='ENOENT'){
+    continue;
+   }
+   throw error;
+  }
   sourceMap.sources=sourceMap.sources.map(source=>{
    const path=source.replace(/^(\.\.\/)+/,'');
    return /^(src|node_modules)\//.test(path)?resolve(root,path):source;
