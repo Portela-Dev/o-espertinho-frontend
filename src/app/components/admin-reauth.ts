@@ -5,7 +5,17 @@ export class AdminReauth{
  api=inject(Api);button=viewChild<ElementRef<HTMLElement>>('button');error=signal('');
  constructor(){effect(()=>{const nonce=this.api.reauthNonce(),element=this.button()?.nativeElement;if(nonce&&element)void this.render(nonce,element);});}
  private async render(nonce:string,element:HTMLElement){
-  this.error.set('');try{const config=await this.api.get<{googleClientId:string}>('/config');await this.api.google.prepare(config.googleClientId);if(this.api.reauthNonce()!==nonce)return;this.api.google.renderReauthentication(element,nonce,credential=>{void this.api.confirmReauthentication(credential).catch(error=>{this.error.set('Não foi possível confirmar. Use a mesma conta conectada ou cancele para tentar novamente.');});});}
+  this.error.set('');
+  try{
+   const config=await this.api.get<{googleClientId:string}>('/config');
+   await this.api.google.prepare(config.googleClientId);
+   if(this.api.reauthNonce()!==nonce){return;}
+   this.api.google.renderReauthentication(element,nonce,credential=>{
+    void this.api.confirmReauthentication(credential).catch(()=>{
+     this.error.set('Não foi possível confirmar. Use a mesma conta conectada ou cancele para tentar novamente.');
+    });
+   });
+  }
   catch{this.error.set('Não foi possível carregar o Google. Cancele e tente novamente.');}
  }
 }

@@ -6,6 +6,10 @@ on:
     branches: [develop, main]
   workflow_dispatch:
     inputs:
+      sonar:
+        description: Executar SonarQube nesta branch (sem deploy)
+        type: boolean
+        default: false
       deploy:
         description: Fazer deploy do commit validado na VPS (somente develop)
         type: boolean
@@ -27,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Obter código
+      - name: Obter cÃ³digo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -36,9 +40,9 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - name: Instalar dependências
+      - name: Instalar dependÃªncias
         run: npm ci --no-audit --no-fund
-      - name: Auditar dependências de produção
+      - name: Auditar dependÃªncias de produÃ§Ã£o
         run: npm audit --omit=dev --audit-level=high
       - name: Validar TypeScript e scripts de deploy
         run: |
@@ -49,8 +53,8 @@ jobs:
         run: npm run validate:html
       - name: Testar com cobertura real
         run: npm run test:coverage
-      - name: Compilar aplicação SSR
-        run: npm run build
+      - name: Compilar aplicaÃ§Ã£o SSR
+        run: npm run build:coverage
       - name: Obter backend para testes isolados
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -63,19 +67,22 @@ jobs:
           npm --prefix .ci-backend ci --no-audit --no-fund
           npm --prefix .ci-backend run build
           node node_modules/playwright/cli.js install --with-deps chromium
-      - name: Testar aplicação web compilada em navegador
+      - name: Testar aplicaÃ§Ã£o web compilada em navegador
         env:
           E2E_BROWSER_CHANNEL: chromium
+          COLLECT_BROWSER_COVERAGE: '1'
           CI_API_PORT: '3100'
           CI_WEB_PORT: '4300'
         run: node scripts/ci/test-web.mjs
-      - name: Publicar cobertura e relatórios
+      - name: Mesclar cobertura do navegador e Node
+        run: npm run coverage:merge
+      - name: Publicar cobertura e relatÃ³rios
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: reports-${{ github.run_id }}
           path: |
-            coverage/lcov.info
+            coverage/**/lcov.info
             reports/web/
             test-results/
             playwright-report/
@@ -86,7 +93,7 @@ jobs:
   sonarqube:
     name: 2. SonarQube e Quality Gate
     needs: validate
-    if: github.ref == 'refs/heads/develop' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: (github.ref == 'refs/heads/develop' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')) || (github.event_name == 'workflow_dispatch' && inputs.sonar)
     runs-on: [self-hosted, Windows, X64, windows-portela-dev]
     timeout-minutes: 15
     concurrency:
@@ -96,7 +103,7 @@ jobs:
       run:
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File {0}
     steps:
-      - name: Obter histórico completo
+      - name: Obter histÃ³rico completo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
@@ -106,20 +113,20 @@ jobs:
         with:
           name: reports-${{ github.run_id }}
           path: reports
-      - name: Conferir configuração e servidor
+      - name: Conferir configuraÃ§Ã£o e servidor
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ([string]::IsNullOrWhiteSpace($env:SONAR_TOKEN)) { throw 'Configure SONAR_TOKEN nos secrets do repositório.' }
-          if ([string]::IsNullOrWhiteSpace($env:SONAR_HOST_URL)) { throw 'Configure SONAR_HOST_URL nas variables do repositório.' }
-          if (-not (Test-Path -LiteralPath 'reports/coverage/lcov.info')) { throw 'Cobertura do commit não encontrada.' }
+          if ([string]::IsNullOrWhiteSpace($env:SONAR_TOKEN)) { throw 'Configure SONAR_TOKEN nos secrets do repositÃ³rio.' }
+          if ([string]::IsNullOrWhiteSpace($env:SONAR_HOST_URL)) { throw 'Configure SONAR_HOST_URL nas variables do repositÃ³rio.' }
+          if (-not (Test-Path -LiteralPath 'reports/coverage/lcov.info')) { throw 'Cobertura do commit nÃ£o encontrada.' }
           $headers = @{ 'ngrok-skip-browser-warning' = 'true'; Accept = 'application/json' }
           $response = Invoke-WebRequest -UseBasicParsing -Uri ($env:SONAR_HOST_URL.TrimEnd('/') + '/api/system/status') -Headers $headers -TimeoutSec 30
-          try { $status = $response.Content | ConvertFrom-Json } catch { throw 'A URL do SonarQube não retornou JSON. Confira o túnel ngrok e sua configuração de acesso.' }
-          if ($status.status -ne 'UP') { throw 'SonarQube indisponível.' }
-      - name: Preparar verificação de assinatura do scanner
+          try { $status = $response.Content | ConvertFrom-Json } catch { throw 'A URL do SonarQube nÃ£o retornou JSON. Confira o tÃºnel ngrok e sua configuraÃ§Ã£o de acesso.' }
+          if ($status.status -ne 'UP') { throw 'SonarQube indisponÃ­vel.' }
+      - name: Preparar verificaÃ§Ã£o de assinatura do scanner
         run: |
           $ErrorActionPreference = 'Stop'
           if (-not (Get-Command gpg.exe -ErrorAction SilentlyContinue) -or -not (Get-Command dirmngr.exe -ErrorAction SilentlyContinue)) {
@@ -146,7 +153,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Obter código
+      - name: Obter cÃ³digo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './coverage';
 test('CSP preserva hidratação e bloqueia script inline injetado',async({page})=>{
  const violations:string[]=[];page.on('console',m=>{if(m.type()==='error'&&m.text().includes('Content Security Policy'))violations.push(m.text());});
  const response=await page.goto('/');expect(response?.headers()['content-security-policy']).toContain("script-src 'self'");

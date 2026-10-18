@@ -4,7 +4,8 @@ import type {RequestHandler} from 'express';
 const hopHeaders=['connection','keep-alive','proxy-authenticate','proxy-authorization','te','trailer','transfer-encoding','upgrade'];
 function cleanHeaders(headers:IncomingHttpHeaders){
  const result={...headers};const nominated=String(headers.connection||'').split(',').map(s=>s.trim().toLowerCase());
- for(const key of [...hopHeaders,...nominated])delete result[key];return result;
+ for(const key of [...hopHeaders,...nominated]){delete result[key];}
+ return result;
 }
 export function apiProxy(origin:string):RequestHandler{
  const target=new URL(origin),request=target.protocol==='https:'?httpsRequest:httpRequest;

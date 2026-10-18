@@ -1,4 +1,4 @@
-import {test,expect,Page,BrowserContext} from '@playwright/test';
+import {test,expect,Page,BrowserContext} from './coverage';
 async function googleMock(target:Page|BrowserContext){
  await target.addInitScript(()=>{
   const state={initialize:0,prompt:0,cancel:0,disable:0,options:{} as any};(window as any).__googleState=state;
