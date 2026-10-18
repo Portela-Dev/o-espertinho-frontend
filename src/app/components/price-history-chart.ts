@@ -1,10 +1,11 @@
+import {Pagination} from './pagination';
 import {Component,input,inject,signal,effect,ViewChild,ElementRef} from '@angular/core';
 import {CurrencyPipe,DatePipe} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Api} from '../api.service';
 import {PriceHistoryService,ChartHistory} from '../price-history.service';
 import {PriceHistoryPlot} from './price-history-plot';
-@Component({selector:'price-history-chart',imports:[FormsModule,CurrencyPipe,DatePipe,PriceHistoryPlot],styles:`
+@Component({selector:'price-history-chart',imports:[Pagination,FormsModule,CurrencyPipe,DatePipe,PriceHistoryPlot],styles:`
 :host{display:block;min-width:0;margin:.5rem 0}.heading{display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-size:.72rem;color:var(--muted);margin-bottom:.5rem}.expand{border:0;background:none;color:var(--ink);padding:.25rem;text-decoration:underline;cursor:pointer;font:inherit}.note{font-size:.7rem;color:var(--muted);margin:.4rem 0}.status{font-size:.8rem;color:var(--muted);min-height:64px;display:grid;place-content:center}.history-dialog{border:1px solid var(--line);border-radius:18px;padding:1.5rem;width:min(760px,calc(100vw - 2rem));max-width:calc(100vw - 2rem);max-height:90dvh;overflow:auto;background:var(--surface);color:var(--ink);box-sizing:border-box}.history-dialog::backdrop{background:rgba(0,0,0,.6)}.dialog-heading{display:flex;justify-content:space-between;align-items:start;gap:1rem}.dialog-heading h2{font-size:1.3rem;overflow-wrap:anywhere;margin:0 0 .5rem}.close{font-size:1.5rem;background:none;border:0;color:inherit;cursor:pointer;padding:0 .3rem}.controls{display:flex;flex-wrap:wrap;gap:.75rem;margin:.5rem 0}.controls label{flex:1;min-width:130px;margin:0;font-size:.85rem}.controls input,.controls select{width:100%;box-sizing:border-box}.details-plot{max-width:650px;margin:auto}.history-table{overflow:auto;max-height:280px;margin-top:.75rem}.history-table table{width:100%}summary{cursor:pointer;font-size:.9rem;margin-top:1rem}.error{color:var(--red);font-size:.8rem}@media(max-width:480px){.history-dialog{padding:1rem}.dialog-heading h2{font-size:1.1rem}}
 `,template:`
 <div class="heading"><span>Histórico · 90 dias</span><button type="button" class="expand" [attr.aria-label]="'Ampliar histórico de preços de '+label()" (click)="open()">Ampliar ↗</button></div>
@@ -20,7 +21,7 @@ import {PriceHistoryPlot} from './price-history-plot';
  <p class="note">{{history.startDate|date:'dd/MM/yyyy'}} a {{history.endDate|date:'dd/MM/yyyy'}} · {{history.intervalDays===1?'Pontos diários':'Pontos a cada '+history.intervalDays+' dias'}} · Horário de Brasília</p>
  <div class="details-plot"><price-history-plot [points]="history.series.points"/></div>
  <p class="note">{{kind()==='product'?'Em cada dia, consideramos o menor preço observado entre os links vinculados ao produto.':'Preços observados neste link.'}} Cada ponto mostra o último dia registrado no intervalo. Lacunas indicam falta de observação ou indisponibilidade; não são preenchidas com preços presumidos. Passe sobre um ponto ou use Tab para consultar seu valor.</p>
- <details><summary>Ver registros diários ({{history.series.daily?.length||0}})</summary><div class="history-table"><table><thead><tr><th>Dia</th><th>Preço registrado</th></tr></thead><tbody>@for(day of history.series.daily||[];track day.date){<tr><td>{{day.date|date:'dd/MM/yyyy'}}</td><td>{{day.priceCents===null?'Indisponível':(day.priceCents/100|currency:'BRL')}}</td></tr>}</tbody></table></div></details>
+ <details><summary>Ver registros diários ({{history.series.daily?.length||0}})</summary><div class="history-table"><table><thead><tr><th>Dia</th><th>Preço registrado</th></tr></thead><tbody>@for(day of (history.series.daily||[]).slice((dailyPage-1)*dailySize,dailyPage*dailySize);track day.date){<tr><td>{{day.date|date:'dd/MM/yyyy'}}</td><td>{{day.priceCents===null?'Indisponível':(day.priceCents/100|currency:'BRL')}}</td></tr>}</tbody></table></div><app-pagination [page]="dailyPage" [total]="history.series.daily?.length||0" [size]="dailySize" (pageChange)="dailyPage=$event" (sizeChange)="dailySize=$event;dailyPage=1" label="Registros diários de preços"/></details>
  }
  <p class="note">Preços observados podem variar por vendedor e condições da loja. O preço final é confirmado no marketplace.</p>
  }
@@ -41,5 +42,6 @@ export class PriceHistoryChart {
  open(){this.period='90';this.to=this.today();this.from=this.compact()?.startDate??this.to;this.expanded.set(true);this.dialog.nativeElement.showModal();void this.loadDetail();}
  close(){this.detailSeq++;this.dialog.nativeElement.close();this.expanded.set(false);}
  changePeriod(value:string){this.period=value;if(value!=='custom')void this.loadDetail();}
- async loadDetail(){const seq=++this.detailSeq;this.detailLoading.set(true);this.detailError.set('');try{const r=await this.history.detail(this.kind(),this.entityId(),this.period==='custom'?{from:this.from,to:this.to}:{days:Number(this.period)});if(seq===this.detailSeq){this.detail.set(r);this.from=r.startDate;this.to=r.endDate;}}catch(e:any){if(seq===this.detailSeq)this.detailError.set(e?.error?.error??'Não foi possível carregar o histórico. Tente novamente.');}finally{if(seq===this.detailSeq)this.detailLoading.set(false);}}
+ dailySize=15;dailyPage=1;
+ async loadDetail(){this.dailyPage=1;const seq=++this.detailSeq;this.detailLoading.set(true);this.detailError.set('');try{const r=await this.history.detail(this.kind(),this.entityId(),this.period==='custom'?{from:this.from,to:this.to}:{days:Number(this.period)});if(seq===this.detailSeq){this.detail.set(r);this.from=r.startDate;this.to=r.endDate;}}catch(e:any){if(seq===this.detailSeq)this.detailError.set(e?.error?.error??'Não foi possível carregar o histórico. Tente novamente.');}finally{if(seq===this.detailSeq)this.detailLoading.set(false);}}
 }

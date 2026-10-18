@@ -42,3 +42,11 @@ A área Admin → Atualizações utiliza a API do backend para salvar as configu
 Admin → Atualizações permite cancelar uma rodada, preservando preços já atualizados e ignorando respostas de tentativas invalidadas. A pausa de proteção após falha técnica aparece explicitamente na tela. O backend oferece `POST /api/admin/offer-refresh/runs/:id/cancel`, com autorização de atualizações, XSRF e confirmação administrativa recente. A migration `020_offer_refresh_cancellation.sql` registra o cancelamento sem apagar execuções, links ou histórico. O job existente já confere o token da tentativa antes de gravar; seu advisory lock continua impedindo extrações simultâneas. Uma nova rodada pode ser enfileirada e aguarda o intervalo de proteção e o término de uma consulta anterior.
 
 O CI dos testes web usa uma revisão imutável do backend com suporte ao cancelamento. A variável E2E_BACKEND_REF continua permitindo selecionar outra revisão. Isso mantém os testes reproduzíveis enquanto as PRs de frontend e backend são avaliadas separadamente; o backend com a migration 020 deve ser implantado antes do frontend correspondente.
+
+## Navegação de coleções
+
+Cards da vitrine, ofertas do produto, favoritos, catálogos, filtros salvos, marketplaces e revisão de ofertas carregam lotes por rolagem vertical. O botão Carregar mais também permite navegação por teclado ou sem IntersectionObserver. Falhas mantêm os cards anteriores e oferecem uma nova tentativa. Mudanças de busca e filtros reiniciam os resultados e descartam respostas antigas.
+
+Listas administrativas usam páginas com contagem total: produtos, usuários, perfis, links, auditoria, ranking de cliques, execuções e ocorrências. Características, evidências e registros diários do gráfico também possuem paginação. Opções de seleção, menus, breadcrumbs e campos de formulário continuam funcionando como controles. Os testes do CI usam um commit específico do backend que contém os endpoints paginados; implante a API compatível antes deste frontend.
+
+Listas paginadas permitem selecionar 5, 10, 15, 20, 25 ou 50 itens por página. Alterar a quantidade reinicia na primeira página sem remover filtros. A rolagem infinita não tem seletor: a vitrine usa 24 produtos por lote; as demais coleções de cards usam 20 por lote.
