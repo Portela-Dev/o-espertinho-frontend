@@ -17,6 +17,17 @@ export class OfferRefreshAdmin implements OnInit{
  async load(syncDraft=false,quiet=false){try{const s=await this.api.get<any>('/admin/offer-refresh');this.state.set(s);if(syncDraft){this.draft={enabled:s.settings.enabled,intervalHours:s.settings.interval_hours,requestIntervalMs:s.settings.request_interval_ms};this.draftVersion=s.settings.updated_at;}}catch(e){if(!quiet)this.api.fail(e);}finally{this.loading.set(false);}}
  async save(){if(this.busy())return;this.busy.set(true);try{await this.api.send('PUT','/admin/offer-refresh',{...this.draft,expectedUpdatedAt:this.draftVersion});await this.load(true);this.api.success('Configuração salva. O serviço de atualização aplicará as alterações automaticamente.');}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
  async run(){if(this.busy())return;this.busy.set(true);try{await this.api.send('POST','/admin/offer-refresh/run',{});await this.load(false);this.api.success('Atualização solicitada. Acompanhe o progresso nesta tela.');}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
- async cancel(){const id=this.cancelTarget();if(!id||this.busy())return;this.busy.set(true);try{await this.api.send('POST','/admin/offer-refresh/runs/'+id+'/cancel',{});this.cancelTarget.set(null);await this.load(false);if(this.selected()?.id===id)await this.details(id);this.api.success('Atualização cancelada. Os preços já atualizados foram preservados.');}catch(e){this.cancelTarget.set(null);await this.load(false);this.api.fail(e);}finally{this.busy.set(false);}}
+ async cancel(){
+  const id=this.cancelTarget();
+  if(!id||this.busy()){return;}
+  this.busy.set(true);
+  try{
+   await this.api.send('POST','/admin/offer-refresh/runs/'+id+'/cancel',{});
+   this.cancelTarget.set(null);await this.load(false);
+   if(this.selected()?.id===id){await this.details(id);}
+   this.api.success('Atualização cancelada. Os preços já atualizados foram preservados.');
+  }catch(e){this.cancelTarget.set(null);await this.load(false);this.api.fail(e);}
+  finally{this.busy.set(false);}
+ }
  async details(id:string){try{this.selected.set(await this.api.get('/admin/offer-refresh/runs/'+id));}catch(e){this.api.fail(e);}}
 }
