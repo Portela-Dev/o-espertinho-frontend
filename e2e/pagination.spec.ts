@@ -56,3 +56,11 @@ test('marketplaces e ofertas do produto acrescentam cards com rolagem',async({pa
  await page.route('**/api/products/'+detail.id+'?**',async route=>{const p=Number(new URL(route.request().url()).searchParams.get('page'));await route.fulfill({json:{...detail,offer_count:22,page:p,pageSize:20,offers:Array.from({length:p===1?20:2},(_,i)=>({...detail.offers[0],id:'offer-'+((p-1)*20+i)}))}});});
  await page.goto('/produto/'+detail.id);await expect(page.locator('offer-card')).toHaveCount(20);await page.locator('app-infinite-scroll').scrollIntoViewIfNeeded();await expect(page.locator('offer-card')).toHaveCount(22);await expect(page.locator('.detail-copy')).toContainText('22 ofertas disponíveis');
 });
+
+test('primeiro lote pode ser repetido e o botão de carregar mais mantém o foco do teclado',async({page})=>{
+ await login(page);let fail=true;
+ await page.addInitScript(()=>Object.defineProperty(window,'IntersectionObserver',{value:undefined,configurable:true}));
+ await page.route('**/api/me/filters?**',async route=>{if(fail){fail=false;await route.fulfill({status:503,json:{error:'Teste'}});return;}const p=Number(new URL(route.request().url()).searchParams.get('page'));await route.fulfill({json:{items:Array.from({length:p===1?20:2},(_,i)=>({id:'filter-'+((p-1)*20+i),name:'Filtro '+i,filters:{q:'Teste'}})),total:22,page:p,pageSize:20}});});
+ await page.goto('/filtros');await page.locator('app-infinite-scroll').getByRole('button',{name:'Tentar novamente'}).click();await expect(page.locator('.saved-filter-card')).toHaveCount(20);
+ const more=page.locator('app-infinite-scroll').getByRole('button',{name:'Carregar mais'});await more.focus();await expect(more).toBeFocused();await more.press('Enter');await expect(page.locator('.saved-filter-card')).toHaveCount(22);await expect(page.locator('app-infinite-scroll button')).toHaveCount(0);
+});

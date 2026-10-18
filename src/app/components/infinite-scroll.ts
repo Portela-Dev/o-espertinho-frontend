@@ -2,8 +2,9 @@ import {Component,ElementRef,inject,input,output,afterRenderEffect} from '@angul
 @Component({selector:'app-infinite-scroll',styles:':host{display:block;min-height:1px}.scroll-status{text-align:center;padding:20px}',template:`
 <div class="scroll-status" [attr.aria-busy]="busy()">
 @if(busy()){<p role="status">Carregando mais…</p>}
-@else if(failed()){<p role="alert">Não foi possível carregar os próximos itens.</p><button type="button" class="button outline small" (click)="more.emit()">Tentar novamente</button>}
-@else if(hasMore()){<button type="button" class="button outline small" (click)="more.emit()">Carregar mais</button>}
+@if(failed()){<p role="alert">Não foi possível carregar os próximos itens.</p>}
+@if(hasMore()||failed()){<button type="button" class="button outline small" [disabled]="busy()" (click)="more.emit()">{{failed()?'Tentar novamente':'Carregar mais'}}</button>}
+
 </div>`})
 export class InfiniteScroll {
  readonly busy=input(false);readonly failed=input(false);readonly hasMore=input(false);readonly more=output<void>();private readonly element=inject(ElementRef<HTMLElement>);

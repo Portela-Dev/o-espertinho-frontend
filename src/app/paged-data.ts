@@ -6,8 +6,13 @@ export class PagedData<T extends {id:string}> {
  readonly loading=signal(false);readonly failed=signal(false);readonly hasMore=computed(()=>this.page()*this.pageSize()<this.total());
  private generation=0;
  constructor(private readonly request:(page:number)=>Promise<PageResult<T>>,private readonly accepted?:(result:PageResult<T>)=>void){}
- reset(){return this.load(1,false);}
- next(){if(this.loading()||!this.hasMore()){return Promise.resolve();}return this.load(this.page()+1,true);}
+ reset(){this.page.set(0);this.total.set(0);return this.load(1,false);}
+ next(){
+  if(this.loading()){return Promise.resolve();}
+  if(!this.page()){return this.reset();}
+  if(!this.hasMore()){return Promise.resolve();}
+  return this.load(this.page()+1,true);
+ }
  go(page:number){if(this.loading()){return Promise.resolve();}return this.load(page,false);}
  private async load(page:number,append:boolean){
   const generation=append?this.generation:++this.generation;
