@@ -45,11 +45,13 @@ export class Api {
   get<T>(path:string,query?:Record<string,unknown>):Promise<T>{let params=new HttpParams();for(const [k,v] of Object.entries(query??{}))if(v!==null&&v!==undefined)params=params.set(k,String(v));return firstValueFrom(this.http.get<T>('/api'+path,{params}));}
   reauthNonce=signal('');private reauthPending?:{promise:Promise<void>;resolve:()=>void;reject:(e:Error)=>void};
   async send<T=any>(method:string,path:string,body?:unknown):Promise<T>{
+    const generation=this.authGeneration,owner=this.user()?.id;
     try{return await firstValueFrom(this.http.request<T>(method,'/api'+path,{body}));}
     catch(error){
       if(!(error instanceof HttpErrorResponse)||error.error?.code!=='ADMIN_REAUTH_REQUIRED')throw error;
-      const generation=this.authGeneration;await this.requestReauthentication();
-      if(generation!==this.authGeneration||!this.user())throw new Error('A sessão mudou. Entre novamente.');
+      if(generation!==this.authGeneration||owner!==this.user()?.id)throw new Error('A sessão mudou. Entre novamente.');
+      await this.requestReauthentication();
+      if(generation!==this.authGeneration||!this.user()||owner!==this.user()?.id)throw new Error('A sessão mudou. Entre novamente.');
       return firstValueFrom(this.http.request<T>(method,'/api'+path,{body}));
     }
   }
