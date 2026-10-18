@@ -72,3 +72,11 @@ Para executar localmente o mesmo teste com a organização atual: compile ambos 
 Se a troca do container falhar, o script tenta reiniciar a imagem anterior e o job continua marcado como falha. Rollback de imagem **não desfaz migrations SQL**. O arquivo de runtime permanece fora das releases, e as imagens anteriores ficam disponíveis para recuperação. O arquivo de imagem transferido é removido depois do sucesso; agende manutenção de imagens antigas, backups e metadados conforme o espaço da VPS. Os artefatos de imagem no GitHub têm retenção de 3 dias; relatórios, 7 dias.
 
 O workflow não provisiona a VPS, DNS, certificados, runners ou projetos SonarQube e não recebe credenciais de produção nos jobs de validação. O deploy só é executado depois que você configurar o environment e acioná-lo/habilitá-lo.
+
+## Segurança
+
+O CI executa `npm audit --omit=dev --audit-level=high`: vulnerabilidades altas/críticas em dependências de produção e falhas da consulta bloqueiam a validação. Alertas devem ser investigados; o pipeline não aplica downgrade nem ignora findings automaticamente. A análise de dependências não substitui atualizações do sistema, navegador e imagens base.
+
+O proxy `/api` usa módulos nativos do Node com destino fixo e preserva cookies/XSRF; não depende de `http-proxy-middleware`, `micromatch` ou `braces` em produção. A CSP permite Google Identity Services, bloqueia scripts inline arbitrários e inclui nonce por resposta para SSR. `scripts/prepare-csp.mjs`, executado no prebuild, calcula o hash exclusivamente do bootstrap estático de eventos da versão instalada do Angular. Mantenha o arquivo gerado `src/angular-bootstrap-csp.ts` atualizado ao atualizar o Angular. CSS inline é permitido para compatibilidade com estilos Angular/Google; JavaScript inline não recebe uma liberação genérica.
+
+A confirmação administrativa aparece em um diálogo quando o backend responde `ADMIN_REAUTH_REQUIRED`; após confirmar a mesma conta Google com o nonce da sessão, a operação é repetida uma única vez. Cancelar mantém a alteração sem salvar. Publique o backend com a migration 018 antes deste frontend.

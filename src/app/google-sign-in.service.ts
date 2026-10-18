@@ -8,7 +8,7 @@ export class GoogleSignIn {
  private document=inject(DOCUMENT);private browser=isPlatformBrowser(inject(PLATFORM_ID));private loading?:Promise<void>;private clientId='';private manualElement?:HTMLElement;private suppressed=false;
  onCredential?:(credential:string,automatic:boolean)=>void;
  async prepare(clientId:string){
-  if(!this.browser)return;
+  if(!this.browser)return;this.reauthClientId=clientId;
   if(!this.loading)this.loading=this.load().catch(e=>{this.loading=undefined;throw e;});await this.loading;
   if(this.clientId===clientId)return;
   window.google!.accounts.id.initialize({client_id:clientId,auto_select:true,use_fedcm_for_prompt:true,callback:(r:GoogleCredential)=>{
@@ -26,6 +26,11 @@ export class GoogleSignIn {
    script.onerror=()=>{clearTimeout(timer);script.remove();reject(new Error('Não foi possível carregar o login Google. Confira bloqueadores e conexão.'));};this.document.head.appendChild(script);
   });
  }
+ renderReauthentication(element:HTMLElement,nonce:string,onCredential:(credential:string)=>void){
+  this.clientId='';window.google!.accounts.id.initialize({client_id:this.reauthClientId,nonce,auto_select:false,callback:(r:GoogleCredential)=>{if(r.credential)onCredential(r.credential);}});
+  window.google!.accounts.id.renderButton(element,{theme:'outline',size:'large',text:'continue_with',locale:'pt-BR'});
+ }
+ private reauthClientId='';
  renderButton(element:HTMLElement){this.manualElement=element;element.replaceChildren();window.google!.accounts.id.renderButton(element,{theme:'outline',size:'large',width:300,text:'continue_with',locale:'pt-BR'});}
  prompt(){if(!this.suppressed)window.google?.accounts.id.prompt?.();}
  suppress(){this.suppressed=true;if(this.browser){window.google?.accounts.id.cancel?.();window.google?.accounts.id.disableAutoSelect?.();}}
