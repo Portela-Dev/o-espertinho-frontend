@@ -13,7 +13,7 @@ async function newProfile(page:Page,name:string,mode='url'){
 
 test('exploração persiste perfil e seção, edita configurações, protege perfil em uso e exclui com confirmação',async({page})=>{
  await login(page);await openProfiles(page);const dialog=await newProfile(page,'Perfil E2E completo');
- await dialog.getByLabel('Seletor dos níveis da categoria de origem').fill('.breadcrumb li');await dialog.getByLabel('Intervalo mínimo entre requisições (ms)').fill('100');
+ await expect(dialog.getByRole('group',{name:'Categoria de origem na vitrine',exact:true})).toHaveCount(0);await expect(dialog.getByRole('group',{name:'Localização dos cards e links na vitrine',exact:true}).getByRole('textbox')).toHaveCount(3);await dialog.getByLabel('Intervalo mínimo entre requisições (ms)').fill('100');
  await dialog.locator('.failure-rule').filter({hasText:'Falha de navegação ou HTTP'}).getByLabel('Ação após esgotar as tentativas').selectOption('skip_page');
  await dialog.getByRole('button',{name:'Salvar configuração'}).click();await expect(dialog).toHaveCount(0);await expect(page.locator('discovery-admin tbody')).toContainText('Perfil E2E completo');
  const profiles=await (await page.request.get('/api/admin/discovery/profiles?q=Perfil%20E2E%20completo')).json();const profile=profiles.items[0];expect(profile.config.limits.requestIntervalMs).toBe(100);expect(profile.config.failures.navigation.action).toBe('skip_page');
