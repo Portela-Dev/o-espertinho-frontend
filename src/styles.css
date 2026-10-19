@@ -65,7 +65,7 @@ offer-category-fields{display:block;min-width:0}offer-category-fields.full-width
  .header-inner{padding-top:0}
  .header-inner .brand{height:64px;padding-left:96px;font-size:23px}
  .brand-mascot{position:absolute;left:0;bottom:0;width:88px;height:126px;margin:0}
- .header-inner .brand .brand-mascot img{left:-24px;bottom:-30px;width:136px;height:136px}
+ .header-inner .brand .brand-mascot img{left:-24px;bottom:-18px;width:136px;height:136px}
  .header-inner .account-nav{padding-top:16px}
  .header-inner nav{left:96px;width:calc(100% - 96px)}
  .header-inner nav a{padding:9px 4px}
