@@ -15,6 +15,11 @@ test('enrichment review requires explicit category confirmation and exposes manu
   return route.fulfill({json:paged([])});
  });
  await page.goto('/entrar');await page.getByRole('button',{name:'Login de teste'}).click();await expect(page).not.toHaveURL(/entrar/);await page.goto('/admin/offers');const panel=page.locator('enrichment-admin');await expect(panel).toContainText('Categoria sugerida — confirmar');expect(confirmed).toBe(false);
- await panel.getByText('Ações',{exact:true}).last().click();await panel.getByRole('button',{name:'Categorizar',exact:true}).click();const dialog=page.getByRole('dialog');await expect(dialog.getByLabel('Categoria do O Espertinho')).toHaveValue(category);expect(confirmed).toBe(false);await dialog.getByLabel('Salvar também o mapeamento',{exact:false}).check();await dialog.getByRole('button',{name:'Confirmar categoria deste item'}).click();await expect(panel).toContainText('Categoria confirmada');
+ const row=panel.locator('tbody tr').first();const initialHeight=(await row.boundingBox())!.height;
+ const actions=panel.getByRole('button',{name:'Ações do link',exact:true}),menu=panel.getByRole('group',{name:'Ações do link'});
+ await actions.click();await expect(menu).toBeVisible();expect((await row.boundingBox())!.height).toBe(initialHeight);
+ await page.keyboard.press('Escape');await expect(menu).toBeHidden();
+ await actions.click();await panel.getByRole('heading',{name:'Enriquecimento e categorização dos links descobertos'}).click();await expect(menu).toBeHidden();
+ await actions.click();await panel.getByRole('button',{name:'Categorizar',exact:true}).click();const dialog=page.getByRole('dialog');await expect(dialog.getByLabel('Categoria do O Espertinho')).toHaveValue(category);expect(confirmed).toBe(false);await dialog.getByLabel('Salvar também o mapeamento',{exact:false}).check();await dialog.getByRole('button',{name:'Confirmar categoria deste item'}).click();await expect(panel).toContainText('Categoria confirmada');
  await panel.getByRole('button',{name:'Execuções de enriquecimento'}).click();await expect(panel).toContainText('1 concluídos');await panel.getByRole('button',{name:'Cancelar',exact:true}).click();const alert=page.getByRole('alertdialog');await alert.getByRole('button',{name:'Confirmar cancelamento'}).click();await expect(panel).toContainText('Cancelado');expect(cancelled).toBe(true);
 });
