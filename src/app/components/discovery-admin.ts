@@ -1,3 +1,4 @@
+import {DismissOnBackdrop} from './dismiss-on-backdrop';
 import {Component,OnInit,inject,signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {DatePipe} from '@angular/common';
@@ -8,7 +9,7 @@ import {Pagination} from './pagination';
 interface Market {id:string;name:string}
 interface Entry {id:string;name:string;marketplace_id:string;marketplace_name:string;version:number;updated_at:string;config?:any;profile_id?:string;profile_name?:string;url?:string;enabled?:boolean;interval_hours?:number;source_category_path?:string[];notes?:string}
 interface Field {key:string;label:string;type?:'number'|'select';min?:number;max?:number;options?:{value:string;label:string}[];hint?:string}
-@Component({selector:'discovery-admin',imports:[FormsModule,DatePipe,Pagination],templateUrl:'./discovery-admin.html',styles:`
+@Component({selector:'discovery-admin',imports:[DismissOnBackdrop,FormsModule,DatePipe,Pagination],templateUrl:'./discovery-admin.html',styles:`
 :host{display:block}.discovery-note{line-height:1.6}.discovery-tabs{display:flex;gap:10px;margin:0 0 20px;padding:0;border:0;flex-wrap:wrap}.discovery-tabs button[aria-pressed=true]{background:var(--green);color:white}.discovery-filters{display:flex;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:20px}.discovery-filters label{margin:0;flex:1;min-width:160px}.discovery-filters input,.discovery-filters select{margin:0}.discovery-table td{vertical-align:top}.source-url{display:block;max-width:360px;overflow-wrap:anywhere;font-size:11px;margin-top:6px;color:var(--muted)}.row-actions{display:flex;gap:12px;align-items:center}.discovery-modal{width:min(920px,100%);margin:0;border:0;color:var(--ink)}fieldset{border:1px solid var(--line);border-radius:10px;margin:20px 0;padding:18px;min-width:0}legend{font-weight:750;padding:0 8px}.help{display:block;font-size:11px;font-weight:400;color:var(--muted);line-height:1.5;letter-spacing:normal}.failure-rule{padding-top:12px;margin-top:12px;border-top:1px solid var(--line)}.failure-rule h3{margin-bottom:12px}.form-errors{border:1px solid var(--red);padding:12px 16px;border-radius:8px;color:var(--red);margin-bottom:16px}.form-errors p{margin:4px 0;font-size:12px}.discovery-modal .button-row{margin-top:20px}@media(max-width:640px){fieldset{padding:12px}.discovery-modal .form-grid{grid-template-columns:1fr}.discovery-filters{gap:12px}.source-url{max-width:230px}}
 `})
 export class DiscoveryAdmin implements OnInit {

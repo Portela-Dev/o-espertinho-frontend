@@ -1,3 +1,4 @@
+import {DismissOnBackdrop} from './dismiss-on-backdrop';
 import {PriceHistoryChart} from './price-history-chart';
 import {Component,input,inject,signal} from '@angular/core';
 import {CurrencyPipe,DatePipe} from '@angular/common';
@@ -6,7 +7,7 @@ import {FormsModule} from '@angular/forms';
 import {MarketplaceLogo} from './marketplace-logo';
 import {Api} from '../api.service';
 import {Offer,Collection,storeNames} from '../models';
-@Component({selector:'offer-card',imports:[PriceHistoryChart,CurrencyPipe,DatePipe,RouterLink,FormsModule,MarketplaceLogo],template:`
+@Component({selector:'offer-card',imports:[DismissOnBackdrop,PriceHistoryChart,CurrencyPipe,DatePipe,RouterLink,FormsModule,MarketplaceLogo],template:`
 <article class="offer-card" [class.unavailable]="!available()">@if(history.isLowest(offer().price_cents,available()&&!!offer().affiliate_url)){<span class="low-price-ribbon" title="Menor preço registrado para este produto entre as ofertas monitoradas nos últimos 90 dias. Considera o histórico disponível.">Menor preço registrado!</span>}
   <div class="product-visual"><a [routerLink]="['/oferta',offer().id]" tabindex="-1" aria-hidden="true">@if(offer().image_url&&!imageFailed()) {<img [src]="offer().image_url" alt="" loading="lazy" referrerpolicy="no-referrer" (error)="imageFailed.set(true)">}@else{<span class="product-fallback">✧</span>}</a>
   @if(discount()>0&&!history.isLowest(offer().price_cents,available()&&!!offer().affiliate_url)){<span class="discount">−{{discount()}}%</span>}
@@ -19,7 +20,7 @@ import {Offer,Collection,storeNames} from '../models';
   <div class="card-bottom"><small>@if(offer().refresh_status==='pending'){Atualização pendente}@else{Atualizado {{(offer().data_updated_at||offer().verified_at)|date:'dd/MM HH:mm'}}}</small><button type="button" class="text-button" (click)="openCatalog()" aria-label="Adicionar ao catálogo">＋ Catálogo</button></div>
   </div>
 </article>
-@if(catalogOpen()) {<div class="modal-backdrop" (click)="catalogOpen.set(false)"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="catalog-title" (click)="$event.stopPropagation()"><button class="close-button" type="button" (click)="catalogOpen.set(false)" aria-label="Fechar">×</button><p class="eyebrow">GUARDE SEU ACHADO</p><h2 id="catalog-title">Adicionar a um catálogo</h2>@if(catalogs().length){<label>Escolha o catálogo<select [(ngModel)]="selected"><option value="">Selecione</option>@for(c of catalogs();track c.id){<option [value]="c.id">{{c.name}}</option>}</select></label><button class="button dark" [disabled]="!selected||saving()" (click)="add()">{{saving()?'Salvando…':'Adicionar oferta'}}</button>}@else{<p>Crie seu primeiro catálogo para organizar suas ofertas.</p><a routerLink="/catalogos" class="button dark" (click)="catalogOpen.set(false)">Criar catálogo ↗</a>}</section></div>}
+@if(catalogOpen()) {<div class="modal-backdrop" (dismissOnBackdrop)="!saving() && catalogOpen.set(false)"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="catalog-title"><button class="close-button" type="button" (click)="catalogOpen.set(false)" aria-label="Fechar">×</button><p class="eyebrow">GUARDE SEU ACHADO</p><h2 id="catalog-title">Adicionar a um catálogo</h2>@if(catalogs().length){<label>Escolha o catálogo<select [(ngModel)]="selected"><option value="">Selecione</option>@for(c of catalogs();track c.id){<option [value]="c.id">{{c.name}}</option>}</select></label><button class="button dark" [disabled]="!selected||saving()" (click)="add()">{{saving()?'Salvando…':'Adicionar oferta'}}</button>}@else{<p>Crie seu primeiro catálogo para organizar suas ofertas.</p><a routerLink="/catalogos" class="button dark" (click)="catalogOpen.set(false)">Criar catálogo ↗</a>}</section></div>}
 `})
 export class OfferCard {
   offer=input.required<Offer>();placement=input('home');api=inject(Api);router=inject(Router);names=storeNames;imageFailed=signal(false);catalogOpen=signal(false);catalogs=signal<Collection[]>([]);selected='';saving=signal(false);

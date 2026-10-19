@@ -1,3 +1,4 @@
+import {DismissOnBackdrop} from './dismiss-on-backdrop';
 import {PagedData} from '../paged-data';
 import {Pagination} from './pagination';
 import {InfiniteScroll} from './infinite-scroll';
@@ -11,7 +12,7 @@ import {MarketplaceLogo} from './marketplace-logo';
 import {storeNames} from '../models';
 interface Market {id:string;name:string;website_url:string;logo_url:string;allowed_hosts:string[];scraping_enabled:boolean}
 interface Rule {field:string;selectorsText:string;mode:string;attribute:string;required:boolean;nameSelector:string;valueSelector:string}
-@Component({selector:'catalog-admin',imports:[Pagination,InfiniteScroll,FormsModule,CurrencyPipe,DatePipe,RouterLink,ProductPicker,MarketplaceLogo],templateUrl:'./catalog-admin.html'})
+@Component({selector:'catalog-admin',imports:[DismissOnBackdrop,Pagination,InfiniteScroll,FormsModule,CurrencyPipe,DatePipe,RouterLink,ProductPicker,MarketplaceLogo],templateUrl:'./catalog-admin.html'})
 export class CatalogAdmin implements OnChanges {
  @Input() section='marketplaces';api=inject(Api);route=inject(ActivatedRoute);loading=signal(false);busy=signal(false);failed=signal(false);markets=signal<Market[]>([]);linkFeed=new PagedData<any>((page,pageSize)=>this.api.get('/admin/link-imports',{paginate:true,page,pageSize}));links=this.linkFeed.items;marketFeed=new PagedData<Market>(page=>this.api.get('/admin/catalog-marketplaces',{paginate:true,page}));preview=signal<any>(null);marketModal=signal(false);deleting=signal<Market|null>(null);deletingLink=signal<any>(null);
  specSize=10;specPage=1;evidenceSize=10;evidencePage=1;productId='';sellerName='';reassignProductId='';selected='amazon';editing=false;marketDraft={id:'',name:'',websiteUrl:'',logoUrl:'',hosts:'',scrapingEnabled:true};rules:Rule[]=[];version=0;waitSeconds=15;validityMinutes=360;linkUrl='';category='';subcategory='';testUrl='';authorized=false;

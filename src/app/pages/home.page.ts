@@ -1,3 +1,4 @@
+import {DismissOnBackdrop} from '../components/dismiss-on-backdrop';
 import {PagedData} from '../paged-data';
 import {InfiniteScroll} from '../components/infinite-scroll';
 import {Component,inject,signal,OnInit,DestroyRef} from '@angular/core';
@@ -11,7 +12,7 @@ import {CategoryNode,Product,Filters,emptyFilters,MarketplaceSummary} from '../m
 import {MarketplaceLogo} from '../components/marketplace-logo';
 import {CategoryBreadcrumb} from '../components/category-breadcrumb';
 import {ProductCard} from '../components/product-card';
-@Component({standalone:true,imports:[InfiniteScroll,CategoryBreadcrumb,FormsModule,RouterLink,ProductCard,MarketplaceLogo],template:`
+@Component({standalone:true,imports:[DismissOnBackdrop,InfiniteScroll,CategoryBreadcrumb,FormsModule,RouterLink,ProductCard,MarketplaceLogo],template:`
 <div class="page-width">
 <section class="hero"><div class="hero-copy"><span class="pill"><span class="live-dot"></span> Seu próximo achado está aqui</span><h1>Comprar bem<br>é coisa de <span>Espertinho.</span></h1><p>Ofertas selecionadas nas suas lojas favoritas.<br>Encontre o que vale a pena e guarde o que combina com você.</p><button type="button" class="button lime" (click)="exploreOffers()">Explorar ofertas <span>↓</span></button><div class="hero-trust"><span>✓ Curadoria de verdade</span><span>✓ Sem custo para você</span></div></div><div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><span class="spark spark-one">✳</span><span class="spark spark-two">✧</span><div class="floating-tag"><span>BONS ACHADOS</span><strong>vale<br>a pena<span>!</span></strong><div class="tag-barcode"></div></div><div class="small-tag">o melhor preço?<br><strong>a gente procura.</strong><span>↗</span></div></div></section>
 @if(marketplaces().length){<div class="partner-row"><span>SEUS ACHADOS, NAS LOJAS QUE VOCÊ CONHECE</span>@for(m of marketplaces();track m.id){<button type="button" class="partner" [attr.aria-pressed]="filters.marketplace===m.id" (click)="store(m.id)"><marketplace-logo [url]="m.logo_url" [name]="m.name"/>{{m.name}}</button>}</div>}
@@ -27,7 +28,7 @@ import {ProductCard} from '../components/product-card';
 </div></div></section>
 <section class="personal-banner"><div class="banner-icon">♡</div><div><p class="eyebrow">SUA LISTA, SEU JEITO</p><h2>Achou. Gostou. Guardou.</h2><p>Crie catálogos para seus planos e deixe seus favoritos em um só lugar.</p></div><a routerLink="/catalogos" class="button dark">Criar meu catálogo ↗</a></section>
 </div>
-@if(saveOpen()){<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="filter-modal-title"><button type="button" class="close-button" (click)="saveOpen.set(false)" aria-label="Fechar">×</button><h2 id="filter-modal-title">Salvar esta busca</h2><p>Encontre novas ofertas com os mesmos critérios quando quiser.</p><form (ngSubmit)="saveFilter()"><label>Nome do filtro<input name="filterName" [(ngModel)]="filterName" required maxlength="80" placeholder="Ex.: Meu próximo monitor"></label><button class="button dark" type="submit" [disabled]="saving()">{{saving()?'Salvando…':'Salvar filtro'}}</button></form></section></div>}
+@if(saveOpen()){<div class="modal-backdrop" (dismissOnBackdrop)="!saving() && saveOpen.set(false)"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="filter-modal-title"><button type="button" class="close-button" (click)="saveOpen.set(false)" aria-label="Fechar">×</button><h2 id="filter-modal-title">Salvar esta busca</h2><p>Encontre novas ofertas com os mesmos critérios quando quiser.</p><form (ngSubmit)="saveFilter()"><label>Nome do filtro<input name="filterName" [(ngModel)]="filterName" required maxlength="80" placeholder="Ex.: Meu próximo monitor"></label><button class="button dark" type="submit" [disabled]="saving()">{{saving()?'Salvando…':'Salvar filtro'}}</button></form></section></div>}
 `})
 export class HomePage implements OnInit {
   document=inject(DOCUMENT);api=inject(Api);route=inject(ActivatedRoute);router=inject(Router);destroy=inject(DestroyRef);title=inject(Title);meta=inject(Meta);

@@ -1,3 +1,4 @@
+import {DismissOnBackdrop} from './dismiss-on-backdrop';
 import {Pagination} from './pagination';
 import {Component,input,inject,signal,effect,ViewChild,ElementRef} from '@angular/core';
 import {CurrencyPipe,DatePipe} from '@angular/common';
@@ -5,13 +6,13 @@ import {FormsModule} from '@angular/forms';
 import {Api} from '../api.service';
 import {PriceHistoryService,ChartHistory} from '../price-history.service';
 import {PriceHistoryPlot} from './price-history-plot';
-@Component({selector:'price-history-chart',imports:[Pagination,FormsModule,CurrencyPipe,DatePipe,PriceHistoryPlot],styles:`
+@Component({selector:'price-history-chart',imports:[DismissOnBackdrop,Pagination,FormsModule,CurrencyPipe,DatePipe,PriceHistoryPlot],styles:`
 :host{display:block;min-width:0;margin:.5rem 0}.heading{display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-size:.72rem;color:var(--muted);margin-bottom:.5rem}.expand{border:0;background:none;color:var(--ink);padding:.25rem;text-decoration:underline;cursor:pointer;font:inherit}.note{font-size:.7rem;color:var(--muted);margin:.4rem 0}.status{font-size:.8rem;color:var(--muted);min-height:64px;display:grid;place-content:center}.history-dialog{border:1px solid var(--line);border-radius:18px;padding:1.5rem;width:min(760px,calc(100vw - 2rem));max-width:calc(100vw - 2rem);max-height:90dvh;overflow:auto;background:var(--surface);color:var(--ink);box-sizing:border-box}.history-dialog::backdrop{background:rgba(0,0,0,.6)}.dialog-heading{display:flex;justify-content:space-between;align-items:start;gap:1rem}.dialog-heading h2{font-size:1.3rem;overflow-wrap:anywhere;margin:0 0 .5rem}.close{font-size:1.5rem;background:none;border:0;color:inherit;cursor:pointer;padding:0 .3rem}.controls{display:flex;flex-wrap:wrap;gap:.75rem;margin:.5rem 0}.controls label{flex:1;min-width:130px;margin:0;font-size:.85rem}.controls input,.controls select{width:100%;box-sizing:border-box}.details-plot{max-width:650px;margin:auto}.history-table{overflow:auto;max-height:280px;margin-top:.75rem}.history-table table{width:100%}summary{cursor:pointer;font-size:.9rem;margin-top:1rem}.error{color:var(--red);font-size:.8rem}@media(max-width:480px){.history-dialog{padding:1rem}.dialog-heading h2{font-size:1.1rem}}
 `,template:`
 <div class="heading"><span>Histórico · 90 dias</span><button type="button" class="expand" [attr.aria-label]="'Ampliar histórico de preços de '+label()" (click)="open()">Ampliar ↗</button></div>
 @if(compactLoading()){<div class="status" role="status">Carregando histórico…</div>}@else if(compactFailed()){<div class="status">Histórico indisponível. <button type="button" class="expand" (click)="retry()">Tentar novamente</button></div>}@else{<price-history-plot [compact]="true" [points]="compact()?.series?.points||[]"/>}
 <p class="note">A cada 10 dias{{kind()==='product'?' · menor preço':''}}.</p>
-<dialog #historyDialog class="history-dialog" [attr.aria-label]="'Histórico de preços: '+label()" (close)="expanded.set(false)">
+<dialog (dismissOnBackdrop)="close()" #historyDialog class="history-dialog" [attr.aria-label]="'Histórico de preços: '+label()" (close)="expanded.set(false)">
  @if(expanded()){
  <div class="dialog-heading"><div><h2>Histórico de preços</h2><p class="muted">{{label()}}</p></div><button type="button" class="close" aria-label="Fechar histórico" (click)="close()">×</button></div>
  <div class="controls"><label>Período do histórico<select [ngModel]="period" (ngModelChange)="changePeriod($event)"><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="180">Últimos 180 dias</option><option value="365">Último ano</option><option value="custom">Personalizado</option></select></label>

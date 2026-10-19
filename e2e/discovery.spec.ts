@@ -47,3 +47,28 @@ test('falhas de carregamento permitem nova tentativa e usuários sem permissão 
  await page.route('**/api/admin/discovery/sources?**',route=>route.fulfill({status:503,json:{error:'Lista indisponível'}}));await page.locator('.discovery-filters').getByRole('button',{name:'Filtrar'}).click();await expect(page.locator('discovery-admin')).toContainText('Não foi possível carregar a lista.');await page.unroute('**/api/admin/discovery/sources?**');await page.locator('discovery-admin').getByRole('button',{name:'Tentar novamente',exact:true}).click();await expect(page.locator('discovery-admin')).not.toContainText('Não foi possível carregar a lista.');
  await page.context().clearCookies();await login(page,'common-discovery');await page.goto('/admin/discovery');await expect(page).toHaveURL(/\/$/);expect((await page.request.get('/api/admin/discovery/profiles')).status()).toBe(403);
 });
+
+
+test('backdrop fecha modais sem confundir cliques internos, arrastos e gravações em andamento',async({page})=>{
+ await login(page);await openProfiles(page);
+ let dialog=await newProfile(page,'Perfil backdrop','single');
+ await dialog.getByRole('heading',{level:2}).click();await expect(dialog).toBeVisible();
+ const input=await dialog.getByLabel('Nome',{exact:true}).boundingBox();
+ await page.mouse.move(input!.x+20,input!.y+10);await page.mouse.down();await page.mouse.move(3,3);await page.mouse.up();await expect(dialog).toBeVisible();
+ await page.mouse.click(3,3);await expect(dialog).toHaveCount(0);
+ dialog=await newProfile(page,'Perfil gravação','single');
+ let release!:()=>void;
+ const pending=new Promise<void>(resolve=>{release=resolve;});
+ await page.route('**/api/admin/discovery/profiles',async route=>{if(route.request().method()!=='POST'){await route.continue();return;}await pending;await route.fulfill({status:400,json:{error:'Falha controlada para testar a modal.'}});});
+ await dialog.getByRole('button',{name:'Salvar configuração'}).click();
+ await expect(dialog.getByRole('button',{name:'Salvando…'})).toBeDisabled();
+ await page.mouse.click(3,3);await expect(dialog).toBeVisible();
+ release();await expect(dialog.getByRole('button',{name:'Salvar configuração'})).toBeEnabled();
+ await page.mouse.click(3,3);await expect(dialog).toHaveCount(0);
+ for(const [url,button] of [['/admin/products','Novo produto'],['/admin/marketplaces','Novo marketplace']]){
+  await page.goto(url);await page.getByRole('button',{name:new RegExp(button+'$')}).click();dialog=page.getByRole('dialog');await dialog.getByRole('heading',{level:2}).click();await expect(dialog).toBeVisible();await page.mouse.click(3,3);await expect(dialog).toHaveCount(0);
+ }
+ await page.goto('/');const history=page.locator('price-history-chart').first();await history.getByRole('button',{name:/Ampliar histórico/}).click();
+ const chart=page.getByRole('dialog');await chart.getByRole('heading',{name:'Histórico de preços',exact:true}).click();await expect(chart).toBeVisible();
+ await page.mouse.click(3,3);await expect(chart).not.toBeVisible();
+});
