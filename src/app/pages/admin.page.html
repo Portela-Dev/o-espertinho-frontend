@@ -1,5 +1,5 @@
 <div class="page-width admin-page"><div class="admin-top"><div><p class="eyebrow">PAINEL ADMINISTRATIVO</p><h1>{{heading()}}</h1></div><span class="admin-identity">{{api.user()?.email}}</span></div>
-<nav class="tabs admin-tabs" aria-label="Administração">@for(tab of [{id:'overview',path:'/admin',label:'Visão geral'},{id:'offers',path:'/admin/offers',label:'Revisão de ofertas'},{id:'updates',path:'/admin/updates',label:'Atualizações'},{id:'products',path:'/admin/products',label:'Produtos'},{id:'marketplaces',path:'/admin/marketplaces',label:'Marketplaces'},{id:'selectors',path:'/admin/selectors',label:'Seletores'},{id:'links',path:'/admin/links',label:'Cadastro de links'},{id:'users',path:'/admin/users',label:'Usuários'},{id:'profiles',path:'/admin/profiles',label:'Perfis de acesso'},{id:'rules',path:'/admin/rules',label:'Buscas automáticas'},{id:'activity',path:'/admin/activity',label:'Atividade'}];track tab.id){@if(api.adminSection(tab.id)){<a [routerLink]="tab.path" [routerLinkActiveOptions]="{exact:true}" routerLinkActive="selected">{{tab.label}}</a>}}</nav>
+<nav class="tabs admin-tabs" aria-label="Administração">@for(tab of [{id:'overview',path:'/admin',label:'Visão geral'},{id:'offers',path:'/admin/offers',label:'Revisão de ofertas'},{id:'updates',path:'/admin/updates',label:'Atualizações'},{id:'products',path:'/admin/products',label:'Produtos'},{id:'marketplaces',path:'/admin/marketplaces',label:'Marketplaces'},{id:'discovery',path:'/admin/discovery',label:'Exploração'},{id:'selectors',path:'/admin/selectors',label:'Seletores'},{id:'links',path:'/admin/links',label:'Cadastro de links'},{id:'users',path:'/admin/users',label:'Usuários'},{id:'profiles',path:'/admin/profiles',label:'Perfis de acesso'},{id:'rules',path:'/admin/rules',label:'Buscas automáticas'},{id:'activity',path:'/admin/activity',label:'Atividade'}];track tab.id){@if(api.adminSection(tab.id)){<a [routerLink]="tab.path" [routerLinkActiveOptions]="{exact:true}" routerLinkActive="selected">{{tab.label}}</a>}}</nav>
 @if(loading()){<div class="loading-panel" role="status">Carregando painel…</div>}@else if(failed()){<div class="empty-state"><h2>Não foi possível carregar o painel</h2><button class="button dark" (click)="load()">Tentar novamente</button></div>}@else{
 @switch(section()){
 @case('overview'){
@@ -13,6 +13,7 @@
 @case('updates'){<offer-refresh-admin/>}
 @case('products'){<products-admin/>}
 @case('marketplaces'){<catalog-admin section="marketplaces"/>}
+@case('discovery'){<discovery-admin/>}
 @case('selectors'){<catalog-admin section="selectors"/>}
 @case('links'){<catalog-admin section="links"/>}
 @case('offers'){

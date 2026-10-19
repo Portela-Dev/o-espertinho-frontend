@@ -50,3 +50,11 @@ Cards da vitrine, ofertas do produto, favoritos, catálogos, filtros salvos, mar
 Listas administrativas usam páginas com contagem total: produtos, usuários, perfis, links, auditoria, ranking de cliques, execuções e ocorrências. Características, evidências e registros diários do gráfico também possuem paginação. Opções de seleção, menus, breadcrumbs e campos de formulário continuam funcionando como controles. Os testes do CI usam um commit específico do backend que contém os endpoints paginados; implante a API compatível antes deste frontend.
 
 Listas paginadas permitem selecionar 5, 10, 15, 20, 25 ou 50 itens por página. Alterar a quantidade reinicia na primeira página sem remover filtros. A rolagem infinita não tem seletor: a vitrine usa 24 produtos por lote; as demais coleções de cards usam 20 por lote.
+
+### Exploração de marketplaces (somente configuração)
+
+Em **Admin → Exploração**, cadastre primeiro um **Perfil de exploração** e depois uma **Página de seção** do mesmo marketplace. Um perfil pode atender várias seções com a mesma estrutura. Os formulários cobrem carregamento/hidratação, seletores de itens e dados, categoria de origem, paginação (página única, próxima página, URL parametrizada, carregar mais ou rolagem), limites e políticas por tipo de falha. As listas possuem filtros, paginação e seleção da quantidade de registros.
+
+As configurações são persistidas pelo backend, com controle de versão, permissão `discovery` e confirmação recente de login Google nas escritas. É necessário aplicar a migration 022 do backend. A opção de habilitar e o intervalo por seção só preparam a execução futura: **nenhum job ou acesso a marketplace é iniciado nesta entrega**. O cadastro de seletores de anúncios já existente permanece independente; este novo perfil trata páginas de listagem. Use seletores CSS, não JavaScript. URLs de seção mantêm os parâmetros de busca/paginação.
+
+A configuração cobre padrões comuns de navegação, sem garantir compatibilidade com qualquer página, CAPTCHA ou fluxo autenticado. As políticas salvas descrevem como um consumidor futuro deverá agir, não resultados de um teste real de extração.

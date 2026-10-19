@@ -39,8 +39,8 @@ export class Api {
   }
   user=signal<User|null>(null);ready=signal(false);notice=signal('');error=signal('');favorites=signal(new Set<string>());
   canAdmin(permission?:string){const u=this.user();return !!u&&(u.role==='admin'||(permission?u.permissions?.includes(permission):!!u.permissions?.length));}
-  adminSection(section:string){const permissions:Record<string,string>={overview:'overview',products:'catalog',links:'catalog',offers:'catalog',marketplaces:'marketplaces',selectors:'selectors',updates:'updates',activity:'activity',users:'users',profiles:'users'};return this.user()?.role==='admin'||!!permissions[section]&&this.canAdmin(permissions[section]);}
-  firstAdminSection(){return ['overview','products','marketplaces','selectors','updates','activity','users'].find(s=>this.adminSection(s))||'overview';}
+  adminSection(section:string){const permissions:Record<string,string>={discovery:'discovery',overview:'overview',products:'catalog',links:'catalog',offers:'catalog',marketplaces:'marketplaces',selectors:'selectors',updates:'updates',activity:'activity',users:'users',profiles:'users'};return this.user()?.role==='admin'||!!permissions[section]&&this.canAdmin(permissions[section]);}
+  firstAdminSection(){return ['overview','products','discovery','marketplaces','selectors','updates','activity','users'].find(s=>this.adminSection(s))||'overview';}
   browser=isPlatformBrowser(inject(PLATFORM_ID));
   get<T>(path:string,query?:Record<string,unknown>):Promise<T>{let params=new HttpParams();for(const [k,v] of Object.entries(query??{}))if(v!==null&&v!==undefined)params=params.set(k,String(v));return firstValueFrom(this.http.get<T>('/api'+path,{params}));}
   reauthNonce=signal('');private reauthPending?:{promise:Promise<void>;resolve:()=>void;reject:(e:Error)=>void};
