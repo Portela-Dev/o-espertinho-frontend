@@ -15,6 +15,20 @@ export class EnrichmentAdmin implements OnInit,OnDestroy {
  selectedRun=signal<any>(null);items=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/runs/'+this.selectedRun().id+'/items',{page,pageSize}));
  async ngOnInit(){try{const [markets,categories]=await Promise.all([this.api.get<any[]>('/admin/catalog-marketplaces'),this.api.get<any[]>(this.base+'/categories')]);this.markets.set(markets);this.categories.set(categories);await this.links.reset();await this.runs.reset();if(this.api.browser)this.timer=setInterval(()=>{void this.poll();},3000);}catch(e){this.api.fail(e);}}
  creatingCategory=signal(false);newCategoryPath:string[]=[''];
+ productTarget=signal<any>(null);productMode:'existing'|'new'='existing';productQuery='';selectedProductId='';
+ productDraft={name:'',description:'',brand:'',imageUrl:''};
+ products=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/review/'+this.productTarget().id+'/products',{page,pageSize,q:this.productQuery}));
+ async assignProduct(link:any){
+  if(!link.confirmed_category_id||link.extraction_status!=='completed')return;
+  this.productMode='existing';this.productQuery='';this.selectedProductId=link.product_id||'';
+  const data=link.enrichment_data||{};
+  this.productDraft={name:data.title||'',description:data.description||'',brand:data.brand||'',imageUrl:(data.images||[]).find((url:string)=>url.startsWith('https://'))||''};
+  this.productTarget.set(link);await this.products.reset();
+ }
+ async confirmProduct(){const link=this.productTarget();await this.act(async()=>{
+  const body=this.productMode==='existing'?{mode:'existing',version:link.enrichment_version,productId:this.selectedProductId}:{mode:'new',version:link.enrichment_version,product:{...this.productDraft,imageUrl:this.productDraft.imageUrl.trim()||null}};
+  await this.api.send('POST',this.base+'/review/'+link.id+'/product',body);this.productTarget.set(null);
+ },'Produto atribuído. O link aguarda a geração do endereço de afiliado.');}
  private activeActions?:HTMLElement;
  positionActions(event:Event,trigger:HTMLButtonElement,menu:HTMLElement){
   if((event as ToggleEvent).newState!=='open'){if(this.activeActions===menu)this.activeActions=undefined;return;}
