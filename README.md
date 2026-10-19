@@ -63,3 +63,7 @@ Os links descobertos são listados com filtros e paginação, separados das ofer
 ## Normalização de links descobertos
 
 Em Admin → Marketplaces é possível configurar marcadores literais para remover sufixos do caminho dos links de produto descobertos. O botão de teste mostra o resultado sem acessar a página nem persistir links. Query e fragmento são sempre removidos. As regras valem para novos ciclos de descoberta; não alteram seções, paginação, links de afiliados ou dados já coletados. Um formulário antigo que omita as regras preserva a configuração existente no backend.
+
+## Revisão dos links descobertos
+
+A seção Revisão de ofertas inclui enriquecimento manual, acompanhamento/cancelamento de execuções, lista paginada de links com filtros por marketplace, estado da extração e categoria de origem, prévia dos dados extraídos e confirmação de categoria. A aba Vincular categorias permite editar/excluir mapeamentos sem alterar itens já confirmados. As sugestões de mapeamento nunca são aprovadas automaticamente. O backend de testes do CI precisa incluir a migration 026 e as rotas de enriquecimento.

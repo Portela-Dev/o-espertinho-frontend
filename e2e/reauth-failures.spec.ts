@@ -11,7 +11,7 @@ async function enterAdmin(page:Page){
    },cancel(){},disableAutoSelect(){},
   }}};
  });
- await page.goto('/entrar');await page.getByRole('button',{name:'Google confirmação'}).click();
+ await page.goto('/entrar');await page.getByRole('button',{name:'Google confirmação'}).click();await expect(page).not.toHaveURL(/entrar/);
  await page.goto('/admin/profiles');
 }
 async function createProfile(page:Page,name:string){

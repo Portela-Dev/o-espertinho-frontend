@@ -11,14 +11,14 @@ import {ProductPicker} from './product-picker';
 import {MarketplaceLogo} from './marketplace-logo';
 import {storeNames} from '../models';
 interface Market {id:string;name:string;website_url:string;logo_url:string;allowed_hosts:string[];scraping_enabled:boolean;url_normalization_rules?:{type:string;marker:string}[]}
-interface Rule {field:string;selectorsText:string;mode:string;attribute:string;required:boolean;nameSelector:string;valueSelector:string}
+interface Rule {wholeSelector?:string;fractionSelector?:string;field:string;selectorsText:string;mode:string;attribute:string;required:boolean;nameSelector:string;valueSelector:string}
 @Component({selector:'catalog-admin',imports:[DismissOnBackdrop,Pagination,InfiniteScroll,FormsModule,CurrencyPipe,DatePipe,RouterLink,ProductPicker,MarketplaceLogo],templateUrl:'./catalog-admin.html'})
 export class CatalogAdmin implements OnChanges {
  @Input() section='marketplaces';api=inject(Api);route=inject(ActivatedRoute);loading=signal(false);busy=signal(false);failed=signal(false);markets=signal<Market[]>([]);linkFeed=new PagedData<any>((page,pageSize)=>this.api.get('/admin/link-imports',{paginate:true,page,pageSize}));links=this.linkFeed.items;marketFeed=new PagedData<Market>(page=>this.api.get('/admin/catalog-marketplaces',{paginate:true,page}));preview=signal<any>(null);marketModal=signal(false);deleting=signal<Market|null>(null);deletingLink=signal<any>(null);
  normalizationMarkers='';normalizationTestUrl='';normalizedPreview=signal('');
  specSize=10;specPage=1;evidenceSize=10;evidencePage=1;productId='';sellerName='';reassignProductId='';selected='amazon';editing=false;marketDraft={id:'',name:'',websiteUrl:'',logoUrl:'',hosts:'',scrapingEnabled:true};rules:Rule[]=[];version=0;waitSeconds=15;validityMinutes=360;linkUrl='';category='';subcategory='';testUrl='';authorized=false;
  editingClassification=signal<any>(null);classificationDraft={category:'',subcategory:''};
- fields=[{id:'title',name:'Nome do produto'},{id:'price',name:'Preço da oferta'},{id:'originalPrice',name:'Preço de referência'},{id:'images',name:'Imagens'},{id:'description',name:'Descrição'},{id:'specifications',name:'Características'},{id:'conditions',name:'Condições da oferta'},{id:'category',name:'Categoria'},{id:'externalId',name:'Identificador do produto'},{id:'productUrl',name:'URL do produto'}];
+ fields=[{id:'title',name:'Nome do produto'},{id:'brand',name:'Marca'},{id:'price',name:'Preço da oferta'},{id:'originalPrice',name:'Preço de referência'},{id:'images',name:'Imagens'},{id:'description',name:'Descrição'},{id:'specifications',name:'Características'},{id:'conditions',name:'Condições da oferta'},{id:'category',name:'Categoria'},{id:'externalId',name:'Identificador do produto'},{id:'productUrl',name:'URL do produto'}];
  ngOnChanges(){void this.load();}
  async load(){
   this.productId=this.route.snapshot.queryParamMap.get('product')||this.productId;
@@ -42,7 +42,7 @@ export class CatalogAdmin implements OnChanges {
  newRule(field='title'):Rule{return {field,selectorsText:'',mode:'text',attribute:'',required:field==='title'||field==='price',nameSelector:'th',valueSelector:'td'};}
  addRule(){this.rules.push(this.newRule('images'));this.clearPreview();}
  moveRule(index:number,offset:number){const target=index+offset;if(target<0||target>=this.rules.length)return;[this.rules[index],this.rules[target]]=[this.rules[target],this.rules[index]];this.clearPreview();}
- profileBody(){return {version:this.version,waitTimeoutMs:Math.round(this.waitSeconds*1000),validityMinutes:this.validityMinutes,rules:this.rules.map(({selectorsText,...r})=>({...r,selectors:selectorsText.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)}))};}
+ profileBody(){return {version:this.version,waitTimeoutMs:Math.round(this.waitSeconds*1000),validityMinutes:this.validityMinutes,rules:this.rules.map(({selectorsText,...r})=>({...r,wholeSelector:r.mode==='text'&&['price','originalPrice'].includes(r.field)?r.wholeSelector||undefined:undefined,fractionSelector:r.mode==='text'&&['price','originalPrice'].includes(r.field)?r.fractionSelector||undefined:undefined,selectors:selectorsText.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)}))};}
  async saveProfile(){await this.act(async()=>{const r=await this.api.send<{version:number}>('PUT','/admin/selectors/'+this.selected,this.profileBody());this.version=r.version;this.clearPreview();},'Seletores salvos. As próximas extrações usarão essas regras.');}
  async testProfile(){this.clearPreview();await this.act(async()=>{this.preview.set(await this.api.send('POST','/admin/selectors/'+this.selected+'/test',{url:this.testUrl,profile:this.profileBody()}));},'Teste concluído. Nenhuma oferta foi cadastrada.');}
  openMarket(m?:Market){this.normalizationMarkers=(m?.url_normalization_rules||[]).map(r=>r.marker).join('\n');this.normalizationTestUrl='';this.normalizedPreview.set('');this.editing=!!m;this.marketDraft=m?{id:m.id,name:m.name,websiteUrl:m.website_url,logoUrl:m.logo_url||'',hosts:m.allowed_hosts.join('\n'),scrapingEnabled:m.scraping_enabled}:{id:'',name:'',websiteUrl:'',logoUrl:'',hosts:'',scrapingEnabled:true};this.marketModal.set(true);}
