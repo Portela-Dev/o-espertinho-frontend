@@ -38,6 +38,8 @@ export class EnrichmentAdmin implements OnInit {
  async act(work:()=>Promise<unknown>,message:string){if(this.busy())return;
 this.busy.set(true);try{await work();this.api.success(message);await this.feed().go(this.feed().page()||1);}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
  label(status:string){return ({pending:'Pendente',queued:'Aguardando extensão',running:'Em execução',completed:'Concluído',failed:'Falha técnica',cancelled:'Cancelado',skipped:'Ignorado'} as Record<string,string>)[status]||status;}
+ availabilityLabel(data:any){if(data?.availability==='unavailable')return 'Indisponível';
+ return data?.availability==='available'||data?.priceCents>0?'Disponível':'Não confirmada';}
  categoryState(link:any){if(link.confirmed_category_id)return 'Categoria confirmada';
 if(!link.source_category_path.length)return 'Sem categoria de origem';
 if(link.suggested_category_id)return 'Categoria sugerida — confirmar';
