@@ -38,7 +38,7 @@ test('tabelas administrativas mostram apenas a página solicitada e respeitam in
 test('links, auditoria, perfis e execuções navegam pelo histórico em páginas independentes',async({page})=>{
  await login(page);
  const cases=[
-  {path:'/admin/links',api:'/admin/link-imports',selector:'catalog-admin tbody tr',label:'Links cadastrados',key:'items'},
+  {path:'/admin/links',api:'/admin/offers',selector:'.admin-page tbody tr',label:'Ofertas cadastradas',key:'items'},
   {path:'/admin/activity',api:'/admin/audit',selector:'.admin-page tbody tr',label:'Atividade administrativa',key:'items'},
   {path:'/admin/profiles',api:'/admin/access-profiles',selector:'users-admin tbody tr',label:'Perfis de acesso',key:'profiles'},
   {path:'/admin/updates',api:'/admin/extension-catalog/runs',selector:'catalog-operations tbody tr',label:'Execuções da extensão',key:'items'},

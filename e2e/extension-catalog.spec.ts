@@ -40,5 +40,5 @@ test('teste de seletor aguarda resultado da extensão e não cadastra anúncio',
 
 test('admin exposes only extension operations, with no legacy schedule or executor switch',async({page})=>{
  await login(page);await page.goto('/admin/updates');await expect(page.locator('catalog-operations')).toBeVisible();await expect(page.getByText('Serviços legados',{exact:false})).toHaveCount(0);await expect(page.getByRole('button',{name:'Atualizar links agora'})).toHaveCount(0);
- await page.goto('/admin/discovery');await expect(page.getByRole('button',{name:'Confirmar exploração'})).toHaveCount(0);await page.getByRole('button',{name:'Execuções',exact:true}).click();await expect(page.locator('catalog-operations')).toBeVisible();
+ await page.goto('/admin/discovery');await expect(page.getByRole('button',{name:'Confirmar exploração'})).toHaveCount(0);await page.getByRole('navigation',{name:'Administração'}).getByRole('link',{name:'Execuções',exact:true}).click();await expect(page.locator('catalog-operations')).toBeVisible();
 });

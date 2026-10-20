@@ -6,7 +6,11 @@ Na raiz do workspace, `npm run setup` prepara os componentes ativos e sobe somen
 
 ## Administração
 
-Cadastre marketplaces, hosts, perfis e páginas de exploração, seletores de produto, receita declarativa e regras de bloqueio. A extensão executa os quatro passos manualmente. Na revisão confirme categorias, atribua produtos e publique explicitamente. Atualizações, Exploração e Revisão permitem consultar execuções da extensão, paginar itens e cancelar. Não há executor legado, agenda de preços ou conectores específicos.
+Cadastre marketplaces, hosts, perfis e páginas de exploração, seletores de produto, receita declarativa e regras de bloqueio. A extensão executa os quatro passos manualmente. Na revisão confirme categorias, atribua produtos e publique explicitamente. Execuções é a única tela para acompanhar, paginar itens e cancelar operações da extensão. Não há executor legado, agenda de preços ou conectores específicos.
+
+As oito abas principais são Visão geral, Revisão, Ofertas, Produtos, Marketplaces, Execuções, Acessos e Atividade. Marketplaces reúne Cadastro, Exploração e Seletores, conforme as permissões existentes. Acessos reúne Usuários e Perfis. Revisão trata os links descobertos; Ofertas centraliza todos os anúncios, com lista paginada, edição, vínculo de produto, publicação e exclusão confirmada. O cadastro manual abre dentro de Ofertas, inclusive pelos atalhos de produtos. Os caminhos antigos continuam válidos; o agrupamento não concede novas permissões.
+
+O intervalo entre ciclos foi retirado: a exploração é manual. A habilitação de cada fonte e os intervalos entre requisições continuam ativos.
 
 Cadastro por link e teste de seletores recebem uma solicitação assíncrona: selecione-a na extensão, aguarde o resultado e confira a prévia. O frontend finaliza por POST com XSRF. Tokens e cookies do marketplace permanecem no Chrome. Fechar a janela de processamento permite reabertura explícita e continuação pela extensão.
 

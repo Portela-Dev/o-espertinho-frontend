@@ -1,5 +1,4 @@
 import {ActionMenu} from './action-menu';
-import {CatalogOperations} from './catalog-operations';
 import {DismissOnBackdrop} from './dismiss-on-backdrop';
 import {Component,OnInit,inject,signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
@@ -9,13 +8,12 @@ import {Api} from '../api.service';
 import {PagedData} from '../paged-data';
 import {Pagination} from './pagination';
 interface Market {id:string;name:string}
-interface Entry {catalog_executor?:string;id:string;name:string;marketplace_id:string;marketplace_name:string;version:number;updated_at:string;config?:any;profile_id?:string;profile_name?:string;url?:string;enabled?:boolean;interval_hours?:number;source_category_path?:string[];notes?:string;paused_at?:string|null;pause_reason?:string|null}
+interface Entry {catalog_executor?:string;id:string;name:string;marketplace_id:string;marketplace_name:string;version:number;updated_at:string;config?:any;profile_id?:string;profile_name?:string;url?:string;enabled?:boolean;source_category_path?:string[];notes?:string;paused_at?:string|null;pause_reason?:string|null}
 interface Field {key:string;label:string;type?:'number'|'select';min?:number;max?:number;options?:{value:string;label:string}[];hint?:string}
-@Component({selector:'discovery-admin',imports:[ActionMenu,CatalogOperations,DismissOnBackdrop,FormsModule,DatePipe,Pagination],templateUrl:'./discovery-admin.html',styles:`
+@Component({selector:'discovery-admin',imports:[ActionMenu,DismissOnBackdrop,FormsModule,DatePipe,Pagination],templateUrl:'./discovery-admin.html',styles:`
 :host{display:block}.discovery-note{line-height:1.6}.discovery-tabs{display:flex;gap:10px;margin:0 0 20px;padding:0;border:0;flex-wrap:wrap}.discovery-tabs button[aria-pressed=true]{background:var(--green);color:white}.discovery-filters{display:flex;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:20px}.discovery-filters label{margin:0;flex:1;min-width:160px}.discovery-filters input,.discovery-filters select{margin:0}.discovery-table td{vertical-align:top}.source-url{display:block;max-width:360px;overflow-wrap:anywhere;font-size:11px;margin-top:6px;color:var(--muted)}.discovery-modal{width:min(920px,100%);margin:0;border:0;color:var(--ink)}fieldset{border:1px solid var(--line);border-radius:10px;margin:20px 0;padding:18px;min-width:0}legend{font-weight:750;padding:0 8px}.help{display:block;font-size:11px;font-weight:400;color:var(--muted);line-height:1.5;letter-spacing:normal}.failure-rule{padding-top:12px;margin-top:12px;border-top:1px solid var(--line)}.failure-rule h3{margin-bottom:12px}.form-errors{border:1px solid var(--red);padding:12px 16px;border-radius:8px;color:var(--red);margin-bottom:16px}.form-errors p{margin:4px 0;font-size:12px}.discovery-modal .button-row{margin-top:20px}@media(max-width:640px){fieldset{padding:12px}.discovery-modal .form-grid{grid-template-columns:1fr}.discovery-filters{gap:12px}.source-url{max-width:230px}}
 `})
 export class DiscoveryAdmin implements OnInit {
- activityOpen=signal(false);
  api=inject(Api);view=signal<'sources'|'profiles'>('sources');markets=signal<Market[]>([]);options=signal<Entry[]>([]);defaults:any;ready=signal(false);failed=signal(false);busy=signal(false);modal=signal<'sources'|'profiles'|null>(null);deleting=signal<Entry|null>(null);errors=signal<string[]>([]);editing:Entry|null=null;marketplaceId='';q='';enabled='';categoryText='';draft:any={};
  feed=new PagedData<Entry>((page,pageSize)=>this.api.get('/admin/discovery/'+this.view(),{page,pageSize,marketplaceId:this.marketplaceId,q:this.q,...(this.view()==='sources'?{enabled:this.enabled}:{})}));
  modes=[{value:'single',label:'Página única'},{value:'next',label:'Botão ou link de próxima página'},{value:'url',label:'URL com número de página'},{value:'load_more',label:'Botão “Carregar mais”'},{value:'scroll',label:'Rolagem infinita'}];
@@ -32,10 +30,10 @@ export class DiscoveryAdmin implements OnInit {
  async ngOnInit(){await this.initialize();}
  async initialize(){this.failed.set(false);try{const [markets,defaults]=await Promise.all([this.api.get<Market[]>('/admin/catalog-marketplaces'),this.api.get<any>('/admin/discovery/defaults')]);this.markets.set(markets);this.defaults=defaults.config;this.ready.set(true);await this.feed.reset();}catch(e){this.failed.set(true);this.api.fail(e);}}
  async switchView(view:'sources'|'profiles'){if(this.busy()){return;}
-this.activityOpen.set(false);this.view.set(view);await this.feed.reset();}
+this.view.set(view);await this.feed.reset();}
  async filter(){await this.feed.reset();}
  modeLabel(mode:string){return this.modes.find(m=>m.value===mode)?.label||mode;}
- async open(row?:Entry){this.errors.set([]);this.editing=row||null;const market=row?.marketplace_id||this.marketplaceId||this.markets()[0]?.id||'';if(this.view()==='profiles'){this.draft={marketplaceId:market,name:row?.name||'',config:structuredClone(row?.config||this.defaults)};}else{this.draft={marketplaceId:market,name:row?.name||'',profileId:row?.profile_id||'',url:row?.url||'',enabled:row?.enabled??false,intervalHours:row?.interval_hours||24,notes:row?.notes||''};this.categoryText=(row?.source_category_path||[]).join('\n');}
+ async open(row?:Entry){this.errors.set([]);this.editing=row||null;const market=row?.marketplace_id||this.marketplaceId||this.markets()[0]?.id||'';if(this.view()==='profiles'){this.draft={marketplaceId:market,name:row?.name||'',config:structuredClone(row?.config||this.defaults)};}else{this.draft={marketplaceId:market,name:row?.name||'',profileId:row?.profile_id||'',url:row?.url||'',enabled:row?.enabled??false,notes:row?.notes||''};this.categoryText=(row?.source_category_path||[]).join('\n');}
 this.modal.set(this.view());if(this.view()==='sources')await this.loadOptions();
 }
  private optionsSequence=0;

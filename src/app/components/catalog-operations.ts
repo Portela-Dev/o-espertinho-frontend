@@ -25,7 +25,8 @@ export class CatalogOperations implements OnInit, OnDestroy {
     items = new PagedData<any>((page, pageSize) => this.api.get('/admin/extension-catalog/runs/' + this.selected().id + '/items', { page, pageSize }));
     async ngOnInit() {
         try {
-            this.markets.set(await this.api.get<any[]>('/admin/catalog-marketplaces'));
+            const endpoint=['catalog','discovery','marketplaces','selectors'].some(permission=>this.api.canAdmin(permission))?'/admin/catalog-marketplaces':'/marketplaces';
+            this.markets.set(await this.api.get<any[]>(endpoint));
             await this.runs.reset();
             if (this.api.browser)
                 this.timer = setInterval(() => {
