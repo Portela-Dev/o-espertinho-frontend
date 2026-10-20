@@ -8,7 +8,7 @@ import {Api} from '../api.service';
 import {PagedData} from '../paged-data';
 import {Pagination} from './pagination';
 interface Market {id:string;name:string}
-interface Entry {id:string;name:string;marketplace_id:string;marketplace_name:string;version:number;updated_at:string;config?:any;profile_id?:string;profile_name?:string;url?:string;enabled?:boolean;interval_hours?:number;source_category_path?:string[];notes?:string;paused_at?:string|null;pause_reason?:string|null}
+interface Entry {catalog_executor?:string;id:string;name:string;marketplace_id:string;marketplace_name:string;version:number;updated_at:string;config?:any;profile_id?:string;profile_name?:string;url?:string;enabled?:boolean;interval_hours?:number;source_category_path?:string[];notes?:string;paused_at?:string|null;pause_reason?:string|null}
 interface Field {key:string;label:string;type?:'number'|'select';min?:number;max?:number;options?:{value:string;label:string}[];hint?:string}
 @Component({selector:'discovery-admin',imports:[DiscoveryActivity,DismissOnBackdrop,FormsModule,DatePipe,Pagination],templateUrl:'./discovery-admin.html',styles:`
 :host{display:block}.discovery-note{line-height:1.6}.discovery-tabs{display:flex;gap:10px;margin:0 0 20px;padding:0;border:0;flex-wrap:wrap}.discovery-tabs button[aria-pressed=true]{background:var(--green);color:white}.discovery-filters{display:flex;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:20px}.discovery-filters label{margin:0;flex:1;min-width:160px}.discovery-filters input,.discovery-filters select{margin:0}.discovery-table td{vertical-align:top}.source-url{display:block;max-width:360px;overflow-wrap:anywhere;font-size:11px;margin-top:6px;color:var(--muted)}.row-actions{display:flex;gap:12px;align-items:center}.discovery-modal{width:min(920px,100%);margin:0;border:0;color:var(--ink)}fieldset{border:1px solid var(--line);border-radius:10px;margin:20px 0;padding:18px;min-width:0}legend{font-weight:750;padding:0 8px}.help{display:block;font-size:11px;font-weight:400;color:var(--muted);line-height:1.5;letter-spacing:normal}.failure-rule{padding-top:12px;margin-top:12px;border-top:1px solid var(--line)}.failure-rule h3{margin-bottom:12px}.form-errors{border:1px solid var(--red);padding:12px 16px;border-radius:8px;color:var(--red);margin-bottom:16px}.form-errors p{margin:4px 0;font-size:12px}.discovery-modal .button-row{margin-top:20px}@media(max-width:640px){fieldset{padding:12px}.discovery-modal .form-grid{grid-template-columns:1fr}.discovery-filters{gap:12px}.source-url{max-width:230px}}
@@ -30,19 +30,35 @@ export class DiscoveryAdmin implements OnInit {
  limitFields:Field[]=[{key:'maxPages',label:'Máximo de páginas / avanços',type:'number',min:1,max:1000},{key:'maxItems',label:'Máximo de itens por seção',type:'number',min:1,max:100000},{key:'maxDurationSeconds',label:'Duração máxima por seção (segundos)',type:'number',min:60,max:86400},{key:'requestIntervalMs',label:'Intervalo mínimo entre requisições (ms)',type:'number',min:100,max:600000}];
  async ngOnInit(){await this.initialize();}
  async initialize(){this.failed.set(false);try{const [markets,defaults]=await Promise.all([this.api.get<Market[]>('/admin/catalog-marketplaces'),this.api.get<any>('/admin/discovery/defaults')]);this.markets.set(markets);this.defaults=defaults.config;this.ready.set(true);await this.feed.reset();}catch(e){this.failed.set(true);this.api.fail(e);}}
- async switchView(view:'sources'|'profiles'){if(this.busy()){return;}this.activityOpen.set(false);this.view.set(view);await this.feed.reset();}
+ async switchView(view:'sources'|'profiles'){if(this.busy()){return;}
+this.activityOpen.set(false);this.view.set(view);await this.feed.reset();}
  async filter(){await this.feed.reset();}
  modeLabel(mode:string){return this.modes.find(m=>m.value===mode)?.label||mode;}
- async open(row?:Entry){this.errors.set([]);this.editing=row||null;const market=row?.marketplace_id||this.marketplaceId||this.markets()[0]?.id||'';if(this.view()==='profiles'){this.draft={marketplaceId:market,name:row?.name||'',config:structuredClone(row?.config||this.defaults)};}else{this.draft={marketplaceId:market,name:row?.name||'',profileId:row?.profile_id||'',url:row?.url||'',enabled:row?.enabled??false,intervalHours:row?.interval_hours||24,notes:row?.notes||''};this.categoryText=(row?.source_category_path||[]).join('\n');}this.modal.set(this.view());if(this.view()==='sources')await this.loadOptions();}
+ async open(row?:Entry){this.errors.set([]);this.editing=row||null;const market=row?.marketplace_id||this.marketplaceId||this.markets()[0]?.id||'';if(this.view()==='profiles'){this.draft={marketplaceId:market,name:row?.name||'',config:structuredClone(row?.config||this.defaults)};}else{this.draft={marketplaceId:market,name:row?.name||'',profileId:row?.profile_id||'',url:row?.url||'',enabled:row?.enabled??false,intervalHours:row?.interval_hours||24,notes:row?.notes||''};this.categoryText=(row?.source_category_path||[]).join('\n');}
+this.modal.set(this.view());if(this.view()==='sources')await this.loadOptions();
+}
  private optionsSequence=0;
- async loadOptions(){const sequence=++this.optionsSequence,marketplaceId=this.draft.marketplaceId;this.options.set([]);try{const options=await this.api.get<Entry[]>('/admin/discovery/profile-options',{marketplaceId});if(sequence===this.optionsSequence&&this.modal()==='sources')this.options.set(options);}catch(e){if(sequence===this.optionsSequence)this.report(e);}}
+ async loadOptions(){const sequence=++this.optionsSequence,marketplaceId=this.draft.marketplaceId;this.options.set([]);try{const options=await this.api.get<Entry[]>('/admin/discovery/profile-options',{marketplaceId});if(sequence===this.optionsSequence&&this.modal()==='sources')this.options.set(options);
+}catch(e){if(sequence===this.optionsSequence)this.report(e);
+}}
  async marketChanged(){this.draft.profileId='';await this.loadOptions();}
  availableActions(key:string){return this.actions.filter(a=>(a.value!=='skip_item'||key==='invalidItem')&&(a.value!=='skip_page'||this.draft.config.pagination.mode==='url'));}
- changeMode(){if(this.draft.config.pagination.mode==='url'){return;}for(const type of this.failureTypes){const f=this.draft.config.failures[type.key];if(f.action==='skip_page')f.action='stop_section';}}
- visiblePaginationField(key:string){const mode=this.draft.config.pagination.mode;if(['nextSelector','disabledSelector','missingNextAction'].includes(key)){return ['next','load_more'].includes(mode);}if(['startPage','pageStep'].includes(key)){return mode==='url';}if(['scrollContainerSelector','scrollStepPx'].includes(key)){return mode==='scroll';}return mode!=='single';}
- close(){if(this.busy()){return;}this.modal.set(null);this.errors.set([]);}
+ changeMode(){if(this.draft.config.pagination.mode==='url'){return;}
+for(const type of this.failureTypes){const f=this.draft.config.failures[type.key];if(f.action==='skip_page')f.action='stop_section';
+}
+}
+ visiblePaginationField(key:string){const mode=this.draft.config.pagination.mode;if(['nextSelector','disabledSelector','missingNextAction'].includes(key)){return ['next','load_more'].includes(mode);}
+if(['startPage','pageStep'].includes(key)){return mode==='url';}
+if(['scrollContainerSelector','scrollStepPx'].includes(key)){return mode==='scroll';}
+return mode!=='single';}
+ close(){if(this.busy()){return;}
+this.modal.set(null);this.errors.set([]);}
  report(e:unknown){const details=e instanceof HttpErrorResponse?e.error?.fields:undefined;this.errors.set(Array.isArray(details)?details.map((f:any)=>f.field+': '+f.message):[]);this.api.fail(e);}
- async save(){if(this.busy()){return;}this.busy.set(true);this.errors.set([]);try{const kind=this.modal();const body={...this.draft,...(kind==='sources'?{sourceCategoryPath:this.categoryText.split(/\r?\n/).map(v=>v.trim()).filter(Boolean)}:{}),...(this.editing?{version:this.editing.version}:{})};await this.api.send(this.editing?'PUT':'POST','/admin/discovery/'+kind+(this.editing?'/'+this.editing.id:''),body);this.modal.set(null);this.api.success('Configuração salva. Nenhuma exploração foi iniciada.');await this.feed.go(this.feed.page()||1);}catch(e){this.report(e);}finally{this.busy.set(false);}}
- async startExploration(){const source=this.runTarget();if(!source||this.busy())return;this.busy.set(true);try{await this.api.send('POST','/admin/discovery/sources/'+source.id+'/run',{resume:!!source.paused_at});this.runTarget.set(null);this.activityOpen.set(true);this.api.success('Exploração enfileirada. Acompanhe a execução abaixo.');}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
- async remove(){const row=this.deleting();if(!row||this.busy()){return;}this.busy.set(true);try{await this.api.send('DELETE','/admin/discovery/'+this.view()+'/'+row.id,{version:row.version});this.deleting.set(null);this.api.success('Configuração excluída.');await this.feed.go(this.feed.page()||1);}catch(e){this.report(e);}finally{this.busy.set(false);}}
+ async save(){if(this.busy()){return;}
+this.busy.set(true);this.errors.set([]);try{const kind=this.modal();const body={...this.draft,...(kind==='sources'?{sourceCategoryPath:this.categoryText.split(/\r?\n/).map(v=>v.trim()).filter(Boolean)}:{}),...(this.editing?{version:this.editing.version}:{})};await this.api.send(this.editing?'PUT':'POST','/admin/discovery/'+kind+(this.editing?'/'+this.editing.id:''),body);this.modal.set(null);this.api.success('Configuração salva. Nenhuma exploração foi iniciada.');await this.feed.go(this.feed.page()||1);}catch(e){this.report(e);}finally{this.busy.set(false);}}
+ async resumeSource(row:any){try{await this.api.send('POST','/admin/extension-catalog/sources/'+row.id+'/resume',{});await this.feed.reset();this.api.success('Fonte liberada. Inicie o passo 1 na extensão.');}catch(e){this.api.fail(e);}}
+ async startExploration(){const source=this.runTarget();if(!source||this.busy())return;
+this.busy.set(true);try{await this.api.send('POST','/admin/discovery/sources/'+source.id+'/run',{resume:!!source.paused_at});this.runTarget.set(null);this.activityOpen.set(true);this.api.success('Exploração enfileirada. Acompanhe a execução abaixo.');}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
+ async remove(){const row=this.deleting();if(!row||this.busy()){return;}
+this.busy.set(true);try{await this.api.send('DELETE','/admin/discovery/'+this.view()+'/'+row.id,{version:row.version});this.deleting.set(null);this.api.success('Configuração excluída.');await this.feed.go(this.feed.page()||1);}catch(e){this.report(e);}finally{this.busy.set(false);}}
 }

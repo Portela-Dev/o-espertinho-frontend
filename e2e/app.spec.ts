@@ -131,7 +131,7 @@ test('tarja laranja usa o mínimo diário completo e só destaca preços atuais 
 });
 
 test('admin cancela atualização, preserva histórico da rodada e pode solicitar outra',async({page})=>{
- await login(page);await page.goto('/admin/updates');
+ await login(page);await page.goto('/admin/updates');await page.getByText('Serviços legados — somente durante a migração',{exact:true}).click();
  await page.getByLabel('Ativar execuções automáticas').uncheck();
  await page.getByLabel('Pausa entre consultas (milissegundos)').fill('100');
  const saved=page.waitForResponse(r=>r.url().endsWith('/api/admin/offer-refresh')&&r.request().method()==='PUT');
