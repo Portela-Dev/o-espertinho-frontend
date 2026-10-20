@@ -38,8 +38,10 @@ export class EnrichmentAdmin implements OnInit,OnDestroy {
   if((event as ToggleEvent).newState!=='open'){if(this.activeActions===menu)this.activeActions=undefined;
 return;}
   this.activeActions=menu;
-  const anchor=trigger.getBoundingClientRect(),bounds=menu.getBoundingClientRect(),gap=8;
-  const left=Math.max(gap,Math.min(anchor.right-bounds.width,window.innerWidth-bounds.width-gap));
+  const gap=8,viewportWidth=Math.min(window.innerWidth,document.documentElement.clientWidth,window.visualViewport?.width??window.innerWidth);
+  menu.style.width=Math.min(208,viewportWidth-gap*2)+'px';
+  const anchor=trigger.getBoundingClientRect(),bounds=menu.getBoundingClientRect();
+  const left=Math.max(gap,Math.min(anchor.right-bounds.width,viewportWidth-bounds.width-gap));
   const below=anchor.bottom+gap;
   const top=below+bounds.height<=window.innerHeight-gap?below:Math.max(gap,anchor.top-bounds.height-gap);
   menu.style.left=left+'px';menu.style.top=top+'px';
