@@ -31,7 +31,7 @@ try{
  await ready(`http://127.0.0.1:${apiPort}/api/health`,api);
  const web=await start(['dist/espertinho/server/server.mjs'],process.cwd(),{PORT:String(webPort),HOST:'127.0.0.1',API_BASE_URL:`http://127.0.0.1:${apiPort}`,ALLOWED_HOSTS:'localhost,127.0.0.1'},'ssr');
  await ready(`http://127.0.0.1:${webPort}/health`,web);
- const tests=spawn(process.execPath,['node_modules/playwright/cli.js','test'],{env:{...process.env,E2E_BASE_URL:base,E2E_BROWSER_CHANNEL:process.env.E2E_BROWSER_CHANNEL||(process.platform==='win32'?'msedge':'chromium')},stdio:'inherit',windowsHide:true});
+ const tests=spawn(process.execPath,['node_modules/playwright/cli.js','test',...(process.env.E2E_SPEC?[process.env.E2E_SPEC]:[])],{env:{...process.env,E2E_BASE_URL:base,E2E_BROWSER_CHANNEL:process.env.E2E_BROWSER_CHANNEL||(process.platform==='win32'?'msedge':'chromium')},stdio:'inherit',windowsHide:true});
  process.exitCode=await new Promise((done,reject)=>{tests.once('error',reject);tests.once('exit',code=>done(code??1));});
 }catch(error){console.error(error.message);process.exitCode=1;}
 finally{

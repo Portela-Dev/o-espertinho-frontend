@@ -1,3 +1,11 @@
+# Administração do catálogo pela extensão
+
+O frontend permite configurar receitas e regras de login/desafio em Marketplaces, acompanhar execuções em Atualizações, revisar categorias/produtos e publicar candidatos. Em marketplaces migrados, o cadastro manual e o teste de seletores aguardam uma solicitação processada pela extensão; a prévia é finalizada por POST com XSRF. Painéis legados permanecem identificados durante a transição.
+
+A navegação não acontece no servidor Angular. Cookies e tokens do marketplace não são enviados ao frontend/backend. O plano vivo fica na raiz do workspace e em 1-backend/docs/PLANO-MIGRACAO-CATALOGO-EXTENSAO.md.
+
+Jornadas novas: e2e/extension-catalog.spec.ts. O runner web aceita E2E_SPEC para execução seletiva e usa API/banco de teste isolados; não use o banco pessoal.
+
 # Frontend Espertinho
 
 Angular 22 com pÃ¡ginas pÃºblicas SSR e rotas pessoais/admin renderizadas no navegador.
