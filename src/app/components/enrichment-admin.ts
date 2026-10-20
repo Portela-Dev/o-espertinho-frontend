@@ -14,6 +14,7 @@ export class EnrichmentAdmin implements OnInit,OnDestroy {
  mappings=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/mappings',{page,pageSize,marketplaceId:this.marketplaceId}));
  selectedRun=signal<any>(null);items=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/runs/'+this.selectedRun().id+'/items',{page,pageSize}));
  async ngOnInit(){try{const [markets,categories]=await Promise.all([this.api.get<any[]>('/admin/catalog-marketplaces'),this.api.get<any[]>(this.base+'/categories')]);this.markets.set(markets);this.categories.set(categories);await this.links.reset();await this.runs.reset();if(this.api.browser)this.timer=setInterval(()=>{void this.poll();},3000);}catch(e){this.api.fail(e);}}
+ usesExtension(){return this.markets().find(m=>m.id===this.marketplaceId)?.catalog_executor==='extension';}
  creatingCategory=signal(false);newCategoryPath:string[]=[''];
  productTarget=signal<any>(null);productMode:'existing'|'new'='existing';productQuery='';selectedProductId='';
  productDraft={name:'',description:'',brand:'',imageUrl:''};
