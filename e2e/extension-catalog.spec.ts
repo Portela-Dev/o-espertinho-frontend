@@ -24,8 +24,8 @@ test('acompanhamento tem paginação, menu flutuante, detalhes e cancelamento',a
   if(url.pathname.endsWith('/items'))return route.fulfill({json:{items:[{id,status:'failed',error:'incomplete'}],total:1,page:1,pageSize:20}});
   return route.fulfill({json:{items:[{id,marketplace_name:'Loja de teste',step:'prices',status:cancelled?'cancelled':'waiting_for_human',reason:'challenge',total:3,completed:1,failed:0,updated_at:new Date().toISOString()}],total:1,page:1,pageSize:20}});
  });
- await login(page);await page.goto('/admin/updates');const component=page.locator('catalog-operations');await expect(component).toContainText('Intervenção necessária');await component.getByRole('button',{name:'Ações ⋮'}).click();await component.getByRole('button',{name:'Detalhar',exact:true}).click();await expect(component).toContainText('incomplete');
- await component.getByRole('button',{name:'Ações ⋮'}).click();await component.getByRole('button',{name:'Cancelar',exact:true}).click();await expect.poll(()=>cancelled).toBe(true);await expect(component).toContainText('Cancelado');
+ await login(page);await page.goto('/admin/updates');const component=page.locator('catalog-operations');await expect(component).toContainText('Intervenção necessária');await component.getByRole('button',{name:'Ações',exact:true}).click();await component.getByRole('button',{name:'Detalhar',exact:true}).click();await expect(component).toContainText('incomplete');
+ await component.getByRole('button',{name:'Ações',exact:true}).click();await component.getByRole('button',{name:'Cancelar',exact:true}).click();await expect.poll(()=>cancelled).toBe(true);await expect(component).toContainText('Cancelado');
  await expect(component.locator('app-pagination')).toHaveCount(2);
 });
 test('teste de seletor aguarda resultado da extensão e não cadastra anúncio',async({page})=>{
@@ -40,5 +40,5 @@ test('teste de seletor aguarda resultado da extensão e não cadastra anúncio',
 
 test('admin exposes only extension operations, with no legacy schedule or executor switch',async({page})=>{
  await login(page);await page.goto('/admin/updates');await expect(page.locator('catalog-operations')).toBeVisible();await expect(page.getByText('Serviços legados',{exact:false})).toHaveCount(0);await expect(page.getByRole('button',{name:'Atualizar links agora'})).toHaveCount(0);
- await page.goto('/admin/discovery');await expect(page.getByRole('button',{name:'Confirmar exploração'})).toHaveCount(0);await page.getByRole('button',{name:'Execuções',exact:true}).click();await expect(page.locator('catalog-operations')).toBeVisible();
+ await page.goto('/admin/discovery');await expect(page.getByRole('button',{name:'Confirmar exploração'})).toHaveCount(0);await page.getByRole('navigation',{name:'Administração'}).getByRole('link',{name:'Execuções',exact:true}).click();await expect(page.locator('catalog-operations')).toBeVisible();
 });

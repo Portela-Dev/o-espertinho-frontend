@@ -1,10 +1,12 @@
+import {combineLatest} from 'rxjs';
+import {ProductPicker} from '../components/product-picker';
+import {ActionMenu} from '../components/action-menu';
 import {CatalogOperations} from '../components/catalog-operations';
 import {EnrichmentAdmin} from '../components/enrichment-admin';
 import {DismissOnBackdrop} from '../components/dismiss-on-backdrop';
 import {DiscoveryAdmin} from '../components/discovery-admin';
 import {PagedData} from '../paged-data';
 import {Pagination} from '../components/pagination';
-import {InfiniteScroll} from '../components/infinite-scroll';
 import {Component,inject,signal,OnInit,DestroyRef} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {DatePipe,CurrencyPipe} from '@angular/common';
@@ -16,18 +18,29 @@ import {ProductsAdmin} from '../components/products-admin';
 import {CatalogAdmin} from '../components/catalog-admin';
 import {Api} from '../api.service';
 import {Offer,storeNames} from '../models';
-@Component({imports:[CatalogOperations,EnrichmentAdmin,DismissOnBackdrop,DiscoveryAdmin,Pagination,InfiniteScroll,UsersAdmin,ProductsAdmin,CatalogAdmin,FormsModule,RouterLink,RouterLinkActive,DatePipe,CurrencyPipe],templateUrl:'./admin.page.html'})
+@Component({imports:[ActionMenu,CatalogOperations,EnrichmentAdmin,DismissOnBackdrop,DiscoveryAdmin,Pagination,ProductPicker,UsersAdmin,ProductsAdmin,CatalogAdmin,FormsModule,RouterLink,RouterLinkActive,DatePipe,CurrencyPipe],templateUrl:'./admin.page.html'})
 export class AdminPage implements OnInit {
   api=inject(Api);route=inject(ActivatedRoute);destroy=inject(DestroyRef);title=inject(Title);section=signal('overview');loading=signal(false);failed=signal(false);busy=signal(false);names=storeNames;
-  stats=signal<any>(null);offerFeed=new PagedData<Offer>(page=>this.api.get('/admin/offers',{paginate:true,status:this.reviewStatus,page}));offers=this.offerFeed.items;logFeed=new PagedData<any>((page,pageSize)=>this.api.get('/admin/audit',{paginate:true,page,pageSize}));logs=this.logFeed.items;
-  topSize=5;topPage=1;metricSize=5;metricPage=1;days=30;reviewStatus='pending';offerPage=1;
+  stats=signal<any>(null);offerFeed=new PagedData<Offer>((page,pageSize)=>this.api.get('/admin/offers',{paginate:true,status:this.reviewStatus,page,pageSize}));offers=this.offerFeed.items;logFeed=new PagedData<any>((page,pageSize)=>this.api.get('/admin/audit',{paginate:true,page,pageSize}));logs=this.logFeed.items;
+  topSize=5;topPage=1;metricSize=5;metricPage=1;days=30;reviewStatus='all';manualOpen=signal(false);
   editModal=signal(false);editing:Offer|null=null;confirmAction=signal<{message:string;successMessage?:string;action:()=>Promise<void>}|null>(null);
   editDraft={title:'',description:'',category:'',subcategory:'',conditions:'',featured:false,price:0,originalPrice:null as number|null,expiresAt:''};
-  heading(){return ({discovery:'Exploração de marketplaces',users:'Usuários',profiles:'Perfis de acesso',updates:'Atualização de ofertas',products:'Produtos',overview:'Visão geral',marketplaces:'Marketplaces',selectors:'Seletores',links:'Cadastro de links',offers:'Revisão de ofertas',activity:'Atividade'} as Record<string,string>)[this.section()]||'Administração';}
-  ngOnInit(){this.route.paramMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(p=>{const s=p.get('section')||'overview';this.topPage=1;this.metricPage=1;this.section.set(['discovery','users','profiles','updates','products','overview','marketplaces','offers','activity','selectors','links'].includes(s)?s:'overview');this.title.setTitle(this.heading()+' | Admin | O Espertinho');void this.load();});}
+  marketTabs=[{id:'marketplaces',path:'/admin/marketplaces',label:'Cadastro'},{id:'discovery',path:'/admin/discovery',label:'Exploração'},{id:'selectors',path:'/admin/selectors',label:'Seletores'}];
+  tabs(){return [
+   {label:'Visão geral',sections:['overview']},{label:'Revisão',sections:['offers']},{label:'Ofertas',sections:['links']},{label:'Produtos',sections:['products']},
+   {label:'Marketplaces',sections:['marketplaces','discovery','selectors']},{label:'Execuções',sections:['updates']},{label:'Acessos',sections:['users','profiles']},{label:'Atividade',sections:['activity']}
+  ].flatMap(tab=>{const first=tab.sections.find(section=>this.api.adminSection(section));return first?[{...tab,path:first==='overview'?'/admin':'/admin/'+first}]:[];});}
+  editingClassification=signal<Offer|null>(null);reassignProductId='';
+  openClassification(offer:Offer){this.reassignProductId=offer.product_id;this.editingClassification.set(offer);}
+  async saveClassification(){const offer=this.editingClassification();if(!offer)return;
+   await this.act(async()=>{await this.api.send('PUT','/admin/offers/'+offer.id+'/product',{productId:this.reassignProductId,expectedUpdatedAt:offer.updated_at});this.editingClassification.set(null);},'Produto vinculado. A oferta voltou para revisão.');
+  }
+  manualCreated(){this.manualOpen.set(false);this.reviewStatus='pending';void this.load();}
+  heading(){return ({discovery:'Exploração de marketplaces',users:'Usuários',profiles:'Perfis de acesso',updates:'Execuções',products:'Produtos',overview:'Visão geral',marketplaces:'Marketplaces',selectors:'Seletores',links:'Ofertas',offers:'Revisão de ofertas',activity:'Atividade'} as Record<string,string>)[this.section()]||'Administração';}
+  ngOnInit(){combineLatest([this.route.paramMap,this.route.queryParamMap]).pipe(takeUntilDestroyed(this.destroy)).subscribe(([p,query])=>{const s=p.get('section')||'overview';this.topPage=1;this.metricPage=1;const status=query.get('status');if(status&&['all','pending','published','rejected','expired'].includes(status)){this.reviewStatus=status;}this.manualOpen.set(query.has('product')||query.get('new')==='1');this.section.set(['discovery','users','profiles','updates','products','overview','marketplaces','offers','activity','selectors','links'].includes(s)?s:'overview');this.title.setTitle(this.heading()+' | Admin | O Espertinho');void this.load();});}
   async load(){this.loading.set(true);this.failed.set(false);try{switch(this.section()){
     case'overview':{const stats:any=await this.api.get('/admin/stats',{days:this.days,paginate:true,topPage:this.topPage,pageSize:this.topSize});this.stats.set(stats);this.topPage=stats.topPage;break;}
-    case'offers':await this.offerFeed.reset();if(this.offerFeed.failed())throw new Error('Não foi possível carregar as ofertas.');break;
+    case'links':await this.offerFeed.reset();if(this.offerFeed.failed())throw new Error('Não foi possível carregar as ofertas.');break;
     case'activity':await this.logFeed.reset();break;
   }}catch(e){this.failed.set(true);this.api.fail(e);}finally{this.loading.set(false);}}
   async act(fn:()=>Promise<unknown>,message:string,reload=true){if(this.busy())return;this.busy.set(true);try{await fn();this.api.success(message);if(reload)await this.load();}catch(e){this.api.fail(e);if(reload)await this.load();}finally{this.busy.set(false);}}
@@ -38,5 +51,5 @@ export class AdminPage implements OnInit {
   saveEdit(){void this.act(async()=>{const {price,originalPrice,expiresAt,...editorial}=this.editDraft;await this.api.send('PATCH','/admin/offers/'+this.editing!.id,{...editorial,priceCents:Math.round(price*100),originalPriceCents:originalPrice?Math.round(originalPrice*100):null,expiresAt:new Date(expiresAt).toISOString()});this.editModal.set(false);},'Alterações salvas. A oferta voltou para revisão.');}
   count(status:string){return this.stats()?.offers?.find((o:any)=>o.status===status)?.count||0;}
   maxClicks(){return Math.max(1,...(this.stats()?.marketplaces||[]).map((m:any)=>m.clicks));}
-  statusLabel(status:string){return ({pending:'Pendente',published:'Publicada',rejected:'Rejeitada',expired:'Encerrada',connected:'Conectado',catalog_only:'Somente API geral',unverified:'Não validado',not_configured:'Não configurado',error:'Verifique a conexão',running:'Executando',success:'Concluída',failed:'Falhou'} as Record<string,string>)[status]||status;}
+  statusLabel(status:string){return ({pending:'Pendente',published:'Publicada',rejected:'Rejeitada',expired:'Encerrada'} as Record<string,string>)[status]||status;}
 }
