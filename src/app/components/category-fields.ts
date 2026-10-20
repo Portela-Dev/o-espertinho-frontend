@@ -10,13 +10,15 @@ let nextId=0;
   <datalist [id]="id+'-'+level">@for(name of optionsAt(level);track name){<option [value]="name"></option>}</datalist></label>
  }
  </div>
- <p class="legal-small muted">Até 10 níveis. Preencha uma subcategoria para abrir o próximo nível. Ao alterar um nível, seus descendentes são removidos. Novas opções são salvas junto com o produto.</p>
+ <p class="legal-small muted">{{helpText}}</p>
  @if(failed()){<p class="legal-small muted">As sugestões estão indisponíveis. Você ainda pode digitar os níveis.</p>}
 `})
 export class CategoryFields implements OnInit {
  @Input() path:string[]=[''];@Output() pathChange=new EventEmitter<string[]>();
+ @Input() optionsUrl='/admin/category-tree';
+ @Input() helpText='Até 10 níveis. Preencha uma subcategoria para abrir o próximo nível. Ao alterar um nível, seus descendentes são removidos. Novas opções são salvas junto com o produto.';
  api=inject(Api);id='offer-category-'+nextId++;options=signal<CategoryNode[]>([]);failed=signal(false);
- ngOnInit(){void this.api.get<CategoryNode[]>('/admin/category-tree').then(v=>this.options.set(v)).catch(()=>this.failed.set(true));}
+ ngOnInit(){void this.api.get<CategoryNode[]>(this.optionsUrl).then(v=>this.options.set(v)).catch(()=>this.failed.set(true));}
  levels(){return Array.from({length:Math.min(10,Math.max(2,this.path.length+(this.path.at(-1)?.trim()?1:0)))},(_,i)=>this.path[i]??'');}
  optionsAt(level:number){const key=(s:string)=>s.trim().replace(/\s+/g,' ').toLocaleLowerCase();return this.options().filter(n=>n.path.length===level+1&&n.path.slice(0,level).every((s,i)=>key(s)===key(this.path[i]??''))).map(n=>n.path[level]);}
  change(level:number,value:string){const path=this.path.slice(0,level);if(value.trim()||!level)path.push(value);this.pathChange.emit(path);}
