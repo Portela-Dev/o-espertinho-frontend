@@ -41,11 +41,11 @@ test('links, auditoria, perfis e execuções navegam pelo histórico em páginas
   {path:'/admin/links',api:'/admin/link-imports',selector:'catalog-admin tbody tr',label:'Links cadastrados',key:'items'},
   {path:'/admin/activity',api:'/admin/audit',selector:'.admin-page tbody tr',label:'Atividade administrativa',key:'items'},
   {path:'/admin/profiles',api:'/admin/access-profiles',selector:'users-admin tbody tr',label:'Perfis de acesso',key:'profiles'},
-  {path:'/admin/updates',api:'/admin/offer-refresh',selector:'offer-refresh-admin tbody tr',label:'Execuções de atualização',key:'runs'},
+  {path:'/admin/updates',api:'/admin/extension-catalog/runs',selector:'catalog-operations tbody tr',label:'Execuções da extensão',key:'items'},
  ];
  for(const c of cases){
   await page.route('**/api'+c.api+'?**',async route=>{const p=Number(new URL(route.request().url()).searchParams.get('page'));const response=await route.fetch(),base=await response.json();const rows=Array.from({length:p===1?20:1},(_,i)=>({id:'record-'+((p-1)*20+i),title:'Registro '+i,name:'Registro '+i,category:'Teste',status:'completed',trigger:'manual',total:1,processed:1,updated:1,pending:0,unavailable:0,affiliate_url:'https://www.example.com/',permissions:[],user_count:0,created_at:'2026-10-18T12:00:00Z'}));await route.fulfill({response,json:{...base,[c.key]:rows,items:rows,total:21,page:p,pageSize:20}});});
-  await page.goto(c.path);if(c.path==='/admin/updates')await page.getByText('Serviços legados — somente durante a migração',{exact:true}).click();const pager=page.getByRole('navigation',{name:c.label,exact:true});await expect(page.locator(c.selector)).toHaveCount(20);await pager.getByRole('button',{name:'Próxima'}).click();await expect(page.locator(c.selector)).toHaveCount(1);await expect(pager).toContainText('Página 2 de 2');
+  await page.goto(c.path);const pager=page.getByRole('navigation',{name:c.label,exact:true});await expect(page.locator(c.selector)).toHaveCount(20);await pager.getByRole('button',{name:'Próxima'}).click();await expect(page.locator(c.selector)).toHaveCount(1);await expect(pager).toContainText('Página 2 de 2');
  }
 });
 test('marketplaces e ofertas do produto acrescentam cards com rolagem',async({page})=>{
