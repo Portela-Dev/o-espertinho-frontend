@@ -31,8 +31,15 @@ test('formulário adapta os controles de paginação e mantém o mobile sem tran
   await dialog.getByLabel('Como a página avança').selectOption(mode);
   if(['next','load_more'].includes(mode))await expect(dialog.getByLabel('Seletor de próxima página / carregar mais')).toBeVisible();
   if(mode==='url')await expect(dialog.getByLabel('Modelo de URL')).toBeVisible();
-  if(mode==='scroll')await expect(dialog.getByLabel('Deslocamento por rolagem')).toBeVisible();
+  if(mode==='scroll'){
+   await expect(dialog.getByLabel('Deslocamento por rolagem')).toBeVisible();
+   await dialog.getByLabel('Estratégia de rolagem').selectOption('bottom');await expect(dialog.getByLabel('Deslocamento por rolagem')).toHaveCount(0);
+   await dialog.getByLabel('Estratégia de rolagem').selectOption('step');await expect(dialog.getByLabel('Deslocamento por rolagem')).toBeVisible();
+  }
  }
+ await dialog.getByLabel('Como a página avança').selectOption('scroll');await dialog.getByLabel('Estratégia de rolagem').selectOption('bottom');await dialog.getByRole('button',{name:'Salvar configuração'}).click();await expect(dialog).toHaveCount(0);
+ const saved=(await (await page.request.get('/api/admin/discovery/profiles?q=Perfil%20visual')).json()).items[0];expect(saved.config.pagination.scrollStrategy).toBe('bottom');
+ await chooseAction(page.locator('discovery-admin tbody tr').filter({hasText:'Perfil visual'}),'Editar');await expect(dialog.getByLabel('Estratégia de rolagem')).toHaveValue('bottom');
  await page.setViewportSize({width:390,height:844});await dialog.getByLabel('Nome',{exact:true}).scrollIntoViewIfNeeded();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();await page.screenshot({path:'test-results/discovery-mobile.png'});await page.setViewportSize({width:1440,height:1080});await page.screenshot({path:'test-results/discovery-desktop.png'});await dialog.getByRole('button',{name:'Cancelar',exact:true}).click();await expect(dialog).toHaveCount(0);
 });
 
