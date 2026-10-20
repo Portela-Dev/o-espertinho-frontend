@@ -1,3 +1,4 @@
+import {ReviewAiSettings} from './review-ai-settings';
 import {RouterLink} from '@angular/router';
 import {ActionMenu} from './action-menu';
 import {CategoryFields} from './category-fields';
@@ -8,9 +9,9 @@ import {Api} from '../api.service';
 import {PagedData} from '../paged-data';
 import {Pagination} from './pagination';
 import {DismissOnBackdrop} from './dismiss-on-backdrop';
-@Component({selector:'enrichment-admin',imports:[RouterLink,ActionMenu,CategoryFields,FormsModule,DatePipe,CurrencyPipe,Pagination,DismissOnBackdrop],templateUrl:'./enrichment-admin.html',styles:`:host{display:block}.tools,.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:16px 0}.tools label{margin:0;min-width:160px;flex:1}.tools input,.tools select{margin-bottom:0}td{vertical-align:top}.url{overflow-wrap:anywhere;max-width:320px;display:block}.detail{width:min(800px,100%);margin:0;border:0;color:var(--ink)}.detail img{width:180px;height:180px;object-fit:contain}.detail p{white-space:pre-wrap;overflow-wrap:anywhere}.notice{color:var(--muted);font-size:12px}small{display:block}.actions button[aria-pressed=true]{font-weight:bold}.category-tree-fields{border:0;padding:0;margin:0;min-width:0}`})
+@Component({selector:'enrichment-admin',imports:[ReviewAiSettings,RouterLink,ActionMenu,CategoryFields,FormsModule,DatePipe,CurrencyPipe,Pagination,DismissOnBackdrop],templateUrl:'./enrichment-admin.html',styles:`:host{display:block}.tools,.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:16px 0}.tools label{margin:0;min-width:160px;flex:1}.tools input,.tools select{margin-bottom:0}td{vertical-align:top}.url{overflow-wrap:anywhere;max-width:320px;display:block}.detail{width:min(800px,100%);margin:0;border:0;color:var(--ink)}.detail img{width:180px;height:180px;object-fit:contain}.detail p{white-space:pre-wrap;overflow-wrap:anywhere}.notice{color:var(--muted);font-size:12px}small{display:block}.actions button[aria-pressed=true]{font-weight:bold}.category-tree-fields{border:0;padding:0;margin:0;min-width:0}`})
 export class EnrichmentAdmin implements OnInit {
- api=inject(Api);base='/admin/discovery/enrichment';view=signal<'review'|'mappings'>('review');markets=signal<any[]>([]);categories=signal<any[]>([]);marketplaceId='';state='';sourceCategory='';busy=signal(false);detail=signal<any>(null);categoryTarget=signal<any>(null);mappingTarget=signal<any>(null);deleteTarget=signal<any>(null);archiveTarget=signal<any>(null);categoryId='';saveMapping=false;
+ api=inject(Api);base='/admin/discovery/enrichment';view=signal<'review'|'mappings'|'ai'>('review');markets=signal<any[]>([]);categories=signal<any[]>([]);marketplaceId='';state='';sourceCategory='';busy=signal(false);detail=signal<any>(null);categoryTarget=signal<any>(null);mappingTarget=signal<any>(null);deleteTarget=signal<any>(null);archiveTarget=signal<any>(null);categoryId='';saveMapping=false;
  links=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/review',{page,pageSize,marketplaceId:this.marketplaceId,state:this.state,sourceCategory:this.sourceCategory}));
  mappings=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/mappings',{page,pageSize,marketplaceId:this.marketplaceId}));
  async ngOnInit(){try{const [markets,categories]=await Promise.all([this.api.get<any[]>('/admin/catalog-marketplaces'),this.api.get<any[]>(this.base+'/categories')]);this.markets.set(markets);this.categories.set(categories);await this.links.reset();
@@ -24,6 +25,8 @@ export class EnrichmentAdmin implements OnInit {
   this.productMode='existing';this.productQuery='';this.selectedProductId=link.product_id||'';
   const data=link.enrichment_data||{};
   this.productDraft={name:data.title||'',description:data.description||'',brand:data.brand||'',imageUrl:(data.images||[]).find((url:string)=>url.startsWith('https://'))||''};
+  if(link.ai_product?.action==='link_existing'){this.selectedProductId=link.ai_product.productId;}
+  if(link.ai_product?.action==='create_new'){this.productMode='new';this.productDraft={...this.productDraft,...link.ai_product.product};}
   this.productTarget.set(link);await this.products.reset();
  }
  async confirmProduct(){const link=this.productTarget();await this.act(async()=>{
@@ -32,7 +35,7 @@ export class EnrichmentAdmin implements OnInit {
  },'Produto atribuído. Revise o anúncio antes de publicar.');}
  publishTarget=signal<any>(null);
  async publish(){const link=this.publishTarget();await this.act(async()=>{await this.api.send('POST',this.base+'/review/'+link.id+'/publish',{version:link.enrichment_version,authorizedContent:true});this.publishTarget.set(null);},'Oferta publicada.');}
- async selectView(view:'review'|'mappings'){this.view.set(view);await this.feed().reset();}
+ async selectView(view:'review'|'mappings'|'ai'){this.view.set(view);if(view!=='ai')await this.feed().reset();}
  feed(){return this.view()==='mappings'?this.mappings:this.links;}
  async filter(){await this.feed().reset();}
  async act(work:()=>Promise<unknown>,message:string){if(this.busy())return;
@@ -44,7 +47,8 @@ this.busy.set(true);try{await work();this.api.success(message);await this.feed()
 if(!link.source_category_path.length)return 'Sem categoria de origem';
 if(link.suggested_category_id)return 'Categoria sugerida — confirmar';
 return 'Aguardando categorização';}
- categorize(link:any){this.categoryId=link.confirmed_category_id||link.suggested_category_id||'';this.saveMapping=false;this.creatingCategory.set(false);this.newCategoryPath=[''];this.categoryTarget.set(link);}
+ categorize(link:any){this.categoryId=link.confirmed_category_id||link.suggested_category_id||'';this.saveMapping=false;this.creatingCategory.set(false);this.newCategoryPath=[''];if(link.ai_category){this.categoryId=link.ai_category.categoryId||'';if(!this.categoryId){this.newCategoryPath=[...link.ai_category.categoryPath];this.creatingCategory.set(true);}}
+this.categoryTarget.set(link);}
  async createCategory(){
   if(this.busy())return;
 this.busy.set(true);
@@ -60,5 +64,6 @@ this.busy.set(true);
  async saveEditedMapping(){await this.act(async()=>{await this.api.send('PUT',this.base+'/mappings/'+this.mappingTarget().id,{categoryId:this.categoryId});this.mappingTarget.set(null);},'Mapeamento alterado. Categorias já confirmadas foram preservadas.');}
  async deleteMapping(){await this.act(async()=>{await this.api.send('DELETE',this.base+'/mappings/'+this.deleteTarget().id,{});this.deleteTarget.set(null);},'Mapeamento excluído.');}
  async archive(){await this.act(async()=>{await this.api.send('POST',this.base+'/review/'+this.archiveTarget().id+'/archive',{});this.archiveTarget.set(null);},'Link arquivado.');}
+ async discardAi(requestId:string){await this.act(async()=>{await this.api.send('POST',this.base+'/ai/suggestions/'+requestId+'/discard',{});this.categoryTarget.set(null);this.productTarget.set(null);},'Sugestão descartada. O item pode ser analisado novamente pela extensão.');}
  async retryLink(link:any){await this.act(()=>this.api.send('POST',this.base+'/review/'+link.id+'/retry',{}),'Retentativa preparada. Execute o passo 3 na extensão.');}
 }

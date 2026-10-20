@@ -19,3 +19,7 @@ Cadastro por link e teste de seletores recebem uma solicitação assíncrona: se
 `npm run typecheck`, `npm run build`, `npm run test:coverage` e `npm run test:e2e`. Os E2Es usam o servidor de fixture isolado do backend, nunca o banco pessoal. O CI executa SSR/Chromium real e coleta cobertura do navegador. O checkout backend é fixado em SHA compatível com a mesma entrega.
 
 Plano e diário: ../PLANO-MIGRACAO-CATALOGO-EXTENSAO.md e cópia versionada em o-espertinho-backend/docs. Evidências anteriores estão em docs/history.
+
+## Revisão com IA
+
+A revisão possui uma aba Configurações de IA com tarefas e prompts independentes. A extensão gera propostas; o administrador confirma categoria e produto antes de qualquer aplicação. Consulte docs/REVISAO-IA.md no backend.
