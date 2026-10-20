@@ -60,7 +60,7 @@ jobs:
         with:
           repository: Portela-Dev/o-espertinho-backend
           # Compatible backend contract, including discovery configuration; may be overridden for integration testing.
-          ref: ${{ vars.E2E_BACKEND_REF || '266dcd998bd2268792bfe09d20e4bd049f9e0351' }}
+          ref: ${{ vars.E2E_BACKEND_REF || 'cc3762c6746c4d08d0e1da89ff3023c4ae3648f7' }}
           path: .ci-backend
           persist-credentials: false
       - name: Preparar API de teste e Chromium

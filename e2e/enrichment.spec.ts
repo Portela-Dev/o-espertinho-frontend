@@ -51,7 +51,7 @@ test('confirmed review assigns existing products and creates editable prefilled 
  await dialog.getByLabel('Buscar produto por nome ou SKU').fill('Monitor');await dialog.getByRole('button',{name:'Buscar produtos',exact:true}).click();
  await dialog.getByRole('radio',{name:'Selecionar Monitor',exact:false}).check();
  const assigned=page.waitForResponse(r=>r.url().endsWith('/6ef4f2a1-912f-463a-a6e8-43c505976781/product')&&r.status()===200);
- await dialog.getByRole('button',{name:'Confirmar atribuição',exact:true}).click();expect((await (await assigned).json()).status).toBe('awaiting_affiliate_link');await expect(dialog).toBeHidden();await expect(row).toContainText('Produto: Monitor');
+ await dialog.getByRole('button',{name:'Confirmar atribuição',exact:true}).click();expect((await (await assigned).json()).status).toBe('ready_for_review');await expect(dialog).toBeHidden();await expect(row).toContainText('Produto: Monitor');
  row=panel.locator('tbody tr').filter({hasText:'Produto descoberto para criar'});await row.getByRole('button',{name:'Ações do link',exact:true}).click();await panel.getByRole('button',{name:'Atribuir Produto',exact:true}).click();
  dialog=page.getByRole('dialog',{name:'Atribuir Produto',exact:true});await dialog.getByRole('button',{name:'Criar novo produto',exact:true}).click();
  await expect(dialog.getByLabel('Nome',{exact:true})).toHaveValue('Produto descoberto para criar');await expect(dialog.getByLabel('Descrição (opcional)',{exact:true})).toHaveValue('Descrição extraída do produto');await expect(dialog.getByLabel('Marca (opcional)',{exact:true})).toHaveValue('Marca extraída');await expect(dialog.getByLabel('URL da imagem (opcional)',{exact:true})).toHaveValue('https://example.com/image.jpg');
@@ -59,7 +59,7 @@ test('confirmed review assigns existing products and creates editable prefilled 
  let failOnce=true;await page.route('**/enrichment/review/6ef4f2a1-912f-463a-a6e8-43c505976782/product',async route=>{if(failOnce){failOnce=false;await route.fulfill({status:503,json:{error:'Falha temporária ao atribuir'}});}else await route.continue();});
  await dialog.getByRole('button',{name:'Criar e atribuir produto',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Falha temporária ao atribuir');await expect(dialog.getByLabel('Nome',{exact:true})).toHaveValue('Produto criado na revisão');
  const created=page.waitForResponse(r=>r.url().endsWith('/6ef4f2a1-912f-463a-a6e8-43c505976782/product')&&r.status()===200);await dialog.getByRole('button',{name:'Criar e atribuir produto',exact:true}).click();
- const result=await (await created).json();expect(result.product.name).toBe('Produto criado na revisão');expect(result.product.brand).toBe('Marca revisada');expect(result.product.category_path).toEqual(['Tecnologia']);await expect(dialog).toBeHidden();await expect(row).toContainText('Aguardando link de afiliado');
+ const result=await (await created).json();expect(result.product.name).toBe('Produto criado na revisão');expect(result.product.brand).toBe('Marca revisada');expect(result.product.category_path).toEqual(['Tecnologia']);await expect(dialog).toBeHidden();await expect(row).toContainText('Produto: Produto criado na revisão');
 });
 
 
