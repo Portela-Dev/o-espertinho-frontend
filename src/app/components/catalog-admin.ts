@@ -43,7 +43,7 @@ export class CatalogAdmin implements OnChanges,OnDestroy {
  private async awaitPreview(value:any){
   if(!value.executionId)return value;this.pendingExecution.set(value.executionId);this.api.success('Prévia solicitada. Abra a extensão, carregue as execuções e selecione esta solicitação.');
   const deadline=Date.now()+15*60000;
-  try{while(!this.stopped&&this.pendingExecution()&&Date.now()<deadline){const result=await this.api.get<any>('/admin/extension-catalog/manual/'+value.executionId);if(result.status==='completed')return result;if(['cancelled','failed'].includes(result.status))throw new Error('A prévia foi encerrada: '+(result.reason||result.status));await new Promise(resolve=>setTimeout(resolve,2000));}throw new Error('Espera encerrada. Consulte a solicitação pela extensão ou gere outra prévia.');}finally{this.pendingExecution.set(null);}
+  try{while(!this.stopped&&this.pendingExecution()&&Date.now()<deadline){const result=await this.api.get<any>('/admin/extension-catalog/manual/'+value.executionId);if(result.status==='completed')return result.requiresFinalize?await this.api.send('POST','/admin/extension-catalog/manual/'+value.executionId+'/finalize',{}):result;if(['cancelled','failed'].includes(result.status))throw new Error('A prévia foi encerrada: '+(result.reason||result.status));await new Promise(resolve=>setTimeout(resolve,2000));}throw new Error('Espera encerrada. Consulte a solicitação pela extensão ou gere outra prévia.');}finally{this.pendingExecution.set(null);}
  }
  clearPreview(){this.specPage=1;this.evidencePage=1;this.preview.set(null);this.authorized=false;}
  async selectMarket(){this.clearPreview();if(this.section==='selectors')await this.act(()=>this.loadProfile(),'Seletores carregados.');}
