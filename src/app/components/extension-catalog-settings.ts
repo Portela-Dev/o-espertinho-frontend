@@ -1,8 +1,7 @@
-import {Component,Input,inject,signal} from '@angular/core';
-import {FormsModule} from '@angular/forms';
-import {Api} from '../api.service';
-
-@Component({selector:'extension-catalog-settings',standalone:true,imports:[FormsModule],template:`
+import { Component, Input, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Api } from '../api.service';
+@Component({ selector: 'extension-catalog-settings', standalone: true, imports: [FormsModule], template: `
 <details class="panel" (toggle)="opened($event)"><summary>Execução pela extensão / conversão e bloqueios</summary>
 @if(loaded()){
 <p class="muted">Configuração declarativa usada pelos quatro passos. Cookies e tokens do marketplace permanecem no Chrome.</p>
@@ -20,12 +19,50 @@ import {Api} from '../api.service';
 <label>Receita JSON (opcional)<textarea rows="12" [(ngModel)]="recipeText" spellcheck="false"></textarea></label>
 <button type="button" class="button dark small" [disabled]="busy()" (click)="save()">Salvar configuração da extensão</button>
 }@else{<p>Configuração ainda não carregada.</p><button type="button" class="button outline small" (click)="load()">Carregar</button>}
-</details>`})
+</details>` })
 export class ExtensionCatalogSettings {
- @Input({required:true}) marketplaceId='';
- api=inject(Api);loaded=signal(false);busy=signal(false);executor='legacy';version=0;recipeText='';placeholder='{{originalUrl}}';
- config:any={intervalMs:2000,timeoutMs:30000,humanTimeoutMs:900000,categorySeparator:'>',blockRules:[],recipe:null};
- opened(event:Event){if((event.target as HTMLDetailsElement).open&&!this.loaded())void this.load();}
- async load(){try{const data=await this.api.get<any>('/admin/extension-catalog/settings/'+this.marketplaceId);this.config=data.config;this.executor=data.catalog_executor;this.version=data.version;this.recipeText=data.config.recipe?JSON.stringify(data.config.recipe,null,2):'';this.loaded.set(true);}catch(e){this.api.fail(e);}}
- async save(){if(this.busy())return;this.busy.set(true);try{const recipe=this.recipeText.trim()?JSON.parse(this.recipeText):null;const result=await this.api.send<any>('PUT','/admin/extension-catalog/settings/'+this.marketplaceId,{version:this.version,executor:this.executor,config:{...this.config,recipe}});this.version=result.version;this.api.success('Configuração salva. Será aplicada às próximas execuções.');}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
+    @Input({ required: true })
+    marketplaceId = '';
+    api = inject(Api);
+    loaded = signal(false);
+    busy = signal(false);
+    executor = 'legacy';
+    version = 0;
+    recipeText = '';
+    placeholder = '{{originalUrl}}';
+    config: any = { intervalMs: 2000, timeoutMs: 30000, humanTimeoutMs: 900000, categorySeparator: '>', blockRules: [], recipe: null };
+    opened(event: Event) {
+        if ((event.target as HTMLDetailsElement).open && !this.loaded())
+            void this.load();
+    }
+    async load() {
+        try {
+            const data = await this.api.get<any>('/admin/extension-catalog/settings/' + this.marketplaceId);
+            this.config = data.config;
+            this.executor = data.catalog_executor;
+            this.version = data.version;
+            this.recipeText = data.config.recipe ? JSON.stringify(data.config.recipe, null, 2) : '';
+            this.loaded.set(true);
+        }
+        catch (e) {
+            this.api.fail(e);
+        }
+    }
+    async save() {
+        if (this.busy())
+            return;
+        this.busy.set(true);
+        try {
+            const recipe = this.recipeText.trim() ? JSON.parse(this.recipeText) : null;
+            const result = await this.api.send<any>('PUT', '/admin/extension-catalog/settings/' + this.marketplaceId, { version: this.version, executor: this.executor, config: { ...this.config, recipe } });
+            this.version = result.version;
+            this.api.success('Configuração salva. Será aplicada às próximas execuções.');
+        }
+        catch (e) {
+            this.api.fail(e);
+        }
+        finally {
+            this.busy.set(false);
+        }
+    }
 }

@@ -6,14 +6,15 @@ import {Api} from '../api.service';
 import {PagedData} from '../paged-data';
 import {Pagination} from './pagination';
 import {DismissOnBackdrop} from './dismiss-on-backdrop';
-@Component({selector:'enrichment-admin',imports:[CategoryFields,FormsModule,DatePipe,CurrencyPipe,Pagination,DismissOnBackdrop],templateUrl:'./enrichment-admin.html',host:{'(window:scroll)':'closeActions()','(window:resize)':'closeActions()'},styles:`:host{display:block}.tools,.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:16px 0}.tools label{margin:0;min-width:160px;flex:1}.tools input,.tools select{margin-bottom:0}td{vertical-align:top}.url{overflow-wrap:anywhere;max-width:320px;display:block}.detail{width:min(800px,100%);margin:0;border:0;color:var(--ink)}.detail img{width:180px;height:180px;object-fit:contain}.detail p{white-space:pre-wrap;overflow-wrap:anywhere}.notice{color:var(--muted);font-size:12px}small{display:block}.actions button[aria-pressed=true]{font-weight:bold}.link-actions{position:fixed;inset:auto;margin:0;width:min(208px,calc(100vw - 16px));max-height:calc(100dvh - 16px);overflow:auto;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);box-shadow:0 8px 28px #0003}.link-actions button{display:block;width:100%;min-height:40px;padding:10px 12px;border:0;border-radius:6px;background:transparent;color:var(--ink);text-align:left;font-size:13px}.link-actions button:hover:not(:disabled){background:var(--hover)}.link-actions button:focus-visible{outline-offset:-3px}.link-actions .danger-text{color:var(--red)}.category-tree-fields{border:0;padding:0;margin:0;min-width:0}`})
+@Component({selector:'enrichment-admin',imports:[CategoryFields,FormsModule,DatePipe,CurrencyPipe,Pagination,DismissOnBackdrop],templateUrl:'./enrichment-admin.html',host:{'(window:scroll)':'closeActions()','(window:resize)':'closeActions()'},styles:`:host{display:block}.tools,.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:16px 0}.tools label{margin:0;min-width:160px;flex:1}.tools input,.tools select{margin-bottom:0}td{vertical-align:top}.url{overflow-wrap:anywhere;max-width:320px;display:block}.detail{width:min(800px,100%);margin:0;border:0;color:var(--ink)}.detail img{width:180px;height:180px;object-fit:contain}.detail p{white-space:pre-wrap;overflow-wrap:anywhere}.notice{color:var(--muted);font-size:12px}small{display:block}.actions button[aria-pressed=true]{font-weight:bold}.link-actions{min-inline-size:0;position:fixed;inset:auto;margin:0;width:min(208px,calc(100vw - 16px));max-height:calc(100dvh - 16px);overflow:auto;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);box-shadow:0 8px 28px #0003}.link-actions button{display:block;width:100%;min-height:40px;padding:10px 12px;border:0;border-radius:6px;background:transparent;color:var(--ink);text-align:left;font-size:13px}.link-actions button:hover:not(:disabled){background:var(--hover)}.link-actions button:focus-visible{outline-offset:-3px}.link-actions .danger-text{color:var(--red)}.category-tree-fields{border:0;padding:0;margin:0;min-width:0}`})
 export class EnrichmentAdmin implements OnInit,OnDestroy {
  api=inject(Api);base='/admin/discovery/enrichment';view=signal<'review'|'runs'|'mappings'>('review');markets=signal<any[]>([]);categories=signal<any[]>([]);marketplaceId='';state='';sourceCategory='';retryFailed=false;limit=100;interval=2000;separator='>';busy=signal(false);detail=signal<any>(null);categoryTarget=signal<any>(null);mappingTarget=signal<any>(null);cancelTarget=signal<any>(null);deleteTarget=signal<any>(null);archiveTarget=signal<any>(null);categoryId='';saveMapping=false;private timer?:ReturnType<typeof setInterval>;private polling=false;
  links=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/review',{page,pageSize,marketplaceId:this.marketplaceId,state:this.state,sourceCategory:this.sourceCategory}));
  runs=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/runs',{page,pageSize,marketplaceId:this.marketplaceId}));
  mappings=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/mappings',{page,pageSize,marketplaceId:this.marketplaceId}));
  selectedRun=signal<any>(null);items=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/runs/'+this.selectedRun().id+'/items',{page,pageSize}));
- async ngOnInit(){try{const [markets,categories]=await Promise.all([this.api.get<any[]>('/admin/catalog-marketplaces'),this.api.get<any[]>(this.base+'/categories')]);this.markets.set(markets);this.categories.set(categories);await this.links.reset();await this.runs.reset();if(this.api.browser)this.timer=setInterval(()=>{void this.poll();},3000);}catch(e){this.api.fail(e);}}
+ async ngOnInit(){try{const [markets,categories]=await Promise.all([this.api.get<any[]>('/admin/catalog-marketplaces'),this.api.get<any[]>(this.base+'/categories')]);this.markets.set(markets);this.categories.set(categories);await this.links.reset();await this.runs.reset();if(this.api.browser)this.timer=setInterval(()=>{void this.poll();},3000);
+}catch(e){this.api.fail(e);}}
  usesExtension(){return this.markets().find(m=>m.id===this.marketplaceId)?.catalog_executor==='extension';}
  creatingCategory=signal(false);newCategoryPath:string[]=[''];
  productTarget=signal<any>(null);productMode:'existing'|'new'='existing';productQuery='';selectedProductId='';
@@ -34,7 +35,8 @@ export class EnrichmentAdmin implements OnInit,OnDestroy {
  async publish(){const link=this.publishTarget();await this.act(async()=>{await this.api.send('POST',this.base+'/review/'+link.id+'/publish',{version:link.enrichment_version,authorizedContent:true});this.publishTarget.set(null);},'Oferta publicada.');}
  private activeActions?:HTMLElement;
  positionActions(event:Event,trigger:HTMLButtonElement,menu:HTMLElement){
-  if((event as ToggleEvent).newState!=='open'){if(this.activeActions===menu)this.activeActions=undefined;return;}
+  if((event as ToggleEvent).newState!=='open'){if(this.activeActions===menu)this.activeActions=undefined;
+return;}
   this.activeActions=menu;
   const anchor=trigger.getBoundingClientRect(),bounds=menu.getBoundingClientRect(),gap=8;
   const left=Math.max(gap,Math.min(anchor.right-bounds.width,window.innerWidth-bounds.width-gap));
@@ -42,20 +44,29 @@ export class EnrichmentAdmin implements OnInit,OnDestroy {
   const top=below+bounds.height<=window.innerHeight-gap?below:Math.max(gap,anchor.top-bounds.height-gap);
   menu.style.left=left+'px';menu.style.top=top+'px';
  }
- closeActions(){const menu=this.activeActions;this.activeActions=undefined;if(menu?.isConnected&&menu.matches(':popover-open'))menu.hidePopover();}
+ closeActions(){const menu=this.activeActions;this.activeActions=undefined;if(menu?.isConnected&&menu.matches(':popover-open'))menu.hidePopover();
+}
  ngOnDestroy(){this.closeActions();clearInterval(this.timer);}
  async selectView(view:'review'|'runs'|'mappings'){this.view.set(view);await this.feed().reset();}
- feed(){return this.view()==='review'?this.links:this.view()==='runs'?this.runs:this.mappings;}
- async filter(){await this.feed().reset();if(this.marketplaceId){try{const v=await this.api.get<any>(this.base+'/settings/'+this.marketplaceId);this.interval=v.request_interval_ms;this.separator=v.category_separator;}catch(e){this.api.fail(e);}}}
- async act(work:()=>Promise<unknown>,message:string){if(this.busy())return;this.busy.set(true);try{await work();this.api.success(message);await this.feed().go(this.feed().page()||1);}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
+ feed(){if(this.view()==='review')return this.links;
+if(this.view()==='runs')return this.runs;
+return this.mappings;}
+ async filter(){await this.feed().reset();if(this.marketplaceId){try{const v=await this.api.get<any>(this.base+'/settings/'+this.marketplaceId);this.interval=v.request_interval_ms;this.separator=v.category_separator;}catch(e){this.api.fail(e);}}
+}
+ async act(work:()=>Promise<unknown>,message:string){if(this.busy())return;
+this.busy.set(true);try{await work();this.api.success(message);await this.feed().go(this.feed().page()||1);}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
  async start(){await this.act(async()=>{await this.api.send('POST',this.base+'/runs',{marketplaceId:this.marketplaceId,retryFailed:this.retryFailed,limit:this.limit});this.view.set('runs');},'Enriquecimento enfileirado. O worker deve estar ativo.');}
  async saveSettings(){await this.act(()=>this.api.send('PUT',this.base+'/settings/'+this.marketplaceId,{requestIntervalMs:this.interval,categorySeparator:this.separator}),'Configuração salva para as próximas execuções.');}
  active(run:any){return ['queued','running'].includes(run.status);}
  label(status:string){return ({pending:'Pendente',queued:'Aguardando worker',running:'Em execução',completed:'Concluído',failed:'Falha técnica',cancelled:'Cancelado',skipped:'Ignorado'} as Record<string,string>)[status]||status;}
- categoryState(link:any){if(link.confirmed_category_id)return 'Categoria confirmada';if(!link.source_category_path.length)return 'Sem categoria de origem';if(link.suggested_category_id)return 'Categoria sugerida — confirmar';return 'Aguardando categorização';}
+ categoryState(link:any){if(link.confirmed_category_id)return 'Categoria confirmada';
+if(!link.source_category_path.length)return 'Sem categoria de origem';
+if(link.suggested_category_id)return 'Categoria sugerida — confirmar';
+return 'Aguardando categorização';}
  categorize(link:any){this.categoryId=link.confirmed_category_id||link.suggested_category_id||'';this.saveMapping=false;this.creatingCategory.set(false);this.newCategoryPath=[''];this.categoryTarget.set(link);}
  async createCategory(){
-  if(this.busy())return;this.busy.set(true);
+  if(this.busy())return;
+this.busy.set(true);
   try{
    const node=await this.api.send<{id:string;path:string[];nodes:{id:string;path:string[]}[]}>('POST',this.base+'/categories',{categoryPath:this.newCategoryPath});
    this.categories.update(current=>[...new Map([...current,...node.nodes].map(value=>[value.id,value])).values()].sort((a,b)=>a.path.join(' › ').localeCompare(b.path.join(' › '))));
@@ -72,5 +83,8 @@ export class EnrichmentAdmin implements OnInit,OnDestroy {
  async showRun(run:any){this.selectedRun.set(run);await this.items.reset();}
  async retryRun(run:any){await this.act(async()=>{await this.api.send('POST',this.base+'/runs/'+run.id+'/retry',{});this.selectedRun.set(null);this.view.set('runs');this.runs.page.set(1);},'Nova execução enfileirada somente com os links que continuam com falha.');}
  async retryLink(link:any){await this.act(async()=>{const result=await this.api.send<any>('POST',this.base+'/review/'+(link.link_id||link.id)+'/retry',{});this.selectedRun.set(null);this.view.set(result.executor==='extension'?'review':'runs');this.runs.page.set(1);},'Retentativa preparada. Para marketplaces migrados, execute o passo 3 na extensão.');}
- async poll(){if(this.polling||this.busy())return;this.polling=true;try{const page=this.runs.page()||1;const data=await this.api.get<any>(this.base+'/runs',{page,pageSize:this.runs.pageSize(),marketplaceId:this.marketplaceId});if(!this.runs.loading()&&page===this.runs.page()){this.runs.items.set(data.items);this.runs.total.set(data.total);}if(this.selectedRun()&&!this.items.loading())await this.items.go(this.items.page()||1);}catch{/* Explicit reload reports connection failures. */}finally{this.polling=false;}}
+ async poll(){if(this.polling||this.busy())return;
+this.polling=true;try{const page=this.runs.page()||1;const data=await this.api.get<any>(this.base+'/runs',{page,pageSize:this.runs.pageSize(),marketplaceId:this.marketplaceId});if(!this.runs.loading()&&page===this.runs.page()){this.runs.items.set(data.items);this.runs.total.set(data.total);}
+if(this.selectedRun()&&!this.items.loading())await this.items.go(this.items.page()||1);
+}catch{/* Explicit reload reports connection failures. */}finally{this.polling=false;}}
 }

@@ -36,21 +36,29 @@ export class CatalogAdmin implements OnChanges,OnDestroy {
   finally{this.loading.set(false);}
  }
 
- async act(work:()=>Promise<void>,message:string){if(this.busy())return;this.busy.set(true);try{await work();this.api.success(message);}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
+ async act(work:()=>Promise<void>,message:string){if(this.busy())return;
+this.busy.set(true);try{await work();this.api.success(message);}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
  pendingExecution=signal<string|null>(null);private stopped=false;
  ngOnDestroy(){this.stopped=true;}
- async cancelPreview(){const id=this.pendingExecution();if(!id)return;try{await this.api.send('POST','/admin/extension-catalog/manual/'+id+'/cancel',{});this.pendingExecution.set(null);}catch(e){this.api.fail(e);}}
+ async cancelPreview(){const id=this.pendingExecution();if(!id)return;
+try{await this.api.send('POST','/admin/extension-catalog/manual/'+id+'/cancel',{});this.pendingExecution.set(null);}catch(e){this.api.fail(e);}}
  private async awaitPreview(value:any){
-  if(!value.executionId)return value;this.pendingExecution.set(value.executionId);this.api.success('Prévia solicitada. Abra a extensão, carregue as execuções e selecione esta solicitação.');
+  if(!value.executionId)return value;
+this.pendingExecution.set(value.executionId);this.api.success('Prévia solicitada. Abra a extensão, carregue as execuções e selecione esta solicitação.');
   const deadline=Date.now()+15*60000;
-  try{while(!this.stopped&&this.pendingExecution()&&Date.now()<deadline){const result=await this.api.get<any>('/admin/extension-catalog/manual/'+value.executionId);if(result.status==='completed')return result.requiresFinalize?await this.api.send('POST','/admin/extension-catalog/manual/'+value.executionId+'/finalize',{}):result;if(['cancelled','failed'].includes(result.status))throw new Error('A prévia foi encerrada: '+(result.reason||result.status));await new Promise(resolve=>setTimeout(resolve,2000));}throw new Error('Espera encerrada. Consulte a solicitação pela extensão ou gere outra prévia.');}finally{this.pendingExecution.set(null);}
+  try{while(!this.stopped&&this.pendingExecution()&&Date.now()<deadline){const result=await this.api.get<any>('/admin/extension-catalog/manual/'+value.executionId);if(result.status==='completed')return result.requiresFinalize?await this.api.send('POST','/admin/extension-catalog/manual/'+value.executionId+'/finalize',{}):result;
+if(['cancelled','failed'].includes(result.status))throw new Error('A prévia foi encerrada: '+(result.reason||result.status));
+await new Promise(resolve=>setTimeout(resolve,2000));}throw new Error('Espera encerrada. Consulte a solicitação pela extensão ou gere outra prévia.');}finally{this.pendingExecution.set(null);}
  }
  clearPreview(){this.specPage=1;this.evidencePage=1;this.preview.set(null);this.authorized=false;}
- async selectMarket(){this.clearPreview();if(this.section==='selectors')await this.act(()=>this.loadProfile(),'Seletores carregados.');}
- async loadProfile(){const p=await this.api.get<any>('/admin/selectors/'+this.selected);this.version=p.version;this.waitSeconds=p.wait_timeout_ms/1000;this.validityMinutes=p.validity_minutes;this.rules=p.rules.map((r:any)=>({...r,selectorsText:r.selectors.join('\n'),attribute:r.attribute||'',nameSelector:r.nameSelector||'th',valueSelector:r.valueSelector||'td'}));if(!this.rules.length)this.rules=[this.newRule('title'),this.newRule('price')];}
+ async selectMarket(){this.clearPreview();if(this.section==='selectors')await this.act(()=>this.loadProfile(),'Seletores carregados.');
+}
+ async loadProfile(){const p=await this.api.get<any>('/admin/selectors/'+this.selected);this.version=p.version;this.waitSeconds=p.wait_timeout_ms/1000;this.validityMinutes=p.validity_minutes;this.rules=p.rules.map((r:any)=>({...r,selectorsText:r.selectors.join('\n'),attribute:r.attribute||'',nameSelector:r.nameSelector||'th',valueSelector:r.valueSelector||'td'}));if(!this.rules.length)this.rules=[this.newRule('title'),this.newRule('price')];
+}
  newRule(field='title'):Rule{return {field,selectorsText:'',mode:'text',attribute:'',required:field==='title'||field==='price',nameSelector:'th',valueSelector:'td'};}
  addRule(){this.rules.push(this.newRule('images'));this.clearPreview();}
- moveRule(index:number,offset:number){const target=index+offset;if(target<0||target>=this.rules.length)return;[this.rules[index],this.rules[target]]=[this.rules[target],this.rules[index]];this.clearPreview();}
+ moveRule(index:number,offset:number){const target=index+offset;if(target<0||target>=this.rules.length)return;
+[this.rules[index],this.rules[target]]=[this.rules[target],this.rules[index]];this.clearPreview();}
  profileBody(){return {version:this.version,waitTimeoutMs:Math.round(this.waitSeconds*1000),validityMinutes:this.validityMinutes,rules:this.rules.map(({selectorsText,...r})=>({...r,wholeSelector:r.mode==='text'&&['price','originalPrice'].includes(r.field)?r.wholeSelector||undefined:undefined,fractionSelector:r.mode==='text'&&['price','originalPrice'].includes(r.field)?r.fractionSelector||undefined:undefined,selectors:selectorsText.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)}))};}
  async saveProfile(){await this.act(async()=>{const r=await this.api.send<{version:number}>('PUT','/admin/selectors/'+this.selected,this.profileBody());this.version=r.version;this.clearPreview();},'Seletores salvos. As próximas extrações usarão essas regras.');}
  async testProfile(){this.clearPreview();await this.act(async()=>{this.preview.set(await this.awaitPreview(await this.api.send('POST','/admin/selectors/'+this.selected+'/test',{url:this.testUrl,profile:this.profileBody()})));},'Teste concluído. Nenhuma oferta foi cadastrada.');}
@@ -58,11 +66,15 @@ export class CatalogAdmin implements OnChanges,OnDestroy {
  async saveMarket(){await this.act(async()=>{const d=this.marketDraft;await this.api.send(this.editing?'PUT':'POST','/admin/catalog-marketplaces'+(this.editing?'/'+d.id:''),{id:d.id,name:d.name,websiteUrl:d.websiteUrl,logoUrl:d.logoUrl,allowedHosts:d.hosts.split(/[\n,]/).map(s=>s.trim().toLowerCase()).filter(Boolean),scrapingEnabled:d.scrapingEnabled,urlNormalizationRules:this.normalizationRules()});this.marketModal.set(false);await this.load();},'Marketplace salvo. Configure seus seletores na aba Seletores.');}
  normalizationRules(){return this.normalizationMarkers.split(/\r?\n/).map(marker=>marker.trim()).filter(Boolean).map(marker=>({type:'remove_path_suffix',marker}));}
  async testNormalization(){this.normalizedPreview.set('');await this.act(async()=>{const result=await this.api.send<{url:string}>('POST','/admin/catalog-marketplaces/normalize-url',{url:this.normalizationTestUrl,allowedHosts:this.marketDraft.hosts.split(/[\n,]/).map(h=>h.trim().toLowerCase()).filter(Boolean),rules:this.normalizationRules()});this.normalizedPreview.set(result.url);},'Normalização calculada. Nenhuma página foi acessada.');}
- async deleteMarket(){const m=this.deleting();if(!m)return;await this.act(async()=>{await this.api.send('DELETE','/admin/catalog-marketplaces/'+m.id);this.deleting.set(null);await this.load();},'Marketplace excluído.');}
+ async deleteMarket(){const m=this.deleting();if(!m)return;
+await this.act(async()=>{await this.api.send('DELETE','/admin/catalog-marketplaces/'+m.id);this.deleting.set(null);await this.load();},'Marketplace excluído.');}
  openClassification(link:any){this.reassignProductId=link.product_id;this.editingClassification.set(link);}
- async saveClassification(){const link=this.editingClassification();if(!link){return;}await this.act(async()=>{await this.api.send('PUT','/admin/offers/'+link.id+'/product',{productId:this.reassignProductId,expectedUpdatedAt:link.updated_at});this.editingClassification.set(null);await this.linkFeed.go(this.linkFeed.page()||1);},'Produto vinculado. A oferta voltou para revisão.');}
- async deleteLink(){const link=this.deletingLink();if(!link){return;}await this.act(async()=>{await this.api.send('DELETE','/admin/offers/'+link.id,{expectedUpdatedAt:link.updated_at});this.deletingLink.set(null);await this.linkFeed.go(this.linkFeed.page()||1);},'Oferta excluída.');}
+ async saveClassification(){const link=this.editingClassification();if(!link){return;}
+await this.act(async()=>{await this.api.send('PUT','/admin/offers/'+link.id+'/product',{productId:this.reassignProductId,expectedUpdatedAt:link.updated_at});this.editingClassification.set(null);await this.linkFeed.go(this.linkFeed.page()||1);},'Produto vinculado. A oferta voltou para revisão.');}
+ async deleteLink(){const link=this.deletingLink();if(!link){return;}
+await this.act(async()=>{await this.api.send('DELETE','/admin/offers/'+link.id,{expectedUpdatedAt:link.updated_at});this.deletingLink.set(null);await this.linkFeed.go(this.linkFeed.page()||1);},'Oferta excluída.');}
  async extractLink(){this.clearPreview();await this.act(async()=>{this.preview.set(await this.awaitPreview(await this.api.send('POST','/admin/link-imports/preview',{marketplaceId:this.selected,productId:this.productId,sellerName:this.sellerName,url:this.linkUrl})));},'Prévia gerada. Confira os dados antes de cadastrar.');}
- async confirmLink(){const preview=this.preview();if(!preview?.canConfirm||!this.authorized){return;}await this.act(async()=>{await this.api.send('POST','/admin/link-imports/confirm',{previewId:preview.previewId,authorizedContent:true});this.clearPreview();this.linkUrl='';await this.linkFeed.go(this.linkFeed.page()||1);},'Oferta cadastrada como pendente. Publique pela revisão de ofertas.');}
+ async confirmLink(){const preview=this.preview();if(!preview?.canConfirm||!this.authorized){return;}
+await this.act(async()=>{await this.api.send('POST','/admin/link-imports/confirm',{previewId:preview.previewId,authorizedContent:true});this.clearPreview();this.linkUrl='';await this.linkFeed.go(this.linkFeed.page()||1);},'Oferta cadastrada como pendente. Publique pela revisão de ofertas.');}
  fieldLabel(field:string){return this.fields.find(f=>f.id===field)?.name||field;}
 }

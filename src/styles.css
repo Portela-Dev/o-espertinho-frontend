@@ -81,3 +81,5 @@ offer-category-fields{display:block;min-width:0}offer-category-fields.full-width
 
 /* A background underline avoids the side edges of an exterior box shadow. */
 .header-inner nav a.active,:root[data-theme=dark] .header-inner nav a.active{box-shadow:none;background-image:linear-gradient(var(--accent),var(--accent));background-position:left bottom;background-size:100% 2px;background-repeat:no-repeat}
+
+catalog-admin output.info-box{display:block}
