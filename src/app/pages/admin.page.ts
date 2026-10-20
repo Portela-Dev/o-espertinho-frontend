@@ -1,3 +1,4 @@
+import {ActionMenu} from '../components/action-menu';
 import {CatalogOperations} from '../components/catalog-operations';
 import {EnrichmentAdmin} from '../components/enrichment-admin';
 import {DismissOnBackdrop} from '../components/dismiss-on-backdrop';
@@ -16,7 +17,7 @@ import {ProductsAdmin} from '../components/products-admin';
 import {CatalogAdmin} from '../components/catalog-admin';
 import {Api} from '../api.service';
 import {Offer,storeNames} from '../models';
-@Component({imports:[CatalogOperations,EnrichmentAdmin,DismissOnBackdrop,DiscoveryAdmin,Pagination,InfiniteScroll,UsersAdmin,ProductsAdmin,CatalogAdmin,FormsModule,RouterLink,RouterLinkActive,DatePipe,CurrencyPipe],templateUrl:'./admin.page.html'})
+@Component({imports:[ActionMenu,CatalogOperations,EnrichmentAdmin,DismissOnBackdrop,DiscoveryAdmin,Pagination,InfiniteScroll,UsersAdmin,ProductsAdmin,CatalogAdmin,FormsModule,RouterLink,RouterLinkActive,DatePipe,CurrencyPipe],templateUrl:'./admin.page.html'})
 export class AdminPage implements OnInit {
   api=inject(Api);route=inject(ActivatedRoute);destroy=inject(DestroyRef);title=inject(Title);section=signal('overview');loading=signal(false);failed=signal(false);busy=signal(false);names=storeNames;
   stats=signal<any>(null);offerFeed=new PagedData<Offer>(page=>this.api.get('/admin/offers',{paginate:true,status:this.reviewStatus,page}));offers=this.offerFeed.items;logFeed=new PagedData<any>((page,pageSize)=>this.api.get('/admin/audit',{paginate:true,page,pageSize}));logs=this.logFeed.items;

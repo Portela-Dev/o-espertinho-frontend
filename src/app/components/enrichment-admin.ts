@@ -1,14 +1,15 @@
+import {ActionMenu} from './action-menu';
 import {CatalogOperations} from './catalog-operations';
 import {CategoryFields} from './category-fields';
-import {Component,OnInit,OnDestroy,inject,signal} from '@angular/core';
+import {Component,OnInit,inject,signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {DatePipe,CurrencyPipe} from '@angular/common';
 import {Api} from '../api.service';
 import {PagedData} from '../paged-data';
 import {Pagination} from './pagination';
 import {DismissOnBackdrop} from './dismiss-on-backdrop';
-@Component({selector:'enrichment-admin',imports:[CatalogOperations,CategoryFields,FormsModule,DatePipe,CurrencyPipe,Pagination,DismissOnBackdrop],templateUrl:'./enrichment-admin.html',host:{'(window:scroll)':'closeActions()','(window:resize)':'closeActions()'},styles:`:host{display:block}.tools,.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:16px 0}.tools label{margin:0;min-width:160px;flex:1}.tools input,.tools select{margin-bottom:0}td{vertical-align:top}.url{overflow-wrap:anywhere;max-width:320px;display:block}.detail{width:min(800px,100%);margin:0;border:0;color:var(--ink)}.detail img{width:180px;height:180px;object-fit:contain}.detail p{white-space:pre-wrap;overflow-wrap:anywhere}.notice{color:var(--muted);font-size:12px}small{display:block}.actions button[aria-pressed=true]{font-weight:bold}.link-actions{min-inline-size:0;position:fixed;inset:auto;margin:0;width:min(208px,calc(100vw - 16px));max-height:calc(100dvh - 16px);overflow:auto;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);box-shadow:0 8px 28px #0003}.link-actions button{display:block;width:100%;min-height:40px;padding:10px 12px;border:0;border-radius:6px;background:transparent;color:var(--ink);text-align:left;font-size:13px}.link-actions button:hover:not(:disabled){background:var(--hover)}.link-actions button:focus-visible{outline-offset:-3px}.link-actions .danger-text{color:var(--red)}.category-tree-fields{border:0;padding:0;margin:0;min-width:0}`})
-export class EnrichmentAdmin implements OnInit,OnDestroy {
+@Component({selector:'enrichment-admin',imports:[ActionMenu,CatalogOperations,CategoryFields,FormsModule,DatePipe,CurrencyPipe,Pagination,DismissOnBackdrop],templateUrl:'./enrichment-admin.html',styles:`:host{display:block}.tools,.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:16px 0}.tools label{margin:0;min-width:160px;flex:1}.tools input,.tools select{margin-bottom:0}td{vertical-align:top}.url{overflow-wrap:anywhere;max-width:320px;display:block}.detail{width:min(800px,100%);margin:0;border:0;color:var(--ink)}.detail img{width:180px;height:180px;object-fit:contain}.detail p{white-space:pre-wrap;overflow-wrap:anywhere}.notice{color:var(--muted);font-size:12px}small{display:block}.actions button[aria-pressed=true]{font-weight:bold}.category-tree-fields{border:0;padding:0;margin:0;min-width:0}`})
+export class EnrichmentAdmin implements OnInit {
  api=inject(Api);base='/admin/discovery/enrichment';view=signal<'review'|'runs'|'mappings'>('review');markets=signal<any[]>([]);categories=signal<any[]>([]);marketplaceId='';state='';sourceCategory='';busy=signal(false);detail=signal<any>(null);categoryTarget=signal<any>(null);mappingTarget=signal<any>(null);deleteTarget=signal<any>(null);archiveTarget=signal<any>(null);categoryId='';saveMapping=false;
  links=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/review',{page,pageSize,marketplaceId:this.marketplaceId,state:this.state,sourceCategory:this.sourceCategory}));
  mappings=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/mappings',{page,pageSize,marketplaceId:this.marketplaceId}));
@@ -31,22 +32,6 @@ export class EnrichmentAdmin implements OnInit,OnDestroy {
  },'Produto atribuído. Revise o anúncio antes de publicar.');}
  publishTarget=signal<any>(null);
  async publish(){const link=this.publishTarget();await this.act(async()=>{await this.api.send('POST',this.base+'/review/'+link.id+'/publish',{version:link.enrichment_version,authorizedContent:true});this.publishTarget.set(null);},'Oferta publicada.');}
- private activeActions?:HTMLElement;
- positionActions(event:Event,trigger:HTMLButtonElement,menu:HTMLElement){
-  if((event as ToggleEvent).newState!=='open'){if(this.activeActions===menu)this.activeActions=undefined;
-return;}
-  this.activeActions=menu;
-  const gap=8,viewportWidth=Math.min(window.innerWidth,document.documentElement.clientWidth,window.visualViewport?.width??window.innerWidth);
-  menu.style.width=Math.min(208,viewportWidth-gap*2)+'px';
-  const anchor=trigger.getBoundingClientRect(),bounds=menu.getBoundingClientRect();
-  const left=Math.max(gap,Math.min(anchor.right-bounds.width,viewportWidth-bounds.width-gap));
-  const below=anchor.bottom+gap;
-  const top=below+bounds.height<=window.innerHeight-gap?below:Math.max(gap,anchor.top-bounds.height-gap);
-  menu.style.left=left+'px';menu.style.top=top+'px';
- }
- closeActions(){const menu=this.activeActions;this.activeActions=undefined;if(menu?.isConnected&&menu.matches(':popover-open'))menu.hidePopover();
-}
- ngOnDestroy(){this.closeActions();}
  async selectView(view:'review'|'runs'|'mappings'){this.view.set(view);await this.feed().reset();}
  feed(){return this.view()==='mappings'?this.mappings:this.links;}
  async filter(){await this.feed().reset();}
