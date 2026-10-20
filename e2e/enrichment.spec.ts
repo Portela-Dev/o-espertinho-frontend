@@ -75,6 +75,6 @@ test('floating review menu marks failed links pending without creating a legacy 
  await page.goto('/entrar');await page.getByRole('button',{name:'Login de teste'}).click();await expect(page).not.toHaveURL(/entrar/);await page.goto('/admin/offers');const panel=page.locator('enrichment-admin');
  const row=panel.locator('tbody tr').first(),height=(await row.boundingBox())!.height;
  await panel.getByRole('button',{name:'Ações do link',exact:true}).click();const menu=panel.getByRole('group',{name:'Ações do link',exact:true});await expect(menu).toBeVisible();expect((await row.boundingBox())!.height).toBe(height);await page.keyboard.press('Escape');
- await page.setViewportSize({width:390,height:844});await panel.getByRole('button',{name:'Ações do link',exact:true}).click();const bounds=(await menu.boundingBox())!;expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.x+bounds.width).toBeLessThanOrEqual(390);
+ await page.setViewportSize({width:390,height:844});await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await expect(menu).toBeVisible();await expect.poll(async()=>{const bounds=await menu.boundingBox();return !!bounds&&bounds.x>=0&&bounds.x+bounds.width<=390;}).toBe(true);
  await menu.getByRole('button',{name:'Retentar extração',exact:true}).click();await expect.poll(()=>pending).toBe(true);await expect(row).toContainText('Pendente');await expect(page.locator('.toast')).toContainText('passo 3');
 });
