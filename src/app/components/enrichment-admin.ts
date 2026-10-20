@@ -28,7 +28,9 @@ export class EnrichmentAdmin implements OnInit,OnDestroy {
  async confirmProduct(){const link=this.productTarget();await this.act(async()=>{
   const body=this.productMode==='existing'?{mode:'existing',version:link.enrichment_version,productId:this.selectedProductId}:{mode:'new',version:link.enrichment_version,product:{...this.productDraft,imageUrl:this.productDraft.imageUrl.trim()||null}};
   await this.api.send('POST',this.base+'/review/'+link.id+'/product',body);this.productTarget.set(null);
- },'Produto atribuído. O link aguarda a geração do endereço de afiliado.');}
+ },'Produto atribuído. Revise o anúncio antes de publicar.');}
+ publishTarget=signal<any>(null);
+ async publish(){const link=this.publishTarget();await this.act(async()=>{await this.api.send('POST',this.base+'/review/'+link.id+'/publish',{version:link.enrichment_version,authorizedContent:true});this.publishTarget.set(null);},'Oferta publicada.');}
  private activeActions?:HTMLElement;
  positionActions(event:Event,trigger:HTMLButtonElement,menu:HTMLElement){
   if((event as ToggleEvent).newState!=='open'){if(this.activeActions===menu)this.activeActions=undefined;return;}
