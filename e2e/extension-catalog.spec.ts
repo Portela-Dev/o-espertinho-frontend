@@ -8,11 +8,11 @@ test('admin configura executor e detecção de bloqueios sem código por marketp
  let saved:any;
  await page.route('**/api/admin/extension-catalog/settings/**',route=>{
   if(route.request().method()==='PUT'){saved=route.request().postDataJSON();return route.fulfill({json:{version:1,config:saved.config}});}
-  return route.fulfill({json:{id:'amazon',catalog_executor:'legacy',version:0,config:config()}});
+  return route.fulfill({json:{id:'amazon',catalog_executor:'extension',version:0,config:config()}});
  });
  await login(page);await page.goto('/admin/marketplaces');
  const panel=page.locator('extension-catalog-settings').first();await panel.locator('summary').click();
- await panel.getByRole('combobox',{name:'Executor',exact:true}).selectOption('extension');await panel.getByLabel('Intervalo entre consultas (ms)').fill('1500');
+ await expect(panel.getByRole('combobox',{name:'Executor',exact:true})).toHaveCount(0);await panel.getByLabel('Intervalo entre consultas (ms)').fill('1500');
  await panel.getByRole('button',{name:'Adicionar regra'}).click();await panel.getByRole('combobox',{name:'Estado',exact:true}).selectOption('challenge');await panel.getByLabel('Valor',{exact:true}).fill('.human-check');
  await panel.getByRole('button',{name:'Salvar configuração da extensão'}).click();await expect.poll(()=>saved?.executor).toBe('extension');expect(saved.config.intervalMs).toBe(1500);expect(saved.config.blockRules[0].kind).toBe('challenge');expect(saved.config.recipe).toBeNull();
 });
@@ -36,4 +36,9 @@ test('teste de seletor aguarda resultado da extensão e não cadastra anúncio',
   return route.fulfill({json:{executionId:id,status:'completed',isTest:true,canConfirm:false,marketplaceName:'Loja de teste',affiliateUrl:'https://shop.example.com/p',data:{title:'Produto pela extensão',description:'Descrição',priceCents:12345,originalPriceCents:null,images:[],missing:[],warnings:[],evidence:[],specifications:[],conditions:'',category:'',productUrl:'https://shop.example.com/p',collectedAt:new Date().toISOString()}}});
  });
  await login(page);await page.goto('/admin/selectors');await page.getByLabel('URL para teste',{exact:true}).fill('https://www.amazon.com.br/product/test');await page.getByRole('button',{name:'Testar extração',exact:true}).click();await expect(page.getByText('Aguardando extração pela extensão.',{exact:false})).toBeVisible();await expect(page.getByText('Produto pela extensão',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Confirmar cadastro'})).toHaveCount(0);
+});
+
+test('admin exposes only extension operations, with no legacy schedule or executor switch',async({page})=>{
+ await login(page);await page.goto('/admin/updates');await expect(page.locator('catalog-operations')).toBeVisible();await expect(page.getByText('Serviços legados',{exact:false})).toHaveCount(0);await expect(page.getByRole('button',{name:'Atualizar links agora'})).toHaveCount(0);
+ await page.goto('/admin/discovery');await expect(page.getByRole('button',{name:'Confirmar exploração'})).toHaveCount(0);await page.getByRole('button',{name:'Execuções',exact:true}).click();await expect(page.locator('catalog-operations')).toBeVisible();
 });

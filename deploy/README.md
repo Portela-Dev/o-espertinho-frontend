@@ -55,9 +55,9 @@ O relatório LCOV vem dos testes reais do mesmo commit, via artefato do job vali
 3. Copie `deploy/runtime.env.example` para **`/opt/o-espertinho/frontend/.env`**, preencha os valores reais e aplique permissão `600`. Não recrie esse arquivo a cada deploy.
 4. Instale a chave pública correspondente em `~/.ssh/authorized_keys` do usuário da VPS. Cadastre sua chave privada no secret do GitHub.
 5. Obtenha a chave pública SSH do host e confira a impressão digital pelo console da VPS (`ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`). Só depois cadastre a linha trusted em `VPS_KNOWN_HOSTS`. Em porta diferente de 22, o nome é `[host]:porta`. `ssh-keyscan` sozinho não autentica o host.
-6. Libere acesso SSH para o runner, aponte o DNS e configure Nginx/HTTPS para o frontend. Há exemplo de Nginx no repositório do frontend. As portas do banco, backend e extrator não são publicadas.
+6. Libere acesso SSH para o runner, aponte o DNS e configure Nginx/HTTPS para o frontend. Há exemplo de Nginx no repositório do frontend. As portas do banco e backend não são publicadas.
 
-O primeiro deploy cria a rede Docker externa compartilhada `espertinho-internal`. Ordem inicial recomendada: **jobs → backend → frontend**. Depois os deploys são independentes. O backend usa `http://espertinho-extractor:3010`; frontend/proxy SSR usa `http://espertinho-backend:3000`. O agendamento dos jobs continua no backend e não foi duplicado no extrator.
+O primeiro deploy cria a rede Docker externa compartilhada `espertinho-internal`. Ordem inicial: **backend/PostgreSQL → frontend → extensão**. Depois os deploys são independentes. Frontend/proxy SSR usa `http://espertinho-backend:3000`. Operações de navegador são manuais na extensão; nenhum serviço de extração ou job é implantado.
 
 O site usa um único domínio: Nginx encaminha ao frontend em `127.0.0.1:4200`; o frontend encaminha `/api` internamente preservando o caminho e a origem. Configure o domínio em `APP_ORIGIN`, `ALLOWED_HOSTS` e nas origens JavaScript do login Google. O proxy Nginx do exemplo sobrescreve os cabeçalhos encaminhados; o backend só confia em loopback e redes privadas na configuração de produção.
 

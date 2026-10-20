@@ -5,7 +5,7 @@ import { Api } from '../api.service';
 <details class="panel" (toggle)="opened($event)"><summary>Execução pela extensão / conversão e bloqueios</summary>
 @if(loaded()){
 <p class="muted">Configuração declarativa usada pelos quatro passos. Cookies e tokens do marketplace permanecem no Chrome.</p>
-<label>Executor<select [(ngModel)]="executor"><option value="legacy">Serviços atuais (durante a migração)</option><option value="extension">Extensão do Chrome — execução manual</option></select></label>
+<p>Execução manual pela extensão do Chrome.</p>
 <div class="form-grid"><label>Intervalo entre consultas (ms)<input type="number" min="100" max="600000" [(ngModel)]="config.intervalMs"></label>
 <label>Tempo máximo por página (ms)<input type="number" min="1000" max="120000" [(ngModel)]="config.timeoutMs"></label>
 <label>Prazo para intervenção humana (ms)<input type="number" min="60000" max="3600000" [(ngModel)]="config.humanTimeoutMs"></label>
@@ -26,7 +26,7 @@ export class ExtensionCatalogSettings {
     api = inject(Api);
     loaded = signal(false);
     busy = signal(false);
-    executor = 'legacy';
+    executor = 'extension';
     version = 0;
     recipeText = '';
     placeholder = '{{originalUrl}}';

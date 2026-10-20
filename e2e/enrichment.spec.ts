@@ -21,7 +21,7 @@ test('enrichment review requires explicit category confirmation and exposes manu
  await page.keyboard.press('Escape');await expect(menu).toBeHidden();
  await actions.click();await panel.getByRole('heading',{name:'Enriquecimento e categorização dos links descobertos'}).click();await expect(menu).toBeHidden();
  await actions.click();await panel.getByRole('button',{name:'Categorizar',exact:true}).click();const dialog=page.getByRole('dialog');await expect(dialog.getByLabel('Categoria do O Espertinho')).toHaveValue(category);expect(confirmed).toBe(false);await dialog.getByLabel('Salvar também o mapeamento',{exact:false}).check();await dialog.getByRole('button',{name:'Confirmar categoria deste item'}).click();await expect(panel).toContainText('Categoria confirmada');
- await panel.getByRole('button',{name:'Execuções de enriquecimento'}).click();await expect(panel).toContainText('1 concluídos');await panel.getByRole('button',{name:'Ações da execução',exact:true}).click();await panel.getByRole('button',{name:'Cancelar',exact:true}).click();const alert=page.getByRole('alertdialog');await alert.getByRole('button',{name:'Confirmar cancelamento'}).click();await expect(panel).toContainText('Cancelado');expect(cancelled).toBe(true);
+
 });
 test('category review creates a ten-level tree inline, preserves failed drafts and requires explicit assignment',async({page})=>{
  await page.addInitScript(()=>{(window as any).google={accounts:{id:{initialize(o:any){(window as any).callback=o.callback;},renderButton(el:HTMLElement){const b=document.createElement('button');b.textContent='Login de teste';b.onclick=()=>(window as any).callback({credential:'admin'});el.appendChild(b);}}}};});
@@ -35,7 +35,7 @@ test('category review creates a ten-level tree inline, preserves failed drafts a
  const path=['Tecnologia','Criada na revisão',...Array.from({length:8},(_,i)=>'Nível '+(i+3))];for(let level=1;level<path.length;level++)await fields.nth(level).fill(path[level]);await expect(fields).toHaveCount(10);
  await expect(dialog.getByRole('button',{name:'Confirmar categoria deste item'})).toBeDisabled();
  await dialog.getByRole('button',{name:'Salvar e selecionar árvore'}).click();await expect(page.getByRole('alert')).toContainText('Falha temporária ao criar árvore');await expect(fields.nth(9)).toHaveValue('Nível 10');
- const response=page.waitForResponse(r=>r.url().endsWith('/enrichment/categories')&&r.request().method()==='POST'&&r.status()===201).then(r=>r.json());await dialog.getByRole('button',{name:'Salvar e selecionar árvore'}).click();created=await response;expect(created.path).toEqual(path);expect(created.nodes).toHaveLength(10);
+ const response=page.waitForResponse(r=>r.url().endsWith('/enrichment/categories')&&r.request().method()==='POST'&&r.status()===201);await dialog.getByRole('button',{name:'Salvar e selecionar árvore'}).click();await response;await expect(dialog.locator('offer-category-fields')).toHaveCount(0);const persisted=await (await page.request.get('/api/admin/discovery/enrichment/categories')).json();created=persisted.find((node:any)=>JSON.stringify(node.path)===JSON.stringify(path));expect(created).toBeTruthy();expect(created.path).toEqual(path);for(let level=1;level<=10;level++)expect(persisted.some((node:any)=>JSON.stringify(node.path)===JSON.stringify(path.slice(0,level)))).toBe(true);
  await expect(dialog.locator('offer-category-fields')).toHaveCount(0);await expect(dialog.getByLabel('Categoria do O Espertinho')).toHaveValue(created.id);expect(confirmed).toBe(false);
  const nodes=await (await page.request.get('/api/admin/discovery/enrichment/categories')).json();expect(nodes.some((node:any)=>node.id===created.id)).toBe(true);
  await dialog.getByRole('button',{name:'Confirmar categoria deste item'}).click();await expect(panel).toContainText('Categoria confirmada');expect(confirmed).toBe(true);
@@ -59,29 +59,22 @@ test('confirmed review assigns existing products and creates editable prefilled 
  let failOnce=true;await page.route('**/enrichment/review/6ef4f2a1-912f-463a-a6e8-43c505976782/product',async route=>{if(failOnce){failOnce=false;await route.fulfill({status:503,json:{error:'Falha temporária ao atribuir'}});}else await route.continue();});
  await dialog.getByRole('button',{name:'Criar e atribuir produto',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Falha temporária ao atribuir');await expect(dialog.getByLabel('Nome',{exact:true})).toHaveValue('Produto criado na revisão');
  const created=page.waitForResponse(r=>r.url().endsWith('/6ef4f2a1-912f-463a-a6e8-43c505976782/product')&&r.status()===200);await dialog.getByRole('button',{name:'Criar e atribuir produto',exact:true}).click();
- const result=await (await created).json();expect(result.product.name).toBe('Produto criado na revisão');expect(result.product.brand).toBe('Marca revisada');expect(result.product.category_path).toEqual(['Tecnologia']);await expect(dialog).toBeHidden();await expect(row).toContainText('Produto: Produto criado na revisão');
+ await created;await expect(dialog).toBeHidden();await expect(row).toContainText('Produto: Produto criado na revisão');const products=await (await page.request.get('/api/admin/products?q='+encodeURIComponent('Produto criado na revisão'))).json();const product=products.find((product:any)=>product.name==='Produto criado na revisão');expect(product).toBeTruthy();expect(product.brand).toBe('Marca revisada');expect(product.category_path).toEqual(['Tecnologia']);
 });
 
 
-test('floating enrichment menus retry individual failures and failed run items without changing table layout',async({page})=>{
+test('floating review menu marks failed links pending without creating a legacy job',async({page})=>{
  await page.addInitScript(()=>{(window as any).google={accounts:{id:{initialize(o:any){(window as any).callback=o.callback;},renderButton(el:HTMLElement){const b=document.createElement('button');b.textContent='Login de teste';b.onclick=()=>(window as any).callback({credential:'admin'});el.appendChild(b);}}}};});
- const link='c6711a7d-7acf-410d-a0b5-39fc8195ee63',run='689cc8fd-8bab-4e09-a9de-60a0ac760a83';let failOnce=true;const retried:string[]=[];
- const paged=(items:any[])=>({items,total:items.length,page:1,pageSize:20});
- await page.route('**/api/admin/discovery/enrichment/**',async route=>{
+ const id='c6711a7d-7acf-410d-a0b5-39fc8195ee63';let pending=false;
+ await page.route('**/api/admin/discovery/enrichment/**',route=>{
   const path=new URL(route.request().url()).pathname;
-  if(path.endsWith('/review'))return route.fulfill({json:paged([{id:link,url:'https://example.com/product',marketplace_name:'Teste',extraction_status:'failed',extraction_error:'incomplete',source_category_path:[]}])});
-  if(path.endsWith('/runs'))return route.fulfill({json:paged([{id:run,marketplace_name:'Teste',status:'completed',completed:2,failed:1,skipped:0,total:3,created_at:new Date().toISOString()}])});
-  if(path.endsWith('/items'))return route.fulfill({json:paged([{id:link,link_id:link,url:'https://example.com/product',status:'failed',error:'incomplete'}])});
-  if(path.endsWith('/retry')){expect(route.request().postDataJSON()).toEqual({});if(failOnce){failOnce=false;return route.fulfill({status:409,json:{error:'Este marketplace já tem um enriquecimento em andamento.'}});}retried.push(path);return route.fulfill({status:202,json:{id:run,status:'queued',total:1}});}
-  if(path.endsWith('/categories'))return route.fulfill({json:[]});
-  return route.fulfill({json:paged([])});
+  if(path.endsWith('/review'))return route.fulfill({json:{items:[{id,url:'https://example.com/product',marketplace_name:'Teste',extraction_status:pending?'pending':'failed',extraction_error:pending?'':'incomplete',source_category_path:[]}],total:1,page:1,pageSize:20}});
+  if(path.endsWith('/retry')){pending=true;return route.fulfill({status:202,json:{id,status:'pending',executor:'extension'}});}
+  return route.fulfill({json:[]});
  });
  await page.goto('/entrar');await page.getByRole('button',{name:'Login de teste'}).click();await expect(page).not.toHaveURL(/entrar/);await page.goto('/admin/offers');const panel=page.locator('enrichment-admin');
- await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await panel.getByRole('button',{name:'Retentar extração',exact:true}).click();await expect(page.getByRole('alert')).toContainText('já tem um enriquecimento');expect(retried).toHaveLength(0);
- await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await panel.getByRole('button',{name:'Retentar extração',exact:true}).click();await expect(panel.getByRole('button',{name:'Ações da execução',exact:true})).toBeVisible();expect(retried[0]).toContain('/review/'+link+'/retry');
  const row=panel.locator('tbody tr').first(),height=(await row.boundingBox())!.height;
- await panel.getByRole('button',{name:'Ações da execução',exact:true}).click();const menu=panel.getByRole('group',{name:'Ações da execução',exact:true});await expect(menu).toBeVisible();expect((await row.boundingBox())!.height).toBe(height);await page.keyboard.press('Escape');await expect(menu).toBeHidden();
- await page.setViewportSize({width:390,height:844});await panel.getByRole('button',{name:'Ações da execução',exact:true}).click();await expect(menu).toBeVisible();const bounds=(await menu.boundingBox())!;expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.x+bounds.width).toBeLessThanOrEqual(390);
- await menu.getByRole('button',{name:'Retentar links com falha',exact:true}).click();await expect.poll(()=>retried.length).toBe(2);expect(retried[1]).toContain('/runs/'+run+'/retry');
- await panel.getByRole('button',{name:'Ações da execução',exact:true}).click();await menu.getByRole('button',{name:'Detalhar',exact:true}).click();const dialog=page.getByRole('dialog',{name:'Itens da execução'});await dialog.getByRole('button',{name:'Ações do item',exact:true}).click();await dialog.getByRole('button',{name:'Retentar extração',exact:true}).click();await expect(dialog).toBeHidden();expect(retried[2]).toContain('/review/'+link+'/retry');
+ await panel.getByRole('button',{name:'Ações do link',exact:true}).click();const menu=panel.getByRole('group',{name:'Ações do link',exact:true});await expect(menu).toBeVisible();expect((await row.boundingBox())!.height).toBe(height);await page.keyboard.press('Escape');
+ await page.setViewportSize({width:390,height:844});await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await expect(menu).toBeVisible();await expect.poll(async()=>{const bounds=await menu.boundingBox();return !!bounds&&bounds.x>=0&&bounds.x+bounds.width<=390;}).toBe(true);
+ await menu.getByRole('button',{name:'Retentar extração',exact:true}).click();await expect.poll(()=>pending).toBe(true);await expect(row).toContainText('Pendente');await expect(page.locator('.toast')).toContainText('passo 3');
 });
