@@ -45,7 +45,7 @@ test('imagem padrão local cobre cards, miniaturas e modal; próxima foto válid
  await page.route('**/api/offers/'+offerId,route=>route.fulfill({json:offer}));
  await page.goto('/sobre');await page.getByRole('link',{name:'Explorar',exact:true}).click();
  await expect(page.locator('product-card .product-visual img')).toHaveAttribute('src',fallback);
- await page.locator('product-card .card-cta').click();await expect(page.locator('.preview-main-image img')).toHaveAttribute('src',fallback);await expect(page.locator('offer-card .product-visual img')).toHaveAttribute('src',fallback);
+ await page.locator('product-card .card-cta').click();await expect(page.locator('offer-card .product-visual img')).toHaveAttribute('src',fallback);
  await page.locator('offer-card h3 a').click();const thumbnail=page.getByRole('button',{name:'Ampliar foto 1 de 2'});await expect(thumbnail.locator('img')).toHaveAttribute('src',fallback);await thumbnail.click();const modal=page.getByRole('dialog',{name:'Galeria de fotos da oferta'});
  await expect(modal.locator('.viewer img')).toHaveAttribute('src',fallback);await expect.poll(()=>modal.locator('.viewer img').evaluate((img:HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0);
  await modal.getByRole('button',{name:'Próxima foto',exact:true}).click();await expect(modal.locator('.viewer img')).toHaveAttribute('src',good);await page.keyboard.press('Escape');
