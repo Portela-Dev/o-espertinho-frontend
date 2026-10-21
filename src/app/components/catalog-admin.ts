@@ -1,3 +1,4 @@
+import {ReviewRating} from './review-rating';
 import {ActionMenu} from './action-menu';
 import {ExtensionCatalogSettings} from './extension-catalog-settings';
 import {DismissOnBackdrop} from './dismiss-on-backdrop';
@@ -14,13 +15,13 @@ import {MarketplaceLogo} from './marketplace-logo';
 import {storeNames} from '../models';
 interface Market {id:string;name:string;website_url:string;logo_url:string;allowed_hosts:string[];scraping_enabled:boolean;url_normalization_rules?:{type:string;marker:string}[]}
 interface Rule {wholeSelector?:string;fractionSelector?:string;field:string;selectorsText:string;mode:string;attribute:string;required:boolean;nameSelector:string;valueSelector:string}
-@Component({selector:'catalog-admin',imports:[ActionMenu,ExtensionCatalogSettings,DismissOnBackdrop,Pagination,InfiniteScroll,FormsModule,CurrencyPipe,DatePipe,RouterLink,ProductPicker,MarketplaceLogo],templateUrl:'./catalog-admin.html'})
+@Component({selector:'catalog-admin',imports:[ReviewRating,ActionMenu,ExtensionCatalogSettings,DismissOnBackdrop,Pagination,InfiniteScroll,FormsModule,CurrencyPipe,DatePipe,RouterLink,ProductPicker,MarketplaceLogo],templateUrl:'./catalog-admin.html'})
 export class CatalogAdmin implements OnChanges,OnDestroy {
  @Input() section='marketplaces';api=inject(Api);route=inject(ActivatedRoute);loading=signal(false);busy=signal(false);failed=signal(false);markets=signal<Market[]>([]);marketFeed=new PagedData<Market>(page=>this.api.get('/admin/catalog-marketplaces',{paginate:true,page}));preview=signal<any>(null);marketModal=signal(false);deleting=signal<Market|null>(null);
  normalizationMarkers='';normalizationTestUrl='';normalizedPreview=signal('');
  specSize=10;specPage=1;evidenceSize=10;evidencePage=1;productId='';sellerName='';selected='';editing=false;marketDraft={id:'',name:'',websiteUrl:'',logoUrl:'',hosts:'',scrapingEnabled:true};rules:Rule[]=[];version=0;waitSeconds=15;validityMinutes=360;linkUrl='';testUrl='';authorized=false;
  offerCreated=output<void>();
- fields=[{id:'title',name:'Nome do produto'},{id:'brand',name:'Marca'},{id:'price',name:'Preço da oferta'},{id:'originalPrice',name:'Preço de referência'},{id:'images',name:'Imagens'},{id:'description',name:'Descrição'},{id:'specifications',name:'Características'},{id:'conditions',name:'Condições da oferta'},{id:'category',name:'Categoria'},{id:'externalId',name:'Identificador do produto'},{id:'productUrl',name:'URL do produto'}];
+ fields=[{id:'title',name:'Nome do produto'},{id:'brand',name:'Marca'},{id:'price',name:'Preço da oferta'},{id:'originalPrice',name:'Preço de referência'},{id:'rating',name:'Nota da avaliação (0 a 5)'},{id:'reviewCount',name:'Quantidade de avaliações'},{id:'images',name:'Imagens'},{id:'description',name:'Descrição'},{id:'specifications',name:'Características'},{id:'conditions',name:'Condições da oferta'},{id:'category',name:'Categoria'},{id:'externalId',name:'Identificador do produto'},{id:'productUrl',name:'URL do produto'}];
  ngOnChanges(){void this.load();}
  async load(){
   this.productId=this.route.snapshot.queryParamMap.get('product')||this.productId;
