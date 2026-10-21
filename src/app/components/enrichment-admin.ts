@@ -33,11 +33,22 @@ export class EnrichmentAdmin implements OnInit {
   const body=this.productMode==='existing'?{mode:'existing',version:link.enrichment_version,productId:this.selectedProductId}:{mode:'new',version:link.enrichment_version,product:{...this.productDraft,imageUrl:this.productDraft.imageUrl.trim()||null}};
   await this.api.send('POST',this.base+'/review/'+link.id+'/product',body);this.productTarget.set(null);
  },'Produto atribuído. Revise o anúncio antes de publicar.');}
+ selectedLinks=signal<Map<string,{id:string;version:number;title:string}>>(new Map());
+ bulkConfirm=signal(false);bulkResults=signal<any[]>([]);
+ canPublish(link:any){return link.status!=='archived'&&!link.published_offer_id&&!!link.product_id&&!!link.confirmed_category_id&&!!link.affiliate_url&&link.extraction_status==='completed'&&!!link.enrichment_data?.priceCents&&!link.enrichment_data?.missing?.length;}
+ clearSelection(){this.selectedLinks.set(new Map());}
+ toggleLink(link:any){if(!this.canPublish(link)||this.busy())return;const next=new Map(this.selectedLinks());if(next.has(link.id))next.delete(link.id);else if(next.size<100)next.set(link.id,{id:link.id,version:link.enrichment_version,title:link.enrichment_data?.title||link.url});this.selectedLinks.set(next);}
+ pageSelected(){const ready=this.links.items().filter(link=>this.canPublish(link));return !!ready.length&&ready.every(link=>this.selectedLinks().has(link.id));}
+ togglePage(){const ready=this.links.items().filter(link=>this.canPublish(link)),remove=this.pageSelected(),next=new Map(this.selectedLinks());for(const link of ready){if(remove)next.delete(link.id);else if(next.size<100)next.set(link.id,{id:link.id,version:link.enrichment_version,title:link.enrichment_data?.title||link.url});}this.selectedLinks.set(next);}
+ async publishSelected(){const selected=[...this.selectedLinks().values()];if(!selected.length)return;await this.act(async()=>{
+  const result=await this.api.send<{results:any[];published:number;failed:number}>('POST',this.base+'/review/publish-batch',{items:selected.map(({id,version})=>({id,version})),authorizedContent:true});
+  this.bulkResults.set(result.results.map(row=>({...row,title:selected.find(item=>item.id===row.id)?.title})));this.selectedLinks.set(new Map());this.bulkConfirm.set(false);
+ },'Publicação em massa concluída. Confira o resultado de cada link.');}
  publishTarget=signal<any>(null);
  async publish(){const link=this.publishTarget();await this.act(async()=>{await this.api.send('POST',this.base+'/review/'+link.id+'/publish',{version:link.enrichment_version,authorizedContent:true});this.publishTarget.set(null);},'Oferta publicada.');}
- async selectView(view:'review'|'mappings'|'ai'){this.view.set(view);if(view!=='ai')await this.feed().reset();}
+ async selectView(view:'review'|'mappings'|'ai'){this.selectedLinks.set(new Map());this.bulkResults.set([]);this.view.set(view);if(view!=='ai')await this.feed().reset();}
  feed(){return this.view()==='mappings'?this.mappings:this.links;}
- async filter(){await this.feed().reset();}
+ async filter(){this.selectedLinks.set(new Map());this.bulkResults.set([]);await this.feed().reset();}
  async act(work:()=>Promise<unknown>,message:string){if(this.busy())return;
 this.busy.set(true);try{await work();this.api.success(message);await this.feed().go(this.feed().page()||1);}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
  label(status:string){return ({pending:'Pendente',queued:'Aguardando extensão',running:'Em execução',completed:'Concluído',failed:'Falha técnica',cancelled:'Cancelado',skipped:'Ignorado'} as Record<string,string>)[status]||status;}

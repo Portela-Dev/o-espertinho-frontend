@@ -23,3 +23,5 @@ Plano e diário: ../PLANO-MIGRACAO-CATALOGO-EXTENSAO.md e cópia versionada em o
 ## Revisão com IA
 
 A revisão possui uma aba Configurações de IA com tarefas e prompts independentes. A extensão cataloga primeiro e categoriza produtos novos depois, reutilizando o inventário completo. Decisões válidas são confirmadas automaticamente; ambiguidades e publicação permanecem na revisão. Consulte docs/REVISAO-IA.md no backend.
+
+Na revisão, selecione links aptos individualmente ou por página e use Publicar selecionados. A seleção permanece entre páginas e admite até 100 links por lote. A confirmação autoriza a divulgação de todos os selecionados; cada link é validado pelo backend com sua versão. O resultado informa publicações e motivos de recusa, sem duplicar ofertas no reenvio. Trocar filtros limpa a seleção.
