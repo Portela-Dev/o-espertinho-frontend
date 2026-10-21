@@ -21,10 +21,10 @@ export class EnrichmentAdmin implements OnInit {
  productDraft={name:'',description:'',brand:'',imageUrl:''};
  products=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/review/'+this.productTarget().id+'/products',{page,pageSize,q:this.productQuery}));
  async assignProduct(link:any){
-  if(!link.confirmed_category_id||link.extraction_status!=='completed')return;
+  if(link.extraction_status!=='completed')return;
   this.productMode='existing';this.productQuery='';this.selectedProductId=link.product_id||'';
   const data=link.enrichment_data||{};
-  this.productDraft={name:data.title||'',description:data.description||'',brand:data.brand||'',imageUrl:(data.images||[]).find((url:string)=>url.startsWith('https://'))||''};
+  this.productDraft={name:link.draft_name||data.title||'',description:link.draft_description||data.description||'',brand:link.draft_brand||data.brand||'',imageUrl:(data.images||[]).find((url:string)=>url.startsWith('https://'))||''};
   if(link.ai_product?.action==='link_existing'){this.selectedProductId=link.ai_product.productId;}
   if(link.ai_product?.action==='create_new'){this.productMode='new';this.productDraft={...this.productDraft,...link.ai_product.product};}
   this.productTarget.set(link);await this.products.reset();
@@ -43,11 +43,11 @@ this.busy.set(true);try{await work();this.api.success(message);await this.feed()
  label(status:string){return ({pending:'Pendente',queued:'Aguardando extensão',running:'Em execução',completed:'Concluído',failed:'Falha técnica',cancelled:'Cancelado',skipped:'Ignorado'} as Record<string,string>)[status]||status;}
  availabilityLabel(data:any){if(data?.availability==='unavailable')return 'Indisponível';
  return data?.availability==='available'||data?.priceCents>0?'Disponível':'Não confirmada';}
- categoryState(link:any){if(link.confirmed_category_id)return 'Categoria confirmada';
+ categoryState(link:any){if(link.product_draft_id&&!link.product_id)return 'Rascunho aguardando categorização';if(link.confirmed_category_id)return 'Categoria confirmada';
 if(!link.source_category_path.length)return 'Sem categoria de origem';
 if(link.suggested_category_id)return 'Categoria sugerida — confirmar';
 return 'Aguardando categorização';}
- categorize(link:any){this.categoryId=link.confirmed_category_id||link.suggested_category_id||'';this.saveMapping=false;this.creatingCategory.set(false);this.newCategoryPath=[''];if(link.ai_category){this.categoryId=link.ai_category.categoryId||'';if(!this.categoryId){this.newCategoryPath=[...link.ai_category.categoryPath];this.creatingCategory.set(true);}}
+ categorize(link:any){this.categoryId=link.confirmed_category_id||link.suggested_category_id||'';this.saveMapping=false;this.creatingCategory.set(false);this.newCategoryPath=[''];if(link.ai_category){this.categoryId=link.ai_category.categoryId||'';if(!this.categoryId&&link.ai_category.categoryPath?.length){this.newCategoryPath=[...link.ai_category.categoryPath];this.creatingCategory.set(true);}}
 this.categoryTarget.set(link);}
  async createCategory(){
   if(this.busy())return;
@@ -59,7 +59,7 @@ this.busy.set(true);
    this.api.success('Árvore disponível e selecionada. Confirme a categoria para atribuí-la ao item.');
   }catch(e){this.api.fail(e);}finally{this.busy.set(false);}
  }
- async confirmCategory(){const link=this.categoryTarget();await this.act(async()=>{await this.api.send('POST',this.base+'/review/'+link.id+'/category',{categoryId:this.categoryId,version:link.enrichment_version,saveMapping:this.saveMapping});this.categoryTarget.set(null);},'Categoria confirmada. Os demais itens continuam aguardando confirmação.');}
+ async confirmCategory(){const link=this.categoryTarget();await this.act(async()=>{await this.api.send('POST',this.base+'/review/'+link.id+'/category',{categoryId:this.categoryId,version:link.enrichment_version,saveMapping:this.saveMapping});this.categoryTarget.set(null);},'Categoria do produto atualizada. Os vínculos relacionados foram preservados.');}
  editMapping(row:any){this.mappingTarget.set(row);this.categoryId=row.category_id;}
  async saveEditedMapping(){await this.act(async()=>{await this.api.send('PUT',this.base+'/mappings/'+this.mappingTarget().id,{categoryId:this.categoryId});this.mappingTarget.set(null);},'Mapeamento alterado. Categorias já confirmadas foram preservadas.');}
  async deleteMapping(){await this.act(async()=>{await this.api.send('DELETE',this.base+'/mappings/'+this.deleteTarget().id,{});this.deleteTarget.set(null);},'Mapeamento excluído.');}

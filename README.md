@@ -22,4 +22,4 @@ Plano e diário: ../PLANO-MIGRACAO-CATALOGO-EXTENSAO.md e cópia versionada em o
 
 ## Revisão com IA
 
-A revisão possui uma aba Configurações de IA com tarefas e prompts independentes. A extensão gera propostas; o administrador confirma categoria e produto antes de qualquer aplicação. Consulte docs/REVISAO-IA.md no backend.
+A revisão possui uma aba Configurações de IA com tarefas e prompts independentes. A extensão cataloga primeiro e categoriza produtos novos depois, reutilizando o inventário completo. Decisões válidas são confirmadas automaticamente; ambiguidades e publicação permanecem na revisão. Consulte docs/REVISAO-IA.md no backend.
