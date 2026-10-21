@@ -19,3 +19,9 @@ Cadastro por link e teste de seletores recebem uma solicitação assíncrona: se
 `npm run typecheck`, `npm run build`, `npm run test:coverage` e `npm run test:e2e`. Os E2Es usam o servidor de fixture isolado do backend, nunca o banco pessoal. O CI executa SSR/Chromium real e coleta cobertura do navegador. O checkout backend é fixado em SHA compatível com a mesma entrega.
 
 Plano e diário: ../PLANO-MIGRACAO-CATALOGO-EXTENSAO.md e cópia versionada em o-espertinho-backend/docs. Evidências anteriores estão em docs/history.
+
+## Revisão com IA
+
+A revisão possui uma aba Configurações de IA com tarefas e prompts independentes. A extensão cataloga primeiro e categoriza produtos novos depois, reutilizando o inventário completo. Decisões válidas são confirmadas automaticamente; ambiguidades e publicação permanecem na revisão. Consulte docs/REVISAO-IA.md no backend.
+
+Na revisão, selecione links aptos individualmente ou por página e use Publicar selecionados. A seleção permanece entre páginas e admite até 100 links por lote. A confirmação autoriza a divulgação de todos os selecionados; cada link é validado pelo backend com sua versão. O resultado informa publicações e motivos de recusa, sem duplicar ofertas no reenvio. Trocar filtros limpa a seleção.
