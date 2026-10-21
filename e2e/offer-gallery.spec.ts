@@ -3,7 +3,15 @@ import {test,expect} from './coverage';
 for(const mobile of [false,true])test(`galeria abre na foto escolhida, navega e fecha sem nova aba — ${mobile?'mobile':'desktop'}`,async({page,context})=>{
  await page.setViewportSize({width:mobile?375:1320,height:900});
  await page.route('https://images.example.com/*',route=>{const portrait=route.request().url().endsWith('2.svg'),w=portrait?200:800,h=portrait?800:200;return route.fulfill({contentType:'image/svg+xml',body:`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="100%" height="100%" fill="#cef58c"/><rect width="100%" height="20" fill="#173a2b"/><rect y="${h-20}" width="100%" height="20" fill="#b56c0b"/></svg>`});});
- await page.goto('/');await page.locator('product-card .card-cta').first().click();
+ await page.goto('/');
+ const squareImage=async(selector:string)=>{
+  const visual=page.locator(selector).first();await expect(visual).toBeVisible();
+  const bounds=await visual.boundingBox();expect(Math.abs(bounds!.width-bounds!.height)).toBeLessThan(1);
+  await expect(visual.locator('img')).toHaveCSS('object-fit','contain');
+  const image=await visual.locator('img').boundingBox();expect(image!.width).toBeCloseTo(bounds!.width,0);expect(image!.height).toBeCloseTo(bounds!.height,0);
+ };
+ await squareImage('product-card .product-visual');await page.locator('product-card .card-cta').first().click();
+ await squareImage('offer-card .product-visual');
  const link=page.locator('offer-card h3 a').first(),href=await link.getAttribute('href');
  const id=href!.split('/').at(-1);
  await page.route('**/api/offers/'+id,async route=>{const response=await route.fetch(),offer=await response.json();await route.fulfill({json:{...offer,images:['https://images.example.com/1.svg','https://images.example.com/2.svg','https://images.example.com/3.svg']}});});
