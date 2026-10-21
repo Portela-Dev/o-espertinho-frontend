@@ -20,8 +20,8 @@ for(const mobile of [false,true])test(`galeria abre na foto escolhida, navega e 
  expect(context.pages().length).toBe(pages);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.keyboard.press('Escape');await expect(modal).not.toBeVisible();await expect(opener).toBeFocused();
  await opener.click();await modal.getByRole('button',{name:'Fechar galeria'}).click();await expect(modal).not.toBeVisible();
- await opener.click();await page.mouse.click(2,2);await expect(modal).not.toBeVisible();
- await opener.click();await page.keyboard.press('Tab');expect(await modal.evaluate(dialog=>dialog.contains(document.activeElement))).toBe(true);
+ await opener.click();await expect(modal).toBeVisible();await page.mouse.click(2,2);await expect(modal).not.toBeVisible();
+ await opener.click();await expect(modal.getByRole('button',{name:'Foto anterior',exact:true})).toBeVisible();await expect(modal.getByRole('button',{name:'Fechar galeria'})).toBeFocused();await page.keyboard.press('Tab');await expect(modal.getByRole('button',{name:'Foto anterior',exact:true})).toBeFocused();
  await page.screenshot({path:`test-results/gallery-${mobile?'mobile':'desktop'}.png`});
 });
 

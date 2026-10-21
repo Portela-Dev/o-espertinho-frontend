@@ -1,5 +1,5 @@
 import {ProductImage} from './product-image';
-import {Component,ElementRef,ViewChild,input,signal} from '@angular/core';
+import {Component,ElementRef,ViewChild,input,signal,afterNextRender,inject,Injector} from '@angular/core';
 import {DismissOnBackdrop} from './dismiss-on-backdrop';
 
 @Component({selector:'offer-photo-gallery',imports:[ProductImage,DismissOnBackdrop],styles:`
@@ -15,7 +15,7 @@ dialog::backdrop{background:#000b}.heading{display:flex;align-items:center;justi
 <div class="thumbnails" aria-label="Fotos da oferta">
  @for(image of images();track $index){<button type="button" class="thumbnail" [attr.aria-label]="'Ampliar foto '+($index+1)+' de '+images().length" (click)="open($index)"><img [productImage]="image" [alt]="title()+' — foto '+($index+1)" loading="lazy" referrerpolicy="no-referrer"></button>}
 </div>
-<dialog #gallery aria-label="Galeria de fotos da oferta" (dismissOnBackdrop)="close()" (close)="opened.set(false)" (keydown)="key($event)">
+<dialog #gallery aria-label="Galeria de fotos da oferta" (dismissOnBackdrop)="close()" (close)="onClosed()" (keydown)="key($event)">
  <div class="heading"><h2>{{title()}}</h2><button class="close" type="button" autofocus aria-label="Fechar galeria" (click)="close()">×</button></div>
  @if(opened()){
   <div class="viewer" (touchstart)="touchStart($event)" (touchend)="touchEnd($event)">
@@ -30,9 +30,11 @@ dialog::backdrop{background:#000b}.heading{display:flex;align-items:center;justi
 export class OfferPhotoGallery {
  images=input.required<string[]>();title=input('Fotos da oferta');selected=signal(0);opened=signal(false);
  @ViewChild('gallery',{static:true}) gallery!:ElementRef<HTMLDialogElement>;
+ private readonly injector=inject(Injector);
  private touch?:{x:number;y:number};
- open(index:number){this.choose(index);this.opened.set(true);this.gallery.nativeElement.showModal();}
+ open(index:number){this.choose(index);this.opened.set(true);afterNextRender(()=>{if(!this.opened())return;const dialog=this.gallery.nativeElement;if(!dialog.open)dialog.showModal();dialog.querySelector<HTMLButtonElement>('.close')?.focus();},{injector:this.injector});}
  close(){this.gallery.nativeElement.close();this.opened.set(false);}
+ onClosed(){if(!this.gallery.nativeElement.open)this.opened.set(false);}
  choose(index:number){this.selected.set(index);}
  move(direction:number){const count=this.images().length;if(count)this.choose((this.selected()+direction+count)%count);}
  key(event:KeyboardEvent){if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();this.move(event.key==='ArrowLeft'?-1:1);}}
