@@ -1,3 +1,4 @@
+import {ProductImage} from './product-image';
 import {ReviewAiSettings} from './review-ai-settings';
 import {RouterLink} from '@angular/router';
 import {ReviewRating} from './review-rating';
@@ -10,7 +11,7 @@ import {Api} from '../api.service';
 import {PagedData} from '../paged-data';
 import {Pagination} from './pagination';
 import {DismissOnBackdrop} from './dismiss-on-backdrop';
-@Component({selector:'enrichment-admin',imports:[ReviewRating,ReviewAiSettings,RouterLink,ActionMenu,CategoryFields,FormsModule,DatePipe,CurrencyPipe,Pagination,DismissOnBackdrop],templateUrl:'./enrichment-admin.html',styles:`:host{display:block}.tools,.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:16px 0}.tools label{margin:0;min-width:160px;flex:1}.tools input,.tools select{margin-bottom:0}td{vertical-align:top}.url{overflow-wrap:anywhere;max-width:320px;display:block}.detail{width:min(800px,100%);margin:0;border:0;color:var(--ink)}.detail img{width:180px;height:180px;object-fit:contain}.detail p{white-space:pre-wrap;overflow-wrap:anywhere}.notice{color:var(--muted);font-size:12px}small{display:block}.actions button[aria-pressed=true]{font-weight:bold}.category-tree-fields{border:0;padding:0;margin:0;min-width:0}`})
+@Component({selector:'enrichment-admin',imports:[ProductImage,ReviewRating,ReviewAiSettings,RouterLink,ActionMenu,CategoryFields,FormsModule,DatePipe,CurrencyPipe,Pagination,DismissOnBackdrop],templateUrl:'./enrichment-admin.html',styles:`:host{display:block}.tools,.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:16px 0}.tools label{margin:0;min-width:160px;flex:1}.tools input,.tools select{margin-bottom:0}td{vertical-align:top}.url{overflow-wrap:anywhere;max-width:320px;display:block}.detail{width:min(800px,100%);margin:0;border:0;color:var(--ink)}.detail img{width:180px;height:180px;object-fit:contain}.detail p{white-space:pre-wrap;overflow-wrap:anywhere}.notice{color:var(--muted);font-size:12px}small{display:block}.actions button[aria-pressed=true]{font-weight:bold}.category-tree-fields{border:0;padding:0;margin:0;min-width:0}`})
 export class EnrichmentAdmin implements OnInit {
  api=inject(Api);base='/admin/discovery/enrichment';view=signal<'review'|'mappings'|'ai'>('review');markets=signal<any[]>([]);categories=signal<any[]>([]);marketplaceId='';state='';sourceCategory='';busy=signal(false);detail=signal<any>(null);categoryTarget=signal<any>(null);mappingTarget=signal<any>(null);deleteTarget=signal<any>(null);archiveTarget=signal<any>(null);categoryId='';saveMapping=false;
  links=new PagedData<any>((page,pageSize)=>this.api.get(this.base+'/review',{page,pageSize,marketplaceId:this.marketplaceId,state:this.state,sourceCategory:this.sourceCategory}));

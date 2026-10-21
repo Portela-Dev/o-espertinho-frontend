@@ -24,3 +24,21 @@ for(const mobile of [false,true])test(`galeria abre na foto escolhida, navega e 
  await opener.click();await page.keyboard.press('Tab');expect(await modal.evaluate(dialog=>dialog.contains(document.activeElement))).toBe(true);
  await page.screenshot({path:`test-results/gallery-${mobile?'mobile':'desktop'}.png`});
 });
+
+test('imagem padrão local cobre cards, miniaturas e modal; próxima foto válida continua funcionando',async({page})=>{
+ const productId='11111111-1111-4111-8111-111111111111',offerId='22222222-2222-4222-8222-222222222222';
+ const broken='https://images.example.com/broken.jpg',good='https://images.example.com/good.svg',fallback='/images/product-unavailable.svg';
+ await page.route(broken,route=>route.abort());
+ await page.route(good,route=>route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="green"/></svg>'}));
+ const offer={id:offerId,product_id:productId,title:'Oferta com fotos',marketplace_id:'amazon',marketplace_name:'Amazon',image_url:broken,images:[broken,good],price_cents:10000,status:'published',affiliate_url:'https://www.amazon.com.br/p',description:'',conditions:''};
+ const product={id:productId,name:offer.title,category_path:[],category_ids:[],display_image_url:broken,offer_count:1,available:true,min_price_cents:10000,max_price_cents:10000,offers:[offer],page:1,pageSize:24};
+ await page.route('**/api/products*',route=>route.fulfill({json:{items:[product],total:1,page:1,pageSize:24}}));
+ await page.route('**/api/products/'+productId+'?*',route=>route.fulfill({json:product}));
+ await page.route('**/api/offers/'+offerId,route=>route.fulfill({json:offer}));
+ await page.goto('/sobre');await page.getByRole('link',{name:'Explorar',exact:true}).click();
+ await expect(page.locator('product-card .product-visual img')).toHaveAttribute('src',fallback);
+ await page.locator('product-card .card-cta').click();await expect(page.locator('.preview-main-image img')).toHaveAttribute('src',fallback);await expect(page.locator('offer-card .product-visual img')).toHaveAttribute('src',fallback);
+ await page.locator('offer-card h3 a').click();const thumbnail=page.getByRole('button',{name:'Ampliar foto 1 de 2'});await expect(thumbnail.locator('img')).toHaveAttribute('src',fallback);await thumbnail.click();const modal=page.getByRole('dialog',{name:'Galeria de fotos da oferta'});
+ await expect(modal.locator('.viewer img')).toHaveAttribute('src',fallback);await expect.poll(()=>modal.locator('.viewer img').evaluate((img:HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0);
+ await modal.getByRole('button',{name:'Próxima foto',exact:true}).click();await expect(modal.locator('.viewer img')).toHaveAttribute('src',good);await page.keyboard.press('Escape');
+});
