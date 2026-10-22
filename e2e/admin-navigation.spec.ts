@@ -10,9 +10,9 @@ async function send(context:APIRequestContext,path:string,body:any,method='POST'
  return context.fetch('/api'+path,{method,headers:{Origin:origin,'X-XSRF-TOKEN':token},data:body});
 }
 
-test('admin has eight groups, a single execution screen and one offer management list',async({page})=>{
+test('admin has nine groups, a single execution screen and one offer management list',async({page})=>{
  await login(page);await page.goto('/admin');const nav=page.getByRole('navigation',{name:'Administração'});
- await expect(nav.getByRole('link')).toHaveText(['Visão geral','Revisão','Ofertas','Produtos','Marketplaces','Execuções','Acessos','Atividade']);
+ await expect(nav.getByRole('link')).toHaveText(['Visão geral','Revisão','Ofertas','Produtos','Marketplaces','Execuções','Acessos','Manutenção','Atividade']);
  await nav.getByRole('link',{name:'Marketplaces',exact:true}).click();const market=page.getByRole('navigation',{name:'Configurações de marketplaces'});
  await expect(market.getByRole('link')).toHaveText(['Cadastro','Exploração','Seletores']);
  await market.getByRole('link',{name:'Exploração',exact:true}).click();await expect(page).toHaveURL(/\/admin\/discovery$/);await expect(page.locator('catalog-operations')).toHaveCount(0);
