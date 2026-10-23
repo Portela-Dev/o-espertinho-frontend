@@ -43,6 +43,6 @@ export class HomePage implements OnInit {
   private cancelSearch(){clearTimeout(this.searchTimer);this.searchTimer=undefined;}
   scheduleSearch(){this.cancelSearch();this.searchTimer=setTimeout(()=>{this.searchTimer=undefined;if(this.searchText!==this.filters.q)this.apply(true);},500);}
   apply(automatic=false){this.cancelSearch();this.filters.q=this.searchText;this.filters.maxPrice=this.maxReais?Math.round(this.maxReais*100):0;void this.router.navigate(['/'],{queryParams:{...this.filters,page:1},fragment:'ofertas',replaceUrl:automatic});}
-  store(id:string){this.filters.marketplace=id;this.apply();}category(value:string){this.filters.category='';this.filters.categoryId=value;this.apply();}clear(){this.searchText='';this.filters=emptyFilters();this.maxReais=null;this.apply();}
+  store(id:string){this.filters.marketplace=this.filters.marketplace===id?'':id;this.apply();}category(value:string){this.filters.category='';this.filters.categoryId=value;this.apply();}clear(){this.searchText='';this.filters=emptyFilters();this.maxReais=null;this.apply();}
   async saveFilter(){if(!this.api.user()){this.saveOpen.set(false);await this.router.navigate(['/entrar'],{queryParams:{next:this.router.url}});return;}this.saving.set(true);try{this.filters.maxPrice=this.maxReais?Math.round(this.maxReais*100):0;await this.api.send('POST','/me/filters',{name:this.filterName,filters:this.filters});this.saveOpen.set(false);this.filterName='';this.api.success('Filtro salvo. Acesse em Meus filtros.');}catch(e){this.api.fail(e);}finally{this.saving.set(false);}}
 }
