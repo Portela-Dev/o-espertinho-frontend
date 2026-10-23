@@ -1,3 +1,4 @@
+import {MarketplaceLogo} from '../components/marketplace-logo';
 import {ExpandableDescription} from '../components/expandable-description';
 import {OfferPhotoGallery} from '../components/offer-photo-gallery';
 import {ReviewRating} from '../components/review-rating';
@@ -14,7 +15,7 @@ import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {Api} from '../api.service';
 import {Product,Offer,storeNames} from '../models';
 import {OfferCard} from '../components/offer-card';
-@Component({imports:[ExpandableDescription,ProductImage,OfferPhotoGallery,ReviewRating,InfiniteScroll,CategoryBreadcrumb,RouterLink,CurrencyPipe,DatePipe,OfferCard],styles:'.preview-main-image{position:relative;align-self:start;width:100%;height:auto;aspect-ratio:1;border-radius:12px;overflow:hidden;padding:0}.preview-main-image img{position:absolute;inset:0;display:block;width:100%;height:100%;padding:0;object-fit:contain}.primary-offer{align-items:start}.offer-purchase{display:flex;flex-direction:column;align-items:start;gap:12px;margin:20px 0 24px}.offer-purchase .detail-price{margin:0}.offer-conditions{white-space:pre-wrap;overflow-wrap:anywhere}.other-offers{margin-top:30px}',templateUrl:'./product.page.html'})
+@Component({imports:[MarketplaceLogo,ExpandableDescription,ProductImage,OfferPhotoGallery,ReviewRating,InfiniteScroll,CategoryBreadcrumb,RouterLink,CurrencyPipe,DatePipe,OfferCard],styles:'.preview-main-image{position:relative;align-self:start;width:100%;height:auto;aspect-ratio:1;border-radius:12px;overflow:hidden;padding:0}.preview-main-image img{position:absolute;inset:0;display:block;width:100%;height:100%;padding:0;object-fit:contain}.primary-offer{align-items:start}.offer-purchase{display:flex;flex-direction:column;align-items:start;gap:12px;margin:20px 0 24px}.offer-purchase .detail-price{margin:0}.offer-conditions{white-space:pre-wrap;overflow-wrap:anywhere}.other-offers{margin-top:30px}',templateUrl:'./product.page.html'})
 export class ProductPage implements OnInit{
  api=inject(Api);route=inject(ActivatedRoute);destroy=inject(DestroyRef);title=inject(Title);meta=inject(Meta);product=signal<Product|null>(null);productId='';feed=new PagedData<Offer>(async page=>{const p=await this.api.get<Product&{page:number;pageSize:number}>('/products/'+this.productId,{paginate:true,page});return {...p,items:p.offers??[],total:p.offer_count};},result=>{this.product.set(result as unknown as Product);});loading=signal(true);failed=signal(false);sequence=0;
  primary=computed(()=>this.feed.items()[0]??null);

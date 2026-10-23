@@ -7,6 +7,6 @@ export interface SavedFilter {id:string;name:string;filters:Filters}
 export const storeNames:Record<string,string>={amazon:'Amazon',mercadolivre:'Mercado Livre'};
 export const emptyFilters=():Filters=>({q:'',marketplace:'',category:'',categoryId:'',maxPrice:0,sort:'recent'});
 
-export interface Product {rating?:number|null;review_count?:number|null;rating_marketplace_name?:string|null;id:string;name:string;description:string;brand:string;model:string;category:string;subcategory:string;category_path:string[];category_ids:string[];image_url:string|null;display_image_url:string|null;min_price_cents:number|null;max_price_cents:number|null;offer_count:number;available?:boolean;status?:string;offers?:Offer[];updated_at:string}
+export interface Product {marketplaces?:MarketplaceSummary[];rating?:number|null;review_count?:number|null;rating_marketplace_name?:string|null;id:string;name:string;description:string;brand:string;model:string;category:string;subcategory:string;category_path:string[];category_ids:string[];image_url:string|null;display_image_url:string|null;min_price_cents:number|null;max_price_cents:number|null;offer_count:number;available?:boolean;status?:string;offers?:Offer[];updated_at:string}
 
 export interface MarketplaceSummary {id:string;name:string;website_url:string;logo_url:string}

@@ -13,7 +13,7 @@
      @if(o.seller_name){<p class="muted">Vendedor: {{o.seller_name}}</p>}
      <div class="offer-purchase">
       <p class="detail-price">{{o.price_cents/100|currency:'BRL'}}</p>
-      <a class="button dark" [href]="o.affiliate_url" target="_blank" rel="sponsored noopener" (click)="track(o)">Ver na {{o.marketplace_name||names[o.marketplace_id]||o.marketplace_id}} ↗</a>
+      <a class="button dark" [href]="o.affiliate_url" target="_blank" rel="sponsored noopener" (click)="track(o)"><marketplace-logo [url]="o.marketplace_logo_url||''" [name]="o.marketplace_name||names[o.marketplace_id]||o.marketplace_id"/>Ver na {{o.marketplace_name||names[o.marketplace_id]||o.marketplace_id}} ↗</a>
      </div>
      <expandable-description [text]="o.description||'Confira os detalhes completos do produto, o vendedor e as opções disponíveis na loja.'"/>
      @if(o.images&&o.images.length>1){<offer-photo-gallery [images]="o.images" [title]="o.title"/>}

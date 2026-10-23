@@ -93,3 +93,7 @@ catalog-admin output.info-box{display:block}
 @media(max-width:600px){.category-navigation{margin:14px 0 18px;padding:10px;border-radius:11px}.category-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.category-grid button{padding:11px 12px;min-height:54px;font-size:11px;gap:8px}}
 
 body:has(offer-photo-gallery dialog[open]){overflow:hidden}
+
+.button marketplace-logo{width:24px;height:24px;border-radius:6px;font-size:12px}
+.cta-marketplaces{display:inline-flex;flex-wrap:wrap;justify-content:center;gap:4px}.cta-marketplaces:empty{display:none}.card-cta:has(.cta-marketplaces){flex-wrap:wrap;justify-content:center;gap:8px}.card-cta .cta-marketplaces{margin:0}
+@media(max-width:620px){.button.card-cta marketplace-logo{width:20px;height:20px;border-radius:5px;font-size:10px}}
