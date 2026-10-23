@@ -21,8 +21,8 @@ declare global {
 }
 @Injectable({ providedIn: 'root' })
 export class GoogleSignIn {
-  private document = inject(DOCUMENT);
-  private browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly document = inject(DOCUMENT);
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private loading?: Promise<void>;
   private clientId = '';
   private manualElement?: HTMLElement;

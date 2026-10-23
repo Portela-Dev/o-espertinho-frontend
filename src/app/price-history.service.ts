@@ -34,10 +34,10 @@ type Request = {
 };
 @Injectable({ providedIn: 'root' })
 export class PriceHistoryService {
-  private api = inject(Api);
+  private readonly api = inject(Api);
   private waiting: Request[] = [];
   private timer: ReturnType<typeof setTimeout> | undefined;
-  private cache = new Map<
+  private readonly cache = new Map<
     string,
     { expires: number; promise: Promise<ChartHistory> }
   >();

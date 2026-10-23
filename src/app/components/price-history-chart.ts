@@ -316,8 +316,8 @@ export class PriceHistoryChart {
   kind = input<'product' | 'offer'>('offer');
   label = input('');
   @ViewChild('historyDialog') dialog!: ElementRef<HTMLDialogElement>;
-  private api = inject(Api);
-  private history = inject(PriceHistoryService);
+  private readonly api = inject(Api);
+  private readonly history = inject(PriceHistoryService);
   private compactSeq = 0;
   private detailSeq = 0;
   compact = signal<ChartHistory | null>(null);

@@ -11,8 +11,8 @@ type Theme = 'light' | 'dark';
 const storageKey = 'espertinho-theme';
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  private document = inject(DOCUMENT);
-  private destroy = inject(DestroyRef);
+  private readonly document = inject(DOCUMENT);
+  private readonly destroy = inject(DestroyRef);
   readonly dark = signal(false);
   constructor() {
     // Browser state is read after hydration; SSR never accesses browser globals.

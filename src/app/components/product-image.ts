@@ -8,7 +8,7 @@ export const PRODUCT_IMAGE_FALLBACK = '/images/product-unavailable.svg';
 })
 export class ProductImage {
   productImage = input<string | null | undefined>('');
-  private failedUrl = signal<string | null | undefined>(undefined);
+  private readonly failedUrl = signal<string | null | undefined>(undefined);
   source = computed(() =>
     this.productImage() && this.productImage() !== this.failedUrl()
       ? this.productImage()

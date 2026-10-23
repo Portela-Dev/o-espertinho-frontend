@@ -16,9 +16,9 @@ import { GoogleSignIn } from './google-sign-in.service';
 import type { User, Offer } from './models';
 @Injectable({ providedIn: 'root' })
 export class Api {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   google = inject(GoogleSignIn);
-  private destroy = inject(DestroyRef);
+  private readonly destroy = inject(DestroyRef);
   signing = signal(false);
   private autoAllowed = true;
   private silentAttempted = false;
@@ -190,11 +190,7 @@ export class Api {
   get<T>(path: string, query?: Record<string, unknown>): Promise<T> {
     let params = new HttpParams();
     for (const [k, v] of Object.entries(query ?? {}))
-      if (v !== null && v !== undefined)
-        params = params.set(
-          k,
-          typeof v === 'object' ? JSON.stringify(v) : String(v),
-        );
+      if (v !== null && v !== undefined) params = params.set(k, queryValue(v));
     return firstValueFrom(this.http.get<T>('/api' + path, { params }));
   }
   reauthNonce = signal('');
@@ -335,5 +331,19 @@ export class Api {
   clear() {
     this.notice.set('');
     this.error.set('');
+  }
+}
+
+function queryValue(value: unknown): string {
+  switch (typeof value) {
+    case 'string':
+      return value;
+    case 'number':
+    case 'bigint':
+      return value.toString();
+    case 'boolean':
+      return value ? 'true' : 'false';
+    default:
+      return JSON.stringify(value) ?? '';
   }
 }

@@ -84,8 +84,8 @@ import {
 export class ActionMenu {
   menuId = input.required<string>();
   label = input('Ações');
-  private menu = viewChild<ElementRef<HTMLElement>>('menu');
-  private trigger = viewChild<ElementRef<HTMLElement>>('trigger');
+  private readonly menu = viewChild<ElementRef<HTMLElement>>('menu');
+  private readonly trigger = viewChild<ElementRef<HTMLElement>>('trigger');
   constructor() {
     const destroy = inject(DestroyRef);
     afterNextRender(() => {
