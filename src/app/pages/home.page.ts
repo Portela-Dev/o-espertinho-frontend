@@ -2,7 +2,6 @@ import {DismissOnBackdrop} from '../components/dismiss-on-backdrop';
 import {PagedData} from '../paged-data';
 import {InfiniteScroll} from '../components/infinite-scroll';
 import {Component,inject,signal,OnInit,DestroyRef} from '@angular/core';
-import {DOCUMENT} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Router,ActivatedRoute,RouterLink} from '@angular/router';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
@@ -14,7 +13,6 @@ import {CategoryBreadcrumb} from '../components/category-breadcrumb';
 import {ProductCard} from '../components/product-card';
 @Component({standalone:true,imports:[DismissOnBackdrop,InfiniteScroll,CategoryBreadcrumb,FormsModule,RouterLink,ProductCard,MarketplaceLogo],template:`
 <div class="page-width">
-<section class="hero"><div class="hero-copy"><span class="pill"><span class="live-dot"></span> Seu próximo achado está aqui</span><h1>Comprar bem<br>é coisa de <span>Espertinho.</span></h1><p>Ofertas selecionadas nas suas lojas favoritas.<br>Encontre o que vale a pena e guarde o que combina com você.</p><button type="button" class="button lime" (click)="exploreOffers()">Explorar ofertas <span>↓</span></button><div class="hero-trust"><span>✓ Curadoria de verdade</span><span>✓ Sem custo para você</span></div></div><div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><span class="spark spark-one">✳</span><span class="spark spark-two">✧</span><div class="floating-tag"><span>BONS ACHADOS</span><strong>vale<br>a pena<span>!</span></strong><div class="tag-barcode"></div></div><div class="small-tag">o melhor preço?<br><strong>a gente procura.</strong><span>↗</span></div></div></section>
 @if(marketplaces().length){<div class="partner-row"><span>SEUS ACHADOS, NAS LOJAS QUE VOCÊ CONHECE</span>@for(m of marketplaces();track m.id){<button type="button" class="partner" [attr.aria-pressed]="filters.marketplace===m.id" (click)="store(m.id)"><marketplace-logo [url]="m.logo_url" [name]="m.name"/>{{m.name}}</button>}</div>}
 <section id="ofertas" class="discovery"><div class="section-heading"><div><p class="eyebrow">ESCOLHIDOS A DEDO</p><h2>Pequenos preços. Grandes achados.</h2></div><a routerLink="/filtros" class="text-link">Meus filtros salvos ↗</a></div>
 <form class="search-bar" (ngSubmit)="apply()"><span aria-hidden="true">⌕</span><input aria-label="Buscar ofertas" name="q" [(ngModel)]="filters.q" placeholder="O que você quer encontrar hoje?" maxlength="160"><button class="button dark" type="submit">Buscar <span>↗</span></button></form>
@@ -31,7 +29,7 @@ import {ProductCard} from '../components/product-card';
 @if(saveOpen()){<div class="modal-backdrop" (dismissOnBackdrop)="!saving() && saveOpen.set(false)"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="filter-modal-title"><button type="button" class="close-button" (click)="saveOpen.set(false)" aria-label="Fechar">×</button><h2 id="filter-modal-title">Salvar esta busca</h2><p>Encontre novas ofertas com os mesmos critérios quando quiser.</p><form (ngSubmit)="saveFilter()"><label>Nome do filtro<input name="filterName" [(ngModel)]="filterName" required maxlength="80" placeholder="Ex.: Meu próximo monitor"></label><button class="button dark" type="submit" [disabled]="saving()">{{saving()?'Salvando…':'Salvar filtro'}}</button></form></section></div>}
 `})
 export class HomePage implements OnInit {
-  document=inject(DOCUMENT);api=inject(Api);route=inject(ActivatedRoute);router=inject(Router);destroy=inject(DestroyRef);title=inject(Title);meta=inject(Meta);
+  api=inject(Api);route=inject(ActivatedRoute);router=inject(Router);destroy=inject(DestroyRef);title=inject(Title);meta=inject(Meta);
   marketplaces=signal<MarketplaceSummary[]>([]);
   filters:Filters=emptyFilters();maxReais:number|null=null;feed=new PagedData<Product>(page=>this.api.get('/products',{...this.filters,page}));offers=this.feed.items;categories=signal<CategoryNode[]>([]);loading=this.feed.loading;failed=this.feed.failed;total=this.feed.total;saveOpen=signal(false);saving=signal(false);filterName='';
   ngOnInit(){void this.api.get<MarketplaceSummary[]>('/marketplaces').then(m=>this.marketplaces.set(m)).catch(()=>{});this.title.setTitle('O Espertinho');void this.api.get<CategoryNode[]>('/category-tree').then(c=>this.categories.set(c)).catch(()=>{});this.route.queryParams.pipe(takeUntilDestroyed(this.destroy)).subscribe(p=>{this.filters={q:p['q']||'',marketplace:p['marketplace']||'',category:p['category']||'',categoryId:p['categoryId']||'',maxPrice:Number(p['maxPrice'])||0,sort:p['sort']||'recent'};this.maxReais=this.filters.maxPrice?this.filters.maxPrice/100:null;void this.load();});}
@@ -41,7 +39,6 @@ export class HomePage implements OnInit {
   breadcrumbBase(){return {...this.filters,category:'',categoryId:'',page:1};}
   load(){return this.feed.reset();}
 
-  exploreOffers(){const reducedMotion=this.document.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches;this.document.getElementById('ofertas')?.scrollIntoView({behavior:reducedMotion?'instant':'smooth',block:'start'});}
   apply(){this.filters.maxPrice=this.maxReais?Math.round(this.maxReais*100):0;void this.router.navigate(['/'],{queryParams:{...this.filters,page:1},fragment:'ofertas'});}
   store(id:string){this.filters.marketplace=id;this.apply();}category(value:string){this.filters.category='';this.filters.categoryId=value;this.apply();}clear(){this.filters=emptyFilters();this.maxReais=null;this.apply();}
   async saveFilter(){if(!this.api.user()){this.saveOpen.set(false);await this.router.navigate(['/entrar'],{queryParams:{next:this.router.url}});return;}this.saving.set(true);try{this.filters.maxPrice=this.maxReais?Math.round(this.maxReais*100):0;await this.api.send('POST','/me/filters',{name:this.filterName,filters:this.filters});this.saveOpen.set(false);this.filterName='';this.api.success('Filtro salvo. Acesse em Meus filtros.');}catch(e){this.api.fail(e);}finally{this.saving.set(false);}}

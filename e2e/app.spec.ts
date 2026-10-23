@@ -6,7 +6,7 @@ async function login(page:Page,token='admin'){
   await page.goto('/entrar');await page.getByRole('button',{name:'Continuar com Google (teste)'}).click();await expect(page).not.toHaveURL(/entrar/);
 }
 test('vitrine, detalhes, filtros e layout sem overflow em desktop e celular',async({page})=>{
-  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await expect(page.getByRole('heading',{name:/Comprar bem/})).toBeVisible();await expect(page.locator('product-card')).toHaveCount(6);
+  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await expect(page.getByRole('heading',{name:'Pequenos preços. Grandes achados.'})).toBeVisible();await expect(page.locator('product-card')).toHaveCount(6);
   await page.getByRole('textbox',{name:'Buscar ofertas'}).fill('Monitor');await page.locator('.search-bar').getByRole('button',{name:/Buscar/}).click();await expect(page.locator('product-card')).toHaveCount(1);
   await page.locator('product-card h3 a').click();await expect(page.getByRole('heading',{level:1})).toContainText('Monitor');await expect(page.locator('a.card-cta')).toHaveAttribute('href',/amazon.com.br/);
   await page.setViewportSize({width:390,height:844});await page.goto('/');await expect(page.locator('product-card')).toHaveCount(6);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();await page.screenshot({path:'test-results/home-mobile.png',fullPage:true});
