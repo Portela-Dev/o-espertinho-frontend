@@ -97,3 +97,15 @@ body:has(offer-photo-gallery dialog[open]){overflow:hidden}
 .button marketplace-logo{width:24px;height:24px;border-radius:6px;font-size:12px}
 .cta-marketplaces{display:inline-flex;flex-wrap:wrap;justify-content:center;gap:4px}.cta-marketplaces:empty{display:none}.card-cta:has(.cta-marketplaces){flex-wrap:wrap;justify-content:center;gap:8px}.card-cta .cta-marketplaces{margin:0}
 @media(max-width:620px){.button.card-cta marketplace-logo{width:20px;height:20px;border-radius:5px;font-size:10px}}
+
+/* Shared scrollbar palette for pages, dialogs, tables and text fields. */
+*{scrollbar-width:thin;scrollbar-color:var(--muted) var(--surface-inset)}
+@supports selector(::-webkit-scrollbar){
+ *{scrollbar-width:auto;scrollbar-color:auto}
+ *::-webkit-scrollbar{width:10px;height:10px}
+ *::-webkit-scrollbar-track{background:var(--surface-inset);border-radius:999px}
+ *::-webkit-scrollbar-thumb{background:var(--muted);border:2px solid var(--surface-inset);border-radius:999px}
+ *::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+ *::-webkit-scrollbar-corner{background:var(--surface-inset)}
+}
+@media(forced-colors:active){*{scrollbar-color:auto}}
