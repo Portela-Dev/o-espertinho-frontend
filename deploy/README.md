@@ -82,3 +82,8 @@ O CI executa `npm audit --omit=dev --audit-level=high`: vulnerabilidades altas/c
 O proxy `/api` usa módulos nativos do Node com destino fixo e preserva cookies/XSRF; não depende de `http-proxy-middleware`, `micromatch` ou `braces` em produção. A CSP permite Google Identity Services, bloqueia scripts inline arbitrários e inclui nonce por resposta para SSR. `scripts/prepare-csp.mjs`, executado no prebuild, calcula o hash exclusivamente do bootstrap estático de eventos da versão instalada do Angular. Mantenha o arquivo gerado `src/angular-bootstrap-csp.ts` atualizado ao atualizar o Angular. CSS inline é permitido para compatibilidade com estilos Angular/Google; JavaScript inline não recebe uma liberação genérica.
 
 A confirmação administrativa aparece em um diálogo quando o backend responde `ADMIN_REAUTH_REQUIRED`; após confirmar a mesma conta Google com o nonce da sessão, a operação é repetida uma única vez. Cancelar mantém a alteração sem salvar. Publique o backend com a migration 018 antes deste frontend.
+
+
+## Correção de segurança do Vite
+
+A dependência transitiva `vite` do Angular builder está fixada em `8.3.3` pelo override do package.json, com lockfile atualizado. A versão corrige GHSA-9jrq-w75r-8gcw sem trocar a linha do Angular. As dependências adicionais de Rolldown são exigidas pelo patch do Vite. Remova/reavalie o override quando o builder passar a declarar uma versão corrigida compatível. O teste `test/vite-security.test.mjs` cobre a transformação HTML de uma URL relativa a protocolo em contexto de middleware. Após atualizar as dependências, reinicie um servidor de desenvolvimento já aberto para carregar a nova versão.

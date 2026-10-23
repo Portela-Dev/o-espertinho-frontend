@@ -37,7 +37,9 @@ export class EnrichmentAdmin implements OnInit {
  },'Produto atribuído. Revise o anúncio antes de publicar.');}
  selectedLinks=signal<Map<string,{id:string;version:number;title:string}>>(new Map());
  bulkConfirm=signal(false);bulkResults=signal<any[]>([]);
- canPublish(link:any){return link.status!=='archived'&&!link.published_offer_id&&!!link.product_id&&!!link.confirmed_category_id&&!!link.affiliate_url&&link.extraction_status==='completed'&&!!link.enrichment_data?.priceCents&&!link.enrichment_data?.missing?.length;}
+ invalidReview(link:any){return ['product','category'].some(task=>link.ai_resolution?.[task]?.action==='invalid');}
+ aiReason(link:any){return ['product','category'].map(task=>link.ai_resolution?.[task]).find(result=>result?.action==='invalid')?.reason||link.ai_resolution?.product?.reason||link.ai_resolution?.category?.reason||'';}
+ canPublish(link:any){return !this.invalidReview(link)&& link.status!=='archived'&&!link.published_offer_id&&!!link.product_id&&!!link.confirmed_category_id&&!!link.affiliate_url&&link.extraction_status==='completed'&&!!link.enrichment_data?.priceCents&&!link.enrichment_data?.missing?.length;}
  clearSelection(){this.selectedLinks.set(new Map());}
  toggleLink(link:any){if(!this.canPublish(link)||this.busy())return;const next=new Map(this.selectedLinks());if(next.has(link.id))next.delete(link.id);else if(next.size<100)next.set(link.id,{id:link.id,version:link.enrichment_version,title:link.enrichment_data?.title||link.url});this.selectedLinks.set(next);}
  pageSelected(){const ready=this.links.items().filter(link=>this.canPublish(link));return !!ready.length&&ready.every(link=>this.selectedLinks().has(link.id));}
@@ -56,7 +58,7 @@ this.busy.set(true);try{await work();this.api.success(message);await this.feed()
  label(status:string){return ({pending:'Pendente',queued:'Aguardando extensão',running:'Em execução',completed:'Concluído',failed:'Falha técnica',cancelled:'Cancelado',skipped:'Ignorado'} as Record<string,string>)[status]||status;}
  availabilityLabel(data:any){if(data?.availability==='unavailable')return 'Indisponível';
  return data?.availability==='available'||data?.priceCents>0?'Disponível':'Não confirmada';}
- categoryState(link:any){if(link.product_draft_id&&!link.product_id)return 'Rascunho aguardando categorização';if(link.confirmed_category_id)return 'Categoria confirmada';
+ categoryState(link:any){if(this.invalidReview(link))return 'Anúncio inválido — extraia novamente antes de reavaliar';if(link.product_draft_id&&!link.product_id)return 'Rascunho aguardando categorização';if(link.confirmed_category_id)return 'Categoria confirmada';
 if(!link.source_category_path.length)return 'Sem categoria de origem';
 if(link.suggested_category_id)return 'Categoria sugerida — confirmar';
 return 'Aguardando categorização';}
@@ -78,5 +80,5 @@ this.busy.set(true);
  async deleteMapping(){await this.act(async()=>{await this.api.send('DELETE',this.base+'/mappings/'+this.deleteTarget().id,{});this.deleteTarget.set(null);},'Mapeamento excluído.');}
  async archive(){await this.act(async()=>{await this.api.send('POST',this.base+'/review/'+this.archiveTarget().id+'/archive',{});this.archiveTarget.set(null);},'Link arquivado.');}
  async discardAi(requestId:string){await this.act(async()=>{await this.api.send('POST',this.base+'/ai/suggestions/'+requestId+'/discard',{});this.categoryTarget.set(null);this.productTarget.set(null);},'Sugestão descartada. O item pode ser analisado novamente pela extensão.');}
- async retryLink(link:any){await this.act(()=>this.api.send('POST',this.base+'/review/'+link.id+'/retry',{}),'Retentativa preparada. Execute o passo 3 na extensão.');}
+ async retryLink(link:any){await this.act(()=>this.api.send('POST',this.base+'/review/'+link.id+'/retry',{}),'Nova extração preparada. Execute o passo 3 e depois refaça a análise de IA.');}
 }

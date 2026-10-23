@@ -30,3 +30,21 @@ test('decisões de IA chegam aplicadas, rascunhos aguardam categoria e publicaç
  await dialog.getByRole('radio',{name:'Selecionar Outro produto de outra categoria'}).check();await dialog.getByRole('button',{name:'Confirmar atribuição',exact:true}).click();await expect(dialog).toBeHidden();await expect(panel).toContainText('Casa');
  await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await panel.getByRole('button',{name:'Publicar',exact:true}).click();expect(published).toBe(false);await page.getByRole('button',{name:'Confirmar e publicar',exact:true}).click();await expect.poll(()=>published).toBe(true);
 });
+
+test('anúncio inválido mostra conflito, filtra revisão e só oferece nova extração, sem publicar',async({page})=>{
+ const id='670e75cd-4da6-482a-87ee-18350ac21e4e';let retried=false;const mutations:any[]=[];let state='';
+ await page.route('**/api/**',async route=>{
+  const req=route.request(),url=new URL(req.url()),path=url.pathname;let data:any=[];
+  if(req.method()!=='GET')mutations.push(path);
+  if(path==='/api/auth/session')data={user:{id:'test',name:'Admin',email:'admin@example.test',role:'admin',permissions:['catalog','discovery','affiliate_links']},autoSignInAllowed:false};
+  else if(path==='/api/config')data={googleClientId:''};
+  else if(path==='/api/admin/catalog-marketplaces')data=[{id:'amazon',name:'Amazon'}];
+  else if(path.endsWith('/enrichment/review')){state=url.searchParams.get('state')||'';data={items:[{id,status:'pending',url:'https://example.test/p',affiliate_url:'https://example.test/a',extraction_status:retried?'pending':'completed',enrichment_version:2,source_category_path:[],enrichment_data:{title:'Celular Modelo X',description:'256 GB',priceCents:10000},ai_resolution:{product:{action:'invalid',reason:'Título informa 128 GB; descrição informa 256 GB.'}}}],total:1,page:1,pageSize:20};}
+  else if(path.endsWith('/retry')){retried=true;data={ok:true};}
+  await route.fulfill({json:data});
+ });
+ await page.goto('/admin/offers');const panel=page.locator('enrichment-admin');await expect(panel).toContainText('Anúncio inválido');await expect(panel).toContainText('Título informa 128 GB; descrição informa 256 GB.');
+ await panel.getByLabel('Estado da revisão / extração').selectOption('invalid');await expect.poll(()=>state).toBe('invalid');
+ await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await expect(panel.getByRole('button',{name:'Publicar',exact:true})).toBeDisabled();await expect(panel.getByRole('button',{name:'Atribuir Produto',exact:true})).toBeDisabled();
+ await panel.getByRole('button',{name:'Extrair novamente para reavaliar',exact:true}).click();await expect.poll(()=>retried).toBe(true);expect(mutations).toEqual(['/api/admin/discovery/enrichment/review/'+id+'/retry']);
+});

@@ -49,7 +49,8 @@
     "v8-to-istanbul": "9.3.0"
   },
   "overrides": {
-    "esbuild": "0.25.12"
+    "esbuild": "0.25.12",
+    "vite": "8.3.3"
   },
   "packageManager": "npm@11.19.0"
 }
