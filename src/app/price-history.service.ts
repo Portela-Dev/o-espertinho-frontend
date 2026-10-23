@@ -35,7 +35,7 @@ type Request = {
 @Injectable({ providedIn: 'root' })
 export class PriceHistoryService {
   private readonly api = inject(Api);
-  private waiting: Request[] = [];
+  private readonly waiting: Request[] = [];
   private timer: ReturnType<typeof setTimeout> | undefined;
   private readonly cache = new Map<
     string,

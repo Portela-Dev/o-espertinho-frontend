@@ -109,3 +109,6 @@ body:has(offer-photo-gallery dialog[open]){overflow:hidden}
  *::-webkit-scrollbar-corner{background:var(--surface-inset)}
 }
 @media(forced-colors:active){*{scrollbar-color:auto}}
+
+/* Preserve the existing modal appearance when using native dialog elements. */
+dialog.modal{border:0;margin:0;color:inherit}
