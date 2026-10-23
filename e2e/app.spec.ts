@@ -1,121 +1,1111 @@
-import {test,expect,Page} from '@playwright/test';
-const baseURL=process.env['E2E_BASE_URL']||'http://localhost:4200';
-async function login(page:Page,token='admin'){
-  await page.addInitScript((credential)=>{(window as any).google={accounts:{id:{initialize(o:any){(window as any).__e2eGoogleCallback=o.callback;},renderButton(el:HTMLElement){const b=document.createElement('button');b.className='button outline';b.textContent='Continuar com Google (teste)';b.onclick=()=>{(window as any).__e2eGoogleCallback({credential});};el.appendChild(b);}}}};},token);
-  await page.goto('/entrar');await page.getByRole('button',{name:'Continuar com Google (teste)'}).click();await expect(page).not.toHaveURL(/entrar/);
+import { chooseAction } from './actions';
+import { test, expect, Page } from './coverage';
+const baseURL = process.env['E2E_BASE_URL'] || 'http://localhost:4200';
+async function login(page: Page, token = 'admin') {
+  await page.addInitScript((credential) => {
+    (window as any).google = {
+      accounts: {
+        id: {
+          initialize(o: any) {
+            (window as any).__e2eGoogleCallback = o.callback;
+          },
+          renderButton(el: HTMLElement) {
+            const b = document.createElement('button');
+            b.className = 'button outline';
+            b.textContent = 'Continuar com Google (teste)';
+            b.onclick = () => {
+              (window as any).__e2eGoogleCallback({ credential });
+            };
+            el.appendChild(b);
+          },
+        },
+      },
+    };
+  }, token);
+  await page.goto('/entrar');
+  await page
+    .getByRole('button', { name: 'Continuar com Google (teste)' })
+    .click();
+  await expect(page).not.toHaveURL(/entrar/);
 }
-test('vitrine, detalhes, filtros e layout sem overflow em desktop e celular',async({page})=>{
-  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await expect(page.getByRole('heading',{name:/Comprar bem/})).toBeVisible();await expect(page.locator('product-card')).toHaveCount(6);
-  await page.getByRole('textbox',{name:'Buscar ofertas'}).fill('Monitor');await page.locator('.search-bar').getByRole('button',{name:/Buscar/}).click();await expect(page.locator('product-card')).toHaveCount(1);
-  await page.locator('product-card h3 a').click();await expect(page.getByRole('heading',{level:1})).toContainText('Monitor');await expect(page.locator('a.card-cta')).toHaveAttribute('href',/amazon.com.br/);
-  await page.setViewportSize({width:390,height:844});await page.goto('/');await expect(page.locator('product-card')).toHaveCount(6);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();await page.screenshot({path:'test-results/home-mobile.png',fullPage:true});
-  await page.setViewportSize({width:1440,height:1080});await page.screenshot({path:'test-results/home-desktop.png',fullPage:true});expect(errors).toEqual([]);
+test('vitrine, detalhes, filtros e layout sem overflow em desktop e celular', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await expect(
+    page.getByRole('textbox', { name: 'Buscar ofertas' }),
+  ).toBeVisible();
+  await expect(page.locator('product-card')).toHaveCount(6);
+  await page.getByRole('textbox', { name: 'Buscar ofertas' }).fill('Monitor');
+  await page
+    .locator('.search-bar')
+    .getByRole('button', { name: /Buscar/ })
+    .click();
+  await expect(page.locator('product-card')).toHaveCount(1);
+  await page.locator('product-card h3 a').click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'Monitor',
+  );
+  await expect(page.locator('a.card-cta')).toHaveAttribute(
+    'href',
+    /amazon.com.br/,
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('product-card')).toHaveCount(6);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBeTruthy();
+  await page.screenshot({
+    path: 'test-results/home-mobile.png',
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1440, height: 1080 });
+  await page.screenshot({
+    path: 'test-results/home-desktop.png',
+    fullPage: true,
+  });
+  expect(errors).toEqual([]);
 });
-test('login Google reconhece admin; revisão e dashboard continuam funcionando',async({page})=>{
-  await login(page);await page.getByRole('link',{name:'Admin',exact:false}).first().click();await expect(page.getByRole('heading',{level:1})).toHaveText('Visão geral');
-  await page.getByRole('link',{name:'Buscas automáticas',exact:false}).click();await expect(page.getByRole('heading',{name:'Cadastro com vínculo manual'})).toBeVisible();
-  await page.getByRole('link',{name:'Revisão de ofertas',exact:false}).click();const pending=page.locator('.review-card').filter({hasText:'Oferta pendente de revisão'});await pending.getByRole('button',{name:'Editar',exact:true}).click();await page.getByRole('dialog').getByLabel('Preço atualizado (R$)').fill('109.90');await page.getByRole('dialog').getByRole('button',{name:'Salvar alterações'}).click();await expect(page.locator('.toast[role=status]')).toContainText('Alterações salvas');await pending.getByRole('button',{name:'Publicar'}).click();await page.getByRole('alertdialog').getByRole('button',{name:'Confirmar',exact:true}).click();await expect(page.locator('.toast[role=status]')).toContainText('Ação concluída');await expect(pending).toHaveCount(0);
-  await page.goto('/admin');await page.screenshot({path:'test-results/admin-desktop.png',fullPage:true});
+test('login Google reconhece admin; revisão e dashboard continuam funcionando', async ({
+  page,
+}) => {
+  await login(page);
+  await page.getByRole('link', { name: 'Admin', exact: false }).first().click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    'Visão geral',
+  );
+  await page.goto('/admin/offers');
+  await expect(
+    page.getByRole('textbox', { name: 'ASIN', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { name: 'Importar um produto Amazon' }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText('Importar dados do Mercado Livre pela API geral', {
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await page
+    .getByRole('link', { name: 'Cadastrar oferta', exact: false })
+    .click();
+  await expect(page).toHaveURL(/\/admin\/links(?:\?|$)/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Ofertas');
+  await expect(
+    page.getByRole('link', { name: 'Buscas automáticas', exact: false }),
+  ).toHaveCount(0);
+  await page
+    .getByRole('navigation', { name: 'Administração' })
+    .getByRole('link', { name: 'Ofertas', exact: true })
+    .click();
+  await page
+    .getByRole('combobox', { name: 'Exibir ofertas', exact: true })
+    .selectOption('pending');
+  const pending = page
+    .getByRole('row')
+    .filter({ hasText: 'Oferta pendente de revisão' });
+  await chooseAction(pending, 'Editar');
+  await page
+    .getByRole('dialog')
+    .getByLabel('Preço atualizado (R$)')
+    .fill('109.90');
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Salvar alterações' })
+    .click();
+  await expect(page.locator('.toast[aria-live=polite]')).toContainText(
+    'Alterações salvas',
+  );
+  await chooseAction(pending, 'Publicar ✓');
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Confirmar', exact: true })
+    .click();
+  await expect(page.locator('.toast[aria-live=polite]')).toContainText(
+    'Ação concluída',
+  );
+  await expect(pending).toHaveCount(0);
+  await page.goto('/admin');
+  await page.screenshot({
+    path: 'test-results/admin-desktop.png',
+    fullPage: true,
+  });
 });
-test('favoritos, catálogos, filtros e XSRF funcionam com usuário comum',async({page})=>{
-  await login(page,'alice');await expect(page.locator('.admin-link')).toHaveCount(0);await page.locator('product-card h3 a').first().click();await page.locator('offer-card').first().getByRole('button',{name:'Favoritar oferta'}).click();await expect(page.locator('.toast[role=status]')).toContainText('Oferta salva');
-  await page.getByRole('link',{name:'Meus catálogos',exact:true}).click();await page.getByRole('button',{name:/Criar meu primeiro catálogo|Novo catálogo/}).first().click();const dialog=page.getByRole('dialog');await dialog.getByLabel('Nome do catálogo').fill('Meu escritório');await dialog.getByRole('button',{name:'Salvar catálogo'}).click();await expect(page.getByRole('heading',{name:'Meu escritório'})).toBeVisible();
-  await page.goto('/favoritos');await expect(page.locator('offer-card')).toHaveCount(1);await page.getByRole('button',{name:'Adicionar ao catálogo'}).click();await page.getByRole('dialog').getByLabel('Escolha o catálogo').selectOption({label:'Meu escritório'});await page.getByRole('dialog').getByRole('button',{name:'Adicionar oferta'}).click();await expect(page.locator('.toast[role=status]')).toContainText('Oferta adicionada');
-  await page.goto('/catalogos');await page.getByRole('heading',{name:'Meu escritório'}).click();await expect(page.locator('offer-card')).toHaveCount(1);await page.getByRole('button',{name:'Remover do catálogo'}).click();await expect(page.locator('offer-card')).toHaveCount(0);
-  await page.goto('/');await page.getByRole('button',{name:'Salvar este filtro'}).click();await page.getByRole('dialog').getByLabel('Nome do filtro').fill('Todos os achados');await page.getByRole('dialog').getByRole('button',{name:'Salvar filtro'}).click();await page.goto('/filtros');await expect(page.getByRole('heading',{name:'Todos os achados'})).toBeVisible();
-  const status=await page.evaluate(async()=>{const r=await fetch('/api/me/collections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'forged'})});return r.status;});expect(status).toBe(403);
-  await page.goto('/admin');await expect(page).toHaveURL(baseURL+'/');
+test('favoritos, catálogos, filtros e XSRF funcionam com usuário comum', async ({
+  page,
+}) => {
+  await login(page, 'alice');
+  await expect(page.locator('.admin-link')).toHaveCount(0);
+  await page.locator('product-card h3 a').first().click();
+  await page
+    .locator('offer-card')
+    .first()
+    .getByRole('button', { name: 'Favoritar oferta' })
+    .click();
+  await expect(page.locator('.toast[aria-live=polite]')).toContainText(
+    'Oferta salva',
+  );
+  await page.getByRole('link', { name: 'Meus catálogos', exact: true }).click();
+  await page
+    .getByRole('button', { name: /Criar meu primeiro catálogo|Novo catálogo/ })
+    .first()
+    .click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Nome do catálogo').fill('Meu escritório');
+  await dialog.getByRole('button', { name: 'Salvar catálogo' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Meu escritório' }),
+  ).toBeVisible();
+  await page.goto('/favoritos');
+  await expect(page.locator('offer-card')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Adicionar ao catálogo' }).click();
+  await page
+    .getByRole('dialog')
+    .getByLabel('Escolha o catálogo')
+    .selectOption({ label: 'Meu escritório' });
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Adicionar oferta' })
+    .click();
+  await expect(page.locator('.toast[aria-live=polite]')).toContainText(
+    'Oferta adicionada',
+  );
+  await page.goto('/catalogos');
+  await page.getByRole('heading', { name: 'Meu escritório' }).click();
+  await expect(page.locator('offer-card')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Remover do catálogo' }).click();
+  await expect(page.locator('offer-card')).toHaveCount(0);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Salvar este filtro' }).click();
+  await page
+    .getByRole('dialog')
+    .getByLabel('Nome do filtro')
+    .fill('Todos os achados');
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Salvar filtro' })
+    .click();
+  await page.goto('/filtros');
+  await expect(
+    page.getByRole('heading', { name: 'Todos os achados' }),
+  ).toBeVisible();
+  const status = await page.evaluate(async () => {
+    const r = await fetch('/api/me/collections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'forged' }),
+    });
+    return r.status;
+  });
+  expect(status).toBe(403);
+  await page.goto('/admin');
+  await expect(page).toHaveURL(baseURL + '/');
 });
 
-
-test('marketplaces e seletores podem ser cadastrados e testados sem criar oferta',async({page})=>{
- await login(page);await page.goto('/admin/marketplaces');await page.getByRole('button',{name:'Novo marketplace'}).click();const dialog=page.getByRole('dialog');await dialog.getByLabel('Nome do marketplace').fill('Loja E2E');await dialog.getByLabel('Identificador',{exact:true}).fill('loja-e2e');await dialog.getByLabel('Site oficial').fill('https://www.example.com');await dialog.getByLabel('URL do logo oficial (opcional)').fill('https://www.example.com/logo.svg');await dialog.getByLabel('Domínios permitidos').fill('www.example.com');await dialog.getByRole('button',{name:'Salvar marketplace'}).click();await expect(page.locator('.toast[role=status]')).toContainText('Marketplace salvo');
- const card=page.locator('catalog-admin .panel').filter({has:page.getByRole('heading',{name:'Loja E2E',exact:true})});await card.getByRole('link',{name:'Configurar seletores'}).click();await expect(page.getByRole('heading',{level:1})).toHaveText('Seletores');await expect(page.locator('select[name="selectorMarket"]')).toHaveValue('loja-e2e');await page.getByRole('textbox',{name:'Seletores da regra 1',exact:true}).fill('h1');await page.getByRole('textbox',{name:'Seletores da regra 2',exact:true}).fill('.price');await page.getByRole('button',{name:'Salvar seletores',exact:true}).click();await expect(page.locator('.toast[role=status]')).toContainText('Seletores salvos');
- await page.getByLabel('URL para teste').fill('https://www.example.com/produto/123');await page.getByRole('button',{name:'Testar extração',exact:true}).click();await expect(page.getByRole('heading',{name:'Resultado do teste'})).toBeVisible();await expect(page.getByRole('button',{name:'Confirmar cadastro da oferta'})).toHaveCount(0);await page.reload();await expect(page.getByRole('textbox',{name:'Seletores da regra 1',exact:true})).toHaveValue('h1');
- await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();await page.screenshot({path:'test-results/selectors-mobile.png',fullPage:true});
+test('marketplaces e seletores podem ser cadastrados e testados sem criar oferta', async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto('/admin/marketplaces');
+  await page.getByRole('button', { name: 'Novo marketplace' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Nome do marketplace').fill('Loja E2E');
+  await dialog.getByLabel('Identificador', { exact: true }).fill('loja-e2e');
+  await dialog.getByLabel('Site oficial').fill('https://www.example.com');
+  await dialog
+    .getByLabel('URL do logo oficial (opcional)')
+    .fill('https://www.example.com/logo.svg');
+  await dialog.getByLabel('Domínios permitidos').fill('www.example.com');
+  await dialog.getByRole('button', { name: 'Salvar marketplace' }).click();
+  await expect(page.locator('.toast[aria-live=polite]')).toContainText(
+    'Marketplace salvo',
+  );
+  const card = page
+    .locator('catalog-admin .panel')
+    .filter({
+      has: page.getByRole('heading', { name: 'Loja E2E', exact: true }),
+    });
+  await card.getByRole('button', { name: 'Ações do marketplace' }).click();
+  await card.getByRole('link', { name: 'Configurar seletores' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Seletores');
+  await expect(page.locator('select[name="selectorMarket"]')).toHaveValue(
+    'loja-e2e',
+  );
+  await page
+    .getByRole('textbox', { name: 'Seletores da regra 1', exact: true })
+    .fill('h1');
+  await page
+    .getByRole('textbox', { name: 'Seletores da regra 2', exact: true })
+    .fill('.price');
+  await page
+    .getByRole('button', { name: 'Adicionar regra', exact: false })
+    .click();
+  const images = page.locator('.selector-rule').nth(2);
+  await images.getByLabel('Obter valor de').selectOption('json');
+  await page
+    .getByRole('textbox', { name: 'Seletores da regra 3', exact: true })
+    .fill('#gallery-data');
+  await images.getByLabel('Comportamento desta fonte').selectOption('fallback');
+  await images
+    .getByLabel('Marcador antes da lista JSON (opcional)')
+    .fill('gallery =');
+  await images
+    .getByLabel('Caminho da lista dentro do JSON (opcional)')
+    .fill('photos');
+  await images
+    .getByLabel('Propriedades de URL em ordem de preferência (opcional)')
+    .fill('original\nurl');
+  await page
+    .getByRole('button', { name: 'Salvar seletores', exact: true })
+    .click();
+  await expect(page.locator('.toast[aria-live=polite]')).toContainText(
+    'Seletores salvos',
+  );
+  await page
+    .getByLabel('URL para teste')
+    .fill('https://www.example.com/produto/123');
+  await page
+    .getByRole('button', { name: 'Testar extração', exact: true })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Resultado do teste' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Confirmar cadastro da oferta' }),
+  ).toHaveCount(0);
+  await page.reload();
+  await expect(
+    page.getByRole('textbox', { name: 'Seletores da regra 1', exact: true }),
+  ).toHaveValue('h1');
+  const savedImages = page.locator('.selector-rule').nth(2);
+  await expect(savedImages.getByLabel('Obter valor de')).toHaveValue('json');
+  await expect(savedImages.getByLabel('Comportamento desta fonte')).toHaveValue(
+    'fallback',
+  );
+  await expect(
+    savedImages.getByLabel(
+      'Propriedades de URL em ordem de preferência (opcional)',
+    ),
+  ).toHaveValue('original\nurl');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBeTruthy();
+  await page.screenshot({
+    path: 'test-results/selectors-mobile.png',
+    fullPage: true,
+  });
 });
-test('cadastro por link mostra prévia e só cria a oferta após confirmação',async({page})=>{
- await login(page);await page.goto('/admin/products');await page.getByRole('button',{name:'Novo produto'}).click();const productDialog=page.getByRole('dialog');await productDialog.getByLabel('Nome do produto',{exact:true}).fill('Headset catálogo E2E');await productDialog.getByLabel('Categoria',{exact:true}).fill('Tecnologia');await productDialog.getByLabel('Subcategoria (opcional)',{exact:true}).fill('Fones e headsets');await productDialog.getByRole('button',{name:'Salvar produto'}).click();await expect(page.locator('.toast[role=status]')).toContainText('Produto salvo');await page.goto('/admin/links');await expect(page.getByRole('button',{name:'Extrair e visualizar prévia'})).toBeDisabled();await page.getByRole('combobox',{name:'Produto',exact:true}).selectOption({label:(await page.getByRole('combobox',{name:'Produto',exact:true}).locator('option').allTextContents()).find(t=>t.includes('Headset catálogo E2E'))!});await page.getByLabel('Link de afiliado',{exact:true}).fill('https://www.amazon.com.br/dp/B0CNKVYLF5?tag=espertinho-20');await page.getByRole('button',{name:'Extrair e visualizar prévia'}).click();await expect(page.getByRole('heading',{name:'Prévia do anúncio',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Oferta de teste Amazon',exact:true})).toBeVisible();await expect(page.locator('.preview-price')).toContainText('321,00');await expect(page.getByRole('cell',{name:'Oferta de teste Amazon',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Confirmar cadastro da oferta'})).toBeDisabled();
- await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();await page.screenshot({path:'test-results/link-preview-mobile.png',fullPage:true});
- await page.getByLabel('Conferi os dados e autorizo o cadastro desta oferta.').check();await page.getByRole('button',{name:'Confirmar cadastro da oferta'}).click();await expect(page.locator('.toast[role=status]')).toContainText('Oferta cadastrada como pendente');await expect(page.getByRole('heading',{name:'Prévia do anúncio',exact:true})).toHaveCount(0);await expect(page.getByRole('row').filter({hasText:'Oferta de teste Amazon'})).toBeVisible();await expect(page.getByRole('cell',{name:/^Pendente/})).toBeVisible();await expect(page.getByRole('cell',{name:'Tecnologia › Fones e headsets',exact:true})).toBeVisible();
- await page.getByRole('link',{name:'Revisar ofertas',exact:false}).last().click();await expect(page.locator('.review-card').filter({hasText:'Oferta de teste Amazon'})).toBeVisible();
+test('normalização de descoberta pode ser testada, salva, reaberta e removida no marketplace', async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto('/admin/marketplaces');
+  await page.getByRole('button', { name: 'Novo marketplace' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Nome do marketplace').fill('Loja Normalização');
+  await dialog
+    .getByLabel('Identificador', { exact: true })
+    .fill('normalizacao-e2e');
+  await dialog.getByLabel('Site oficial').fill('https://shop.example.com');
+  await dialog.getByLabel('Domínios permitidos').fill('shop.example.com');
+  await dialog
+    .getByLabel('Remover sufixos do caminho (opcional)')
+    .fill('/tracking/');
+  await dialog
+    .getByLabel('URL de produto para testar (opcional)')
+    .fill('https://shop.example.com/p/123/tracking/session?x=1#details');
+  await dialog
+    .getByRole('button', { name: 'Testar normalização', exact: true })
+    .click();
+  await expect(dialog.locator('.info-box')).toHaveText(
+    'URL normalizada:https://shop.example.com/p/123',
+  );
+  await page.getByRole('button', { name: 'Fechar mensagem' }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBeTruthy();
+  await dialog.getByRole('button', { name: 'Salvar marketplace' }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.reload();
+  const card = page
+    .locator('catalog-admin .panel')
+    .filter({
+      has: page.getByRole('heading', {
+        name: 'Loja Normalização',
+        exact: true,
+      }),
+    });
+  await chooseAction(card, 'Editar marketplace');
+  await expect(
+    dialog.getByLabel('Remover sufixos do caminho (opcional)'),
+  ).toHaveValue('/tracking/');
+  await dialog.getByLabel('Remover sufixos do caminho (opcional)').fill('');
+  await dialog.getByRole('button', { name: 'Salvar marketplace' }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole('button', { name: 'Fechar mensagem' }).click();
+  await chooseAction(card, 'Editar marketplace');
+  await expect(
+    dialog.getByLabel('Remover sufixos do caminho (opcional)'),
+  ).toHaveValue('');
+  await dialog.getByRole('button', { name: 'Fechar', exact: true }).click();
+  await chooseAction(card, 'Excluir');
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Confirmar exclusão', exact: true })
+    .click();
+  await expect(card).toHaveCount(0);
 });
 
-
-test('oferta encerrada só é excluída após confirmação nas telas do admin',async({page})=>{
- await login(page);await page.goto('/admin/offers');await page.getByRole('combobox',{name:'Exibir ofertas',exact:true}).selectOption('expired');
- const card=page.locator('.review-card').filter({hasText:'Oferta encerrada para exclusão'});await expect(card).toBeVisible();
- await card.getByRole('button',{name:'Excluir',exact:true}).click();const confirmation=page.getByRole('alertdialog');await expect(confirmation).toContainText('histórico de cliques');await confirmation.getByRole('button',{name:'Cancelar',exact:true}).click();await expect(card).toBeVisible();
- await page.goto('/admin/links');const row=page.getByRole('row').filter({hasText:'Oferta encerrada para exclusão'});await expect(row).toBeVisible();await row.getByRole('button',{name:'Excluir',exact:true}).click();await page.getByRole('alertdialog',{name:'Excluir oferta encerrada'}).getByRole('button',{name:'Confirmar exclusão',exact:true}).click();await expect(page.locator('.toast[role=status]')).toContainText('Oferta excluída');await expect(row).toHaveCount(0);
- await page.goto('/admin/offers');await page.getByRole('combobox',{name:'Exibir ofertas',exact:true}).selectOption('expired');await expect(page.locator('.review-card').filter({hasText:'Oferta encerrada para exclusão'})).toHaveCount(0);
- await page.getByRole('combobox',{name:'Exibir ofertas',exact:true}).selectOption('pending');await expect(page.locator('.review-card').getByRole('button',{name:'Excluir',exact:true})).toHaveCount(0);
+test('cadastro por link mostra prévia e só cria a oferta após confirmação', async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto('/admin/products');
+  await page.getByRole('button', { name: 'Novo produto' }).click();
+  const productDialog = page.getByRole('dialog');
+  await productDialog
+    .getByLabel('Nome do produto', { exact: true })
+    .fill('Headset catálogo E2E');
+  await productDialog
+    .getByLabel('Categoria', { exact: true })
+    .fill('Tecnologia');
+  await productDialog
+    .getByLabel('Subcategoria (opcional)', { exact: true })
+    .fill('Fones e headsets');
+  await productDialog.getByRole('button', { name: 'Salvar produto' }).click();
+  await expect(page.locator('.toast[aria-live=polite]')).toContainText(
+    'Produto salvo',
+  );
+  await page.goto('/admin/links?new=1');
+  await expect(
+    page.getByRole('button', { name: 'Extrair e visualizar prévia' }),
+  ).toBeDisabled();
+  await page
+    .getByRole('combobox', { name: 'Produto', exact: true })
+    .selectOption({
+      label: (
+        await page
+          .getByRole('combobox', { name: 'Produto', exact: true })
+          .locator('option')
+          .allTextContents()
+      ).find((t) => t.includes('Headset catálogo E2E'))!,
+    });
+  await page
+    .getByLabel('Link de afiliado', { exact: true })
+    .fill('https://www.amazon.com.br/dp/B0CNKVYLF5?tag=espertinho-20');
+  await page
+    .getByRole('button', { name: 'Extrair e visualizar prévia' })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Prévia do anúncio', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Oferta de teste Amazon', exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('.preview-price')).toContainText('321,00');
+  await expect(
+    page.getByRole('cell', { name: 'Oferta de teste Amazon', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Confirmar cadastro da oferta' }),
+  ).toBeDisabled();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBeTruthy();
+  await page.screenshot({
+    path: 'test-results/link-preview-mobile.png',
+    fullPage: true,
+  });
+  await page
+    .getByLabel('Conferi os dados e autorizo o cadastro desta oferta.')
+    .check();
+  await page
+    .getByRole('button', { name: 'Confirmar cadastro da oferta' })
+    .click();
+  await expect(page.locator('.toast[aria-live=polite]')).toContainText(
+    'Oferta cadastrada como pendente',
+  );
+  await expect(
+    page.getByRole('heading', { name: 'Prévia do anúncio', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('row').filter({ hasText: 'Oferta de teste Amazon' }),
+  ).toBeVisible();
+  await expect(page.getByRole('cell', { name: /^Pendente/ })).toBeVisible();
+  await expect(
+    page.getByRole('cell', {
+      name: 'Tecnologia › Fones e headsets',
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.locator('catalog-admin')).toHaveCount(0);
+  await expect(
+    page.getByRole('row').filter({ hasText: 'Oferta de teste Amazon' }),
+  ).toHaveCount(1);
 });
 
-
-test('produto edita categorias e permite corrigir o vínculo do link',async({page})=>{
- await login(page);await page.goto('/admin/products');const row=page.getByRole('row').filter({hasText:'Headset catálogo E2E'});await row.getByRole('button',{name:'Editar produto'}).click();const dialog=page.getByRole('dialog');
- await expect(dialog.getByLabel('Subcategoria (opcional)',{exact:true})).toHaveValue('Fones e headsets');await dialog.getByLabel('Categoria',{exact:true}).fill('Casa');await expect(dialog.getByLabel('Subcategoria (opcional)',{exact:true})).toHaveValue('');await dialog.getByLabel('Subcategoria (opcional)',{exact:true}).fill('Escritório');await dialog.getByRole('button',{name:'Salvar produto'}).click();await expect(row).toContainText('Casa › Escritório');
- await page.goto('/admin/links');const link=page.getByRole('row').filter({hasText:'Oferta de teste Amazon'});await expect(link).toContainText('Casa › Escritório');await link.getByRole('button',{name:'Alterar produto'}).click();const relink=page.getByRole('dialog',{name:'Alterar produto vinculado'});const monitorOption=relink.locator('option').filter({hasText:'Monitor'});await expect(monitorOption).toHaveCount(1);await relink.getByRole('combobox',{name:'Produto',exact:true}).selectOption({label:(await monitorOption.textContent())!});await relink.getByRole('button',{name:'Salvar vínculo'}).click();await expect(link).toContainText('Monitor');await expect(link).toContainText('Pendente');
- await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();await page.screenshot({path:'test-results/product-links-mobile.png',fullPage:true});
+test('oferta encerrada só é excluída após confirmação nas telas do admin', async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto('/admin/links');
+  await page
+    .getByRole('combobox', { name: 'Exibir ofertas', exact: true })
+    .selectOption('expired');
+  const card = page
+    .getByRole('row')
+    .filter({ hasText: 'Oferta encerrada para exclusão' });
+  await expect(card).toBeVisible();
+  await chooseAction(card, 'Excluir');
+  const confirmation = page.getByRole('alertdialog');
+  await expect(confirmation).toContainText('histórico de cliques');
+  await confirmation
+    .getByRole('button', { name: 'Cancelar', exact: true })
+    .click();
+  await expect(card).toBeVisible();
+  await page.goto('/admin/links');
+  await page
+    .getByRole('combobox', { name: 'Exibir ofertas', exact: true })
+    .selectOption('expired');
+  const row = page
+    .getByRole('row')
+    .filter({ hasText: 'Oferta encerrada para exclusão' });
+  await expect(row).toBeVisible();
+  await chooseAction(row, 'Excluir');
+  await page
+    .getByRole('alertdialog', { name: 'Confirmar ação' })
+    .getByRole('button', { name: 'Confirmar', exact: true })
+    .click();
+  await expect(page.locator('.toast[aria-live=polite]')).toContainText(
+    'Oferta excluída',
+  );
+  await expect(row).toHaveCount(0);
+  await page.goto('/admin/links');
+  await page
+    .getByRole('combobox', { name: 'Exibir ofertas', exact: true })
+    .selectOption('expired');
+  await expect(
+    page.getByRole('row').filter({ hasText: 'Oferta encerrada para exclusão' }),
+  ).toHaveCount(0);
+  await page
+    .getByRole('combobox', { name: 'Exibir ofertas', exact: true })
+    .selectOption('pending');
+  await expect(
+    page.getByRole('row').getByRole('button', { name: 'Excluir', exact: true }),
+  ).toHaveCount(0);
 });
 
-test('produto sem links fica indisponível; múltiplos links mostram faixa e encerramento remove da vitrine',async({page})=>{
- await login(page);await page.goto('/admin/products');await page.getByRole('button',{name:'Novo produto'}).click();const dialog=page.getByRole('dialog');await dialog.getByLabel('Nome do produto',{exact:true}).fill('Produto faixa E2E');await dialog.getByLabel('Categoria',{exact:true}).fill('Tecnologia');await dialog.getByRole('button',{name:'Salvar produto'}).click();const row=page.getByRole('row').filter({hasText:'Produto faixa E2E'});await expect(row).toContainText('Indisponível');await row.getByRole('link',{name:'Ver página'}).click();await expect(page).toHaveURL(/\/produto\/[a-f0-9-]+$/);const productUrl=page.url(),id=productUrl.split('/').at(-1)!;await expect(page.getByRole('heading',{name:'Indisponível',exact:true})).toBeVisible();
- const create=async(price:number,marketplaceId:string)=>page.evaluate(async({id,price,marketplaceId})=>{const csrf=decodeURIComponent(document.cookie.split('; ').find(c=>c.startsWith('XSRF-TOKEN='))!.split('=').slice(1).join('='));const send=async(path:string,body:any)=>{const r=await fetch('/api'+path,{method:'POST',headers:{'Content-Type':'application/json','X-XSRF-TOKEN':csrf},body:JSON.stringify(body)});if(!r.ok)throw new Error(await r.text());return r.json();};const url='https://www.mercadolivre.com.br/sec/faixa-e2e-'+price;const o=await send('/admin/offers',{productId:id,marketplaceId,externalId:'E2E-'+price,title:'Oferta faixa '+price,productUrl:url,affiliateUrl:url,priceCents:price,expiresAt:new Date(Date.now()+3600000).toISOString(),authorizedContent:true});await send('/admin/offers/'+o.id+'/review',{action:'publish',expectedUpdatedAt:o.updated_at});return o.id;},{id,price,marketplaceId});
- const first=await create(32100,'mercadolivre'),second=await create(45000,'mercadolivre');await page.goto('/');const card=page.locator('product-card').filter({hasText:'Produto faixa E2E'});await expect(card).toContainText('321,00');await expect(card).toContainText('450,00');await card.getByRole('link',{name:'Ver 2 ofertas'}).click();await expect(page.locator('offer-card')).toHaveCount(2);await expect(page.getByRole('heading',{level:1})).toHaveText('Produto faixa E2E');
- await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();await page.screenshot({path:'test-results/product-detail-mobile.png',fullPage:true});
- for(const offerId of [first,second])await page.evaluate(async id=>{const csrf=decodeURIComponent(document.cookie.split('; ').find(c=>c.startsWith('XSRF-TOKEN='))!.split('=').slice(1).join('='));const r=await fetch('/api/admin/offers/'+id+'/review',{method:'POST',headers:{'Content-Type':'application/json','X-XSRF-TOKEN':csrf},body:JSON.stringify({action:'expire'})});if(!r.ok)throw new Error(await r.text());},offerId);
- await page.reload();await expect(page.getByRole('heading',{name:'Indisponível',exact:true})).toBeVisible();await page.goto('/');await expect(page.locator('product-card').filter({hasText:'Produto faixa E2E'})).toHaveCount(0);
+test('produto edita categorias e permite corrigir o vínculo do link', async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto('/admin/products');
+  const row = page.getByRole('row').filter({ hasText: 'Headset catálogo E2E' });
+  await chooseAction(row, 'Editar produto');
+  const dialog = page.getByRole('dialog');
+  await expect(
+    dialog.getByLabel('Subcategoria (opcional)', { exact: true }),
+  ).toHaveValue('Fones e headsets');
+  await dialog.getByLabel('Categoria', { exact: true }).fill('Casa');
+  await expect(
+    dialog.getByLabel('Subcategoria (opcional)', { exact: true }),
+  ).toHaveValue('');
+  await dialog
+    .getByLabel('Subcategoria (opcional)', { exact: true })
+    .fill('Escritório');
+  await dialog.getByRole('button', { name: 'Salvar produto' }).click();
+  await expect(row).toContainText('Casa › Escritório');
+  await page.goto('/admin/links');
+  const link = page
+    .getByRole('row')
+    .filter({ hasText: 'Oferta de teste Amazon' });
+  await expect(link).toContainText('Casa › Escritório');
+  await chooseAction(link, 'Alterar produto');
+  const relink = page.getByRole('dialog', {
+    name: 'Alterar produto vinculado',
+  });
+  const monitorOption = relink.locator('option').filter({ hasText: 'Monitor' });
+  await expect(monitorOption).toHaveCount(1);
+  await relink
+    .getByRole('combobox', { name: 'Produto', exact: true })
+    .selectOption({ label: (await monitorOption.textContent())! });
+  await relink.getByRole('button', { name: 'Salvar vínculo' }).click();
+  await expect(link).toContainText('Monitor');
+  await expect(link).toContainText('Pendente');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBeTruthy();
+  await page.screenshot({
+    path: 'test-results/product-links-mobile.png',
+    fullPage: true,
+  });
 });
 
-
-test('admin não exibe abas removidas e a vitrine lista somente os marketplaces atuais',async({page})=>{
- await login(page);await page.goto('/admin');const nav=page.getByRole('navigation',{name:'Administração'});
- await expect(nav.getByRole('link',{name:/Credenciais de API|Conversores de links/})).toHaveCount(0);
- await nav.getByRole('link',{name:'Marketplaces',exact:false}).click();await expect(page.getByRole('heading',{name:'Amazon',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Mercado Livre',exact:true})).toBeVisible();await expect(page.getByText('Shopee',{exact:true})).toHaveCount(0);
- await page.route('https://www.example.com/logo.svg',route=>route.fulfill({status:200,contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="green"/></svg>'}));
- await page.goto('/');await expect(page.locator('.partner-row button')).toHaveCount(3);const custom=page.locator('.partner-row').getByRole('button',{name:'Loja E2E',exact:true});await expect(custom.locator('img')).toHaveAttribute('src','https://www.example.com/logo.svg');await expect(custom.locator('img')).toHaveJSProperty('naturalWidth',32);await expect(page.locator('.partner-row').getByRole('button',{name:'Amazon',exact:true}).locator('img')).toHaveJSProperty('naturalWidth',48);await custom.click();await expect(page).toHaveURL(/marketplace=loja-e2e/);await expect(page.getByRole('combobox',{name:'Loja',exact:true})).toHaveValue('loja-e2e');
- await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();await page.screenshot({path:'test-results/dynamic-marketplaces-mobile.png',fullPage:true});
+test('produto sem links fica indisponível; múltiplos links mostram faixa e encerramento remove da vitrine', async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto('/admin/products');
+  await page.getByRole('button', { name: 'Novo produto' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog
+    .getByLabel('Nome do produto', { exact: true })
+    .fill('Produto faixa E2E');
+  await dialog.getByLabel('Categoria', { exact: true }).fill('Tecnologia');
+  await dialog.getByRole('button', { name: 'Salvar produto' }).click();
+  const row = page.getByRole('row').filter({ hasText: 'Produto faixa E2E' });
+  await expect(row).toContainText('Indisponível');
+  await row.getByRole('button', { name: 'Ações do produto' }).click();
+  await row.getByRole('link', { name: 'Ver página' }).click();
+  await expect(page).toHaveURL(/\/produto\/[a-f0-9-]+$/);
+  const productUrl = page.url(),
+    id = productUrl.split('/').at(-1)!;
+  await expect(
+    page.getByRole('heading', { name: 'Indisponível', exact: true }),
+  ).toBeVisible();
+  const create = async (price: number, marketplaceId: string) =>
+    page.evaluate(
+      async ({ id, price, marketplaceId }) => {
+        const csrf = decodeURIComponent(
+          document.cookie
+            .split('; ')
+            .find((c) => c.startsWith('XSRF-TOKEN='))!
+            .split('=')
+            .slice(1)
+            .join('='),
+        );
+        const send = async (path: string, body: any) => {
+          const r = await fetch('/api' + path, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-XSRF-TOKEN': csrf,
+            },
+            body: JSON.stringify(body),
+          });
+          if (!r.ok) throw new Error(await r.text());
+          return r.json();
+        };
+        const url = 'https://www.mercadolivre.com.br/sec/faixa-e2e-' + price;
+        const queued = await send('/admin/link-imports/preview', {
+          productId: id,
+          marketplaceId,
+          url,
+        });
+        let status: any;
+        for (let i = 0; i < 50; i++) {
+          status = await (
+            await fetch(
+              '/api/admin/extension-catalog/manual/' + queued.executionId,
+            )
+          ).json();
+          if (status.requiresFinalize || status.previewId) break;
+          await new Promise((r) => setTimeout(r, 200));
+        }
+        const preview = await send(
+          '/admin/extension-catalog/manual/' + queued.executionId + '/finalize',
+          {},
+        );
+        const confirmed = await send('/admin/link-imports/confirm', {
+          previewId: preview.previewId,
+          authorizedContent: true,
+        });
+        const offers = await (
+          await fetch('/api/admin/offers?status=pending')
+        ).json();
+        const o = offers.find((o: any) => o.id === confirmed.offerId);
+        await send('/admin/offers/' + o.id + '/review', {
+          action: 'publish',
+          expectedUpdatedAt: o.updated_at,
+        });
+        return o.id;
+      },
+      { id, price, marketplaceId },
+    );
+  const first = await create(32100, 'mercadolivre'),
+    second = await create(45000, 'mercadolivre');
+  await page.goto('/');
+  const card = page
+    .locator('product-card')
+    .filter({ hasText: 'Produto faixa E2E' });
+  await expect(card).toContainText('321,00');
+  await expect(card).toContainText('450,00');
+  await card.getByRole('link', { name: 'Ver 2 ofertas' }).click();
+  await expect(page.locator('offer-card')).toHaveCount(2);
+  await expect(page.locator('.primary-offer offer-card h3 a')).toHaveAttribute(
+    'href',
+    '/oferta/' + first,
+  );
+  await expect(
+    page.getByRole('heading', { name: 'Outras ofertas deste mesmo produto' }),
+  ).toBeVisible();
+  await expect(page.locator('.other-offers offer-card')).toHaveCount(1);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBeTruthy();
+  await page.screenshot({
+    path: 'test-results/product-detail-mobile.png',
+    fullPage: true,
+  });
+  for (const offerId of [first, second])
+    await page.evaluate(async (id) => {
+      const csrf = decodeURIComponent(
+        document.cookie
+          .split('; ')
+          .find((c) => c.startsWith('XSRF-TOKEN='))!
+          .split('=')
+          .slice(1)
+          .join('='),
+      );
+      const r = await fetch('/api/admin/offers/' + id + '/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': csrf },
+        body: JSON.stringify({ action: 'expire' }),
+      });
+      if (!r.ok) throw new Error(await r.text());
+    }, offerId);
+  await page.reload();
+  await expect(
+    page.getByRole('heading', { name: 'Indisponível', exact: true }),
+  ).toBeVisible();
+  await page.goto('/');
+  await expect(
+    page.locator('product-card').filter({ hasText: 'Produto faixa E2E' }),
+  ).toHaveCount(0);
 });
 
-
-test('hierarquia de dez níveis, sugestões por ramificação e breadcrumbs navegáveis',async({page})=>{
- await login(page);await page.goto('/admin/products');await page.getByRole('button',{name:'Novo produto'}).click();const dialog=page.getByRole('dialog');await dialog.getByLabel('Nome do produto',{exact:true}).fill('Produto hierarquia E2E');
- const path=['Informática E2E','Acessórios','Áudio e vídeo','Fones de ouvido','Sem fio','Bluetooth','Uso diário','Dobráveis','Preto','Edição especial'];
- for(let i=0;i<path.length;i++){await dialog.locator('offer-category-fields input').nth(i).fill(path[i]);}
- await expect(dialog.locator('offer-category-fields input')).toHaveCount(10);await dialog.getByRole('button',{name:'Salvar produto'}).click();await expect(page.locator('.toast[role=status]')).toContainText('Produto salvo');
- const p=await page.evaluate(async()=>{const ps=await (await fetch('/api/admin/products?q=Produto%20hierarquia%20E2E')).json();return ps[0];});expect(p.category_path).toEqual(path);
- await page.evaluate(async id=>{const csrf=decodeURIComponent(document.cookie.split('; ').find(c=>c.startsWith('XSRF-TOKEN='))!.split('=').slice(1).join('='));const send=async(url:string,body:any)=>{const r=await fetch('/api'+url,{method:'POST',headers:{'Content-Type':'application/json','X-XSRF-TOKEN':csrf},body:JSON.stringify(body)});if(!r.ok)throw new Error(await r.text());return r.json();};const url='https://www.mercadolivre.com.br/sec/hierarquia-e2e';const o=await send('/admin/offers',{productId:id,marketplaceId:'mercadolivre',externalId:'HIERARQUIA-E2E',title:'Oferta hierarquia',productUrl:url,affiliateUrl:url,priceCents:32100,expiresAt:new Date(Date.now()+3600000).toISOString(),authorizedContent:true});await send('/admin/offers/'+o.id+'/review',{action:'publish',expectedUpdatedAt:o.updated_at});},p.id);
- await page.goto('/produto/'+p.id);const breadcrumb=page.locator('.detail-page > category-breadcrumb');await expect(breadcrumb.getByRole('link')).toHaveCount(11);await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();await page.screenshot({path:'test-results/category-hierarchy-mobile.png',fullPage:true});
- await breadcrumb.getByRole('link',{name:'Áudio e vídeo',exact:true}).click();await expect(page).toHaveURL(new RegExp('categoryId='+p.category_ids[2]));await expect(page.locator('product-card').filter({hasText:p.name})).toHaveCount(1);await expect(page.locator('.category-chips').getByRole('button',{name:'Fones de ouvido',exact:true})).toBeVisible();
- await page.locator('#ofertas > category-breadcrumb').getByRole('link',{name:'Informática E2E',exact:true}).click();await expect(page.locator('product-card').filter({hasText:p.name})).toHaveCount(1);await expect(page.locator('.category-chips').getByRole('button',{name:'Acessórios',exact:true})).toBeVisible();
- await page.goto('/admin/products');await page.locator('tr').filter({hasText:p.name}).getByRole('button',{name:'Editar produto'}).click();await expect(dialog.locator('offer-category-fields input')).toHaveCount(10);await expect(dialog.locator('offer-category-fields input').nth(9)).toHaveValue('Edição especial');await dialog.locator('offer-category-fields input').nth(2).fill('Cabos');await expect(dialog.locator('offer-category-fields input')).toHaveCount(4);await expect(dialog.locator('offer-category-fields input').nth(3)).toHaveValue('');await dialog.getByRole('button',{name:'Salvar produto'}).click();await expect(page.locator('.toast[role=status]')).toContainText('Produto salvo');
- await page.getByRole('button',{name:'Novo produto'}).click();await dialog.getByLabel('Categoria',{exact:true}).fill('Informática E2E');const child=dialog.getByLabel('Subcategoria (opcional)',{exact:true});const list=await child.getAttribute('list');await expect(page.locator('datalist[id="'+list+'"] option[value="Acessórios"]')).toHaveCount(1);await dialog.getByRole('button',{name:'Fechar',exact:true}).click();
+test('admin não exibe abas removidas e a vitrine lista somente os marketplaces atuais', async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto('/admin');
+  const nav = page.getByRole('navigation', { name: 'Administração' });
+  await expect(
+    nav.getByRole('link', {
+      name: /Credenciais de API|Conversores de links|Buscas automáticas/,
+    }),
+  ).toHaveCount(0);
+  await nav.getByRole('link', { name: 'Marketplaces', exact: false }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Amazon', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Mercado Livre', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText('Shopee', { exact: true })).toHaveCount(0);
+  await page.route('https://www.example.com/logo.svg', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="green"/></svg>',
+    }),
+  );
+  await page.goto('/');
+  await expect(page.locator('.partner-row button')).toHaveCount(3);
+  const custom = page
+    .locator('.partner-row')
+    .getByRole('button', { name: 'Loja E2E', exact: true });
+  await expect(custom.locator('img')).toHaveAttribute(
+    'src',
+    'https://www.example.com/logo.svg',
+  );
+  await expect(custom.locator('img')).toHaveJSProperty('naturalWidth', 32);
+  await expect(
+    page
+      .locator('.partner-row')
+      .getByRole('button', { name: 'Amazon', exact: true })
+      .locator('img'),
+  ).toHaveJSProperty('naturalWidth', 48);
+  await custom.click();
+  await expect(page).toHaveURL(/marketplace=loja-e2e/);
+  await expect(
+    page.getByRole('combobox', { name: 'Loja', exact: true }),
+  ).toHaveValue('loja-e2e');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBeTruthy();
+  await page.screenshot({
+    path: 'test-results/dynamic-marketplaces-mobile.png',
+    fullPage: true,
+  });
 });
 
-
-test('gráficos carregam em lote, ampliam até um ano e adaptam pontos e período personalizado',async({page})=>{
- const requests:string[]=[];const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.url().includes('/api/price-history?'))requests.push(r.url());});
- await page.goto('/');const card=page.locator('product-card').filter({hasText:'Monitor 27'}),chart=card.locator('price-history-chart');await expect(chart.locator('.dot')).toHaveCount(9);const initial=requests.filter(url=>url.includes('kind=product'));expect(initial).toHaveLength(1);expect(new URL(initial[0]).searchParams.get('ids')!.split(',').length).toBeGreaterThanOrEqual(6);
- await chart.getByRole('button',{name:/Ampliar histórico/}).click();const dialog=page.getByRole('dialog',{name:/Histórico de preços: Monitor/});await expect(dialog).toBeVisible();await expect(dialog.locator('.dot')).toHaveCount(9);
- await dialog.getByLabel('Período do histórico').selectOption('365');await expect(dialog.locator('.dot')).toHaveCount(13);await expect(dialog).toContainText('Pontos a cada 30 dias');await dialog.locator('summary').click();await expect(dialog.locator('tbody tr')).toHaveCount(365);await dialog.locator('summary').click();
- await dialog.getByLabel('Período do histórico').selectOption('7');await expect(dialog.locator('.dot')).toHaveCount(7);await expect(dialog).toContainText('Pontos diários');
- await dialog.getByLabel('Período do histórico').selectOption('custom');await dialog.getByRole('button',{name:'Aplicar período'}).click();await expect(dialog.locator('.dot')).toHaveCount(7);
- const from=await dialog.getByLabel('Data inicial').inputValue();await dialog.getByLabel('Data final').fill(new Date(Date.parse(from+'T00:00:00Z')-86400000).toISOString().slice(0,10));await dialog.getByRole('button',{name:'Aplicar período'}).click();await expect(dialog.getByRole('alert')).toContainText('até 365 dias');
- await dialog.getByLabel('Período do histórico').selectOption('90');await expect(dialog.locator('.dot')).toHaveCount(9);await dialog.locator('.dot').first().focus();await expect(dialog.locator('.readout')).toContainText('R$');
- await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();expect(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBeTruthy();await page.screenshot({path:'test-results/price-history-mobile.png',fullPage:true});
- await page.evaluate(()=>document.documentElement.setAttribute('data-theme','dark'));await page.screenshot({path:'test-results/price-history-dark.png',fullPage:true});await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible();
- await card.locator('h3 a').click();const offer=page.locator('offer-card').first();await expect(offer.locator('price-history-chart .dot')).toHaveCount(9);await offer.getByRole('button',{name:/Ampliar histórico/}).click();await expect(page.getByRole('dialog',{name:/Histórico de preços:/})).toBeVisible();expect(new URL(requests.at(-1)!).searchParams.get('kind')).toBe('offer');await page.getByRole('button',{name:'Fechar histórico',exact:true}).click();expect(errors).toEqual([]);
+test('hierarquia de dez níveis, sugestões por ramificação e breadcrumbs navegáveis', async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto('/admin/products');
+  await page.getByRole('button', { name: 'Novo produto' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog
+    .getByLabel('Nome do produto', { exact: true })
+    .fill('Produto hierarquia E2E');
+  const path = [
+    'Informática E2E',
+    'Acessórios',
+    'Áudio e vídeo',
+    'Fones de ouvido',
+    'Sem fio',
+    'Bluetooth',
+    'Uso diário',
+    'Dobráveis',
+    'Preto',
+    'Edição especial',
+  ];
+  for (let i = 0; i < path.length; i++) {
+    await dialog.locator('offer-category-fields input').nth(i).fill(path[i]);
+  }
+  await expect(dialog.locator('offer-category-fields input')).toHaveCount(10);
+  await dialog.getByRole('button', { name: 'Salvar produto' }).click();
+  await expect(page.locator('.toast[aria-live=polite]')).toContainText(
+    'Produto salvo',
+  );
+  const p = await page.evaluate(async () => {
+    const ps = await (
+      await fetch('/api/admin/products?q=Produto%20hierarquia%20E2E')
+    ).json();
+    return ps[0];
+  });
+  expect(p.category_path).toEqual(path);
+  await page.evaluate(async (id) => {
+    const csrf = decodeURIComponent(
+      document.cookie
+        .split('; ')
+        .find((c) => c.startsWith('XSRF-TOKEN='))!
+        .split('=')
+        .slice(1)
+        .join('='),
+    );
+    const send = async (url: string, body: any) => {
+      const r = await fetch('/api' + url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': csrf },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      return r.json();
+    };
+    const url = 'https://www.mercadolivre.com.br/sec/hierarquia-e2e';
+    const queued = await send('/admin/link-imports/preview', {
+      productId: id,
+      marketplaceId: 'mercadolivre',
+      url,
+    });
+    for (let i = 0; i < 50; i++) {
+      const status = await (
+        await fetch('/api/admin/extension-catalog/manual/' + queued.executionId)
+      ).json();
+      if (status.requiresFinalize || status.previewId) break;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    const preview = await send(
+      '/admin/extension-catalog/manual/' + queued.executionId + '/finalize',
+      {},
+    );
+    const confirmed = await send('/admin/link-imports/confirm', {
+      previewId: preview.previewId,
+      authorizedContent: true,
+    });
+    const offers = await (
+      await fetch('/api/admin/offers?status=pending')
+    ).json();
+    const o = offers.find((o: any) => o.id === confirmed.offerId);
+    await send('/admin/offers/' + o.id + '/review', {
+      action: 'publish',
+      expectedUpdatedAt: o.updated_at,
+    });
+  }, p.id);
+  await page.goto('/produto/' + p.id);
+  const breadcrumb = page.locator('.detail-page > category-breadcrumb');
+  await expect(breadcrumb.getByRole('link')).toHaveCount(11);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBeTruthy();
+  await page.screenshot({
+    path: 'test-results/category-hierarchy-mobile.png',
+    fullPage: true,
+  });
+  await breadcrumb
+    .getByRole('link', { name: 'Áudio e vídeo', exact: true })
+    .click();
+  await expect(page).toHaveURL(new RegExp('categoryId=' + p.category_ids[2]));
+  await expect(
+    page.locator('product-card').filter({ hasText: p.name }),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .locator('.category-chips')
+      .getByRole('button', { name: 'Fones de ouvido', exact: true }),
+  ).toBeVisible();
+  await page
+    .locator('#ofertas > category-breadcrumb')
+    .getByRole('link', { name: 'Informática E2E', exact: true })
+    .click();
+  await expect(
+    page.locator('product-card').filter({ hasText: p.name }),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .locator('.category-chips')
+      .getByRole('button', { name: 'Acessórios', exact: true }),
+  ).toBeVisible();
+  await page.goto('/admin/products');
+  await chooseAction(
+    page.locator('tr').filter({ hasText: p.name }),
+    'Editar produto',
+  );
+  await expect(dialog.locator('offer-category-fields input')).toHaveCount(10);
+  await expect(
+    dialog.locator('offer-category-fields input').nth(9),
+  ).toHaveValue('Edição especial');
+  await dialog.locator('offer-category-fields input').nth(2).fill('Cabos');
+  await expect(dialog.locator('offer-category-fields input')).toHaveCount(4);
+  await expect(
+    dialog.locator('offer-category-fields input').nth(3),
+  ).toHaveValue('');
+  await dialog.getByRole('button', { name: 'Salvar produto' }).click();
+  await expect(page.locator('.toast[aria-live=polite]')).toContainText(
+    'Produto salvo',
+  );
+  await page.getByRole('button', { name: 'Novo produto' }).click();
+  await dialog.getByLabel('Categoria', { exact: true }).fill('Informática E2E');
+  const child = dialog.getByLabel('Subcategoria (opcional)', { exact: true });
+  const list = await child.getAttribute('list');
+  await expect(
+    page.locator('datalist[id="' + list + '"] option[value="Acessórios"]'),
+  ).toHaveCount(1);
+  await dialog.getByRole('button', { name: 'Fechar', exact: true }).click();
 });
 
+test('gráficos carregam em lote, ampliam até um ano e adaptam pontos e período personalizado', async ({
+  page,
+}) => {
+  const requests: string[] = [];
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('request', (r) => {
+    if (r.url().includes('/api/price-history?')) requests.push(r.url());
+  });
+  await page.goto('/');
+  const card = page.locator('product-card').filter({ hasText: 'Monitor 27' }),
+    chart = card.locator('price-history-chart');
+  await expect(chart.locator('.dot')).toHaveCount(9);
+  const initial = requests.filter((url) => url.includes('kind=product'));
+  expect(initial).toHaveLength(1);
+  expect(
+    new URL(initial[0]).searchParams.get('ids')!.split(',').length,
+  ).toBeGreaterThanOrEqual(6);
+  await chart.getByRole('button', { name: /Ampliar histórico/ }).click();
+  const dialog = page.getByRole('dialog', {
+    name: /Histórico de preços: Monitor/,
+  });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('.dot')).toHaveCount(9);
+  await dialog.getByLabel('Período do histórico').selectOption('365');
+  await expect(dialog.locator('.dot')).toHaveCount(13);
+  await expect(dialog).toContainText('Pontos a cada 30 dias');
+  await dialog.locator('summary').click();
+  await expect(dialog.locator('tbody tr')).toHaveCount(15);
+  const dailyPager = dialog.getByRole('navigation', {
+    name: 'Registros diários de preços',
+  });
+  await expect(dailyPager).toContainText('365 registros');
+  await dailyPager.getByRole('button', { name: 'Próxima' }).click();
+  await expect(dailyPager).toContainText('Página 2 de 25');
+  await dailyPager.getByLabel('Itens por página').selectOption('50');
+  await expect(dialog.locator('tbody tr')).toHaveCount(50);
+  await expect(dailyPager).toContainText('Página 1 de 8');
+  await dialog.locator('summary').click();
+  await dialog.getByLabel('Período do histórico').selectOption('7');
+  await expect(dialog.locator('.dot')).toHaveCount(7);
+  await expect(dialog).toContainText('Pontos diários');
+  await dialog.getByLabel('Período do histórico').selectOption('custom');
+  await dialog.getByRole('button', { name: 'Aplicar período' }).click();
+  await expect(dialog.locator('.dot')).toHaveCount(7);
+  const from = await dialog.getByLabel('Data inicial').inputValue();
+  await dialog
+    .getByLabel('Data final')
+    .fill(
+      new Date(Date.parse(from + 'T00:00:00Z') - 86400000)
+        .toISOString()
+        .slice(0, 10),
+    );
+  await dialog.getByRole('button', { name: 'Aplicar período' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('até 365 dias');
+  await dialog.getByLabel('Período do histórico').selectOption('90');
+  await expect(dialog.locator('.dot')).toHaveCount(9);
+  await dialog.locator('.dot').first().focus();
+  await expect(dialog.locator('.readout')).toContainText('R$');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBeTruthy();
+  expect(
+    await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth),
+  ).toBeTruthy();
+  await page.screenshot({
+    path: 'test-results/price-history-mobile.png',
+    fullPage: true,
+  });
+  await page.evaluate(() =>
+    document.documentElement.setAttribute('data-theme', 'dark'),
+  );
+  await page.screenshot({
+    path: 'test-results/price-history-dark.png',
+    fullPage: true,
+  });
+  await page.keyboard.press('Escape');
+  await expect(dialog).not.toBeVisible();
+  await card.locator('h3 a').click();
+  const offer = page.locator('offer-card').first();
+  await expect(offer.locator('price-history-chart .dot')).toHaveCount(9);
+  await offer.getByRole('button', { name: /Ampliar histórico/ }).click();
+  await expect(
+    page.getByRole('dialog', { name: /Histórico de preços:/ }),
+  ).toBeVisible();
+  expect(new URL(requests.at(-1)!).searchParams.get('kind')).toBe('offer');
+  await page
+    .getByRole('button', { name: 'Fechar histórico', exact: true })
+    .click();
+  expect(errors).toEqual([]);
+});
 
-test('tarja laranja usa o mínimo diário completo e só destaca preços atuais elegíveis',async({page})=>{
- const products=(await (await page.request.get('/api/products')).json()).items;const histories=(await (await page.request.get('/api/price-history?kind=product&ids='+products.map((p:any)=>p.id).join(','))).json()).series;const target=products.filter((p:any)=>histories.some((h:any)=>h.id===p.id&&h.lowestPriceCents!==null)).slice(0,6);expect(target).toHaveLength(6);let cheapest=true;let globalLow=true;
- await page.route('**/api/price-history?*',async route=>{const response=await route.fetch(),body=await response.json();const kind=new URL(route.request().url()).searchParams.get('kind');if(kind==='product')for(const series of body.series){const index=target.findIndex((p:any)=>p.id===series.id);if(index>=0){const current=target[index].min_price_cents;series.lowestPriceCents=index===0?current:index===1?current+100:index===3?null:current-100;series.productLowestPriceCents90d=series.lowestPriceCents;if(index===4)for(const point of series.points)point.priceCents=current+1000;}}else for(const series of body.series){series.lowestPriceCents=1_000_000;series.productLowestPriceCents90d=globalLow?1_000_000:1;series.isCheapestOffer=cheapest&&series.isCheapestOffer;}await route.fulfill({response,json:body});});
- await page.goto('/');for(let i=0;i<target.length;i++){const card=page.locator('product-card').filter({hasText:target[i].name});await expect(card.locator('price-history-chart .dot')).toHaveCount(9);await expect(card.locator('.low-price-ribbon')).toHaveCount(i<2?1:0);}
- const card=page.locator('product-card').filter({hasText:target[0].name});await expect(card.locator('.low-price-ribbon')).toContainText('Menor preço registrado!');await expect(card.locator('.low-price-ribbon')).toHaveCSS('background-color','rgb(251, 140, 36)');await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();await card.screenshot({path:'test-results/lowest-price-card-mobile.png'});
- await card.locator('h3 a').click();const offer=page.locator('offer-card').first();await expect(offer.locator('.low-price-ribbon')).toBeVisible();await expect(offer.locator('.discount')).toHaveCount(0);const favorite=await offer.locator('.favorite-button').boundingBox(),ribbon=await offer.locator('.low-price-ribbon').boundingBox();expect(favorite!.x).toBeGreaterThanOrEqual(ribbon!.x+ribbon!.width);await offer.screenshot({path:'test-results/lowest-price-offer-mobile.png'});
- globalLow=false;await page.reload();await expect(page.locator('offer-card').first().locator('price-history-chart .dot')).toHaveCount(9);await expect(page.locator('offer-card .low-price-ribbon')).toHaveCount(0);globalLow=true;
- cheapest=false;await page.reload();await expect(page.locator('offer-card').first().locator('price-history-chart .dot')).toHaveCount(9);await expect(page.locator('offer-card .low-price-ribbon')).toHaveCount(0);cheapest=true;
- await page.route('**/api/products/'+target[0].id,async route=>{const response=await route.fetch(),body=await response.json();for(const o of body.offers)o.availability_status='unavailable';await route.fulfill({response,json:body});});await page.reload();await expect(page.locator('offer-card').first().locator('price-history-chart .dot')).toHaveCount(9);await expect(page.locator('offer-card .low-price-ribbon')).toHaveCount(0);
+test('tarja laranja usa o mínimo diário completo e só destaca preços atuais elegíveis', async ({
+  page,
+}) => {
+  const products = (await (await page.request.get('/api/products')).json())
+    .items;
+  const histories = (
+    await (
+      await page.request.get(
+        '/api/price-history?kind=product&ids=' +
+          products.map((p: any) => p.id).join(','),
+      )
+    ).json()
+  ).series;
+  const target = products
+    .filter((p: any) =>
+      histories.some((h: any) => h.id === p.id && h.lowestPriceCents !== null),
+    )
+    .slice(0, 6);
+  expect(target).toHaveLength(6);
+  let cheapest = true;
+  let globalLow = true;
+  await page.route('**/api/price-history?*', async (route) => {
+    const response = await route.fetch(),
+      body = await response.json();
+    const kind = new URL(route.request().url()).searchParams.get('kind');
+    if (kind === 'product')
+      for (const series of body.series) {
+        const index = target.findIndex((p: any) => p.id === series.id);
+        if (index >= 0) {
+          const current = target[index].min_price_cents;
+          series.lowestPriceCents =
+            index === 0
+              ? current
+              : index === 1
+                ? current + 100
+                : index === 3
+                  ? null
+                  : current - 100;
+          series.productLowestPriceCents90d = series.lowestPriceCents;
+          if (index === 4)
+            for (const point of series.points)
+              point.priceCents = current + 1000;
+        }
+      }
+    else
+      for (const series of body.series) {
+        series.lowestPriceCents = 1_000_000;
+        series.productLowestPriceCents90d = globalLow ? 1_000_000 : 1;
+        series.isCheapestOffer = cheapest && series.isCheapestOffer;
+      }
+    await route.fulfill({ response, json: body });
+  });
+  await page.goto('/');
+  for (let i = 0; i < target.length; i++) {
+    const card = page
+      .locator('product-card')
+      .filter({ hasText: target[i].name });
+    await expect(card.locator('price-history-chart .dot')).toHaveCount(9);
+    await expect(card.locator('.low-price-ribbon')).toHaveCount(i < 2 ? 1 : 0);
+  }
+  const card = page.locator('product-card').filter({ hasText: target[0].name });
+  await expect(card.locator('.low-price-ribbon')).toContainText(
+    'Menor preço registrado!',
+  );
+  await expect(card.locator('.low-price-ribbon')).toHaveCSS(
+    'background-color',
+    'rgb(251, 140, 36)',
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBeTruthy();
+  await card.screenshot({ path: 'test-results/lowest-price-card-mobile.png' });
+  await card.locator('h3 a').click();
+  const offer = page.locator('offer-card').first();
+  await expect(offer.locator('.low-price-ribbon')).toBeVisible();
+  await expect(offer.locator('.discount')).toHaveCount(0);
+  const favorite = await offer.locator('.favorite-button').boundingBox(),
+    ribbon = await offer.locator('.low-price-ribbon').boundingBox();
+  expect(favorite!.x).toBeGreaterThanOrEqual(ribbon!.x + ribbon!.width);
+  await offer.screenshot({
+    path: 'test-results/lowest-price-offer-mobile.png',
+  });
+  globalLow = false;
+  await page.reload();
+  await expect(
+    page.locator('offer-card').first().locator('price-history-chart .dot'),
+  ).toHaveCount(9);
+  await expect(page.locator('offer-card .low-price-ribbon')).toHaveCount(0);
+  globalLow = true;
+  cheapest = false;
+  await page.reload();
+  await expect(
+    page.locator('offer-card').first().locator('price-history-chart .dot'),
+  ).toHaveCount(9);
+  await expect(page.locator('offer-card .low-price-ribbon')).toHaveCount(0);
+  cheapest = true;
+  await page.route('**/api/products/' + target[0].id + '?**', async (route) => {
+    const response = await route.fetch(),
+      body = await response.json();
+    for (const o of body.offers) o.availability_status = 'unavailable';
+    await route.fulfill({ response, json: body });
+  });
+  await page.reload();
+  await expect(
+    page.locator('offer-card').first().locator('price-history-chart .dot'),
+  ).toHaveCount(9);
+  await expect(page.locator('offer-card .low-price-ribbon')).toHaveCount(0);
 });

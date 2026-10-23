@@ -1,32 +1,27 @@
-# Frontend Espertinho
+# O Espertinho — frontend
 
-Angular 22 com páginas públicas SSR e rotas pessoais/admin renderizadas no navegador.
+Angular com SSR público e páginas pessoais/admin no navegador. Backend Node e PostgreSQL são serviços separados; as operações de navegador são feitas pela extensão do Chrome.
 
-Este é o repositório `o-espertinho-frontend`. Projetos relacionados: [backend](https://github.com/arnaldoportela/o-espertinho-backend) e [extrator](https://github.com/arnaldoportela/o-espertinho-jobs).
+Na raiz do workspace, `npm run setup` prepara os componentes ativos e sobe somente PostgreSQL em segundo plano. Execute frontend e backend em terminais separados. Neste repositório: `npm ci`, `npm run dev` (porta 4200), `npm run build` e `npm start` para SSR compilado. O proxy de desenvolvimento aponta para backend na porta 3000. Em produção configure API_BASE_URL com a origem interna da API e ALLOWED_HOSTS com os hosts aceitos pelo SSR; consulte deploy/README.md.
 
-## Primeiro uso
+## Administração
 
-Requisitos: Node.js 22.12+ (preferencialmente 24) e npm. Configure e execute o backend separadamente na porta 3000.
+Cadastre marketplaces, hosts, perfis e páginas de exploração, seletores de produto, receita declarativa e regras de bloqueio. A extensão executa os quatro passos manualmente. Na revisão confirme categorias, atribua produtos e publique explicitamente. Execuções é a única tela para acompanhar, paginar itens e cancelar operações da extensão. Não há executor legado, agenda de preços ou conectores específicos.
 
-```powershell
-npm ci
-npm run dev
-```
+As oito abas principais são Visão geral, Revisão, Ofertas, Produtos, Marketplaces, Execuções, Acessos e Atividade. Marketplaces reúne Cadastro, Exploração e Seletores, conforme as permissões existentes. Acessos reúne Usuários e Perfis. Revisão trata os links descobertos; Ofertas centraliza todos os anúncios, com lista paginada, edição, vínculo de produto, publicação e exclusão confirmada. O cadastro manual abre dentro de Ofertas, inclusive pelos atalhos de produtos. Os caminhos antigos continuam válidos; o agrupamento não concede novas permissões.
 
-O frontend não inicia banco, backend ou extrator. Acesse `http://localhost:4200`. O backend fornece a configuração pública do login Google; nenhum segredo deve ser colocado no frontend.
+O intervalo entre ciclos foi retirado: a exploração é manual. A habilitação de cada fonte e os intervalos entre requisições continuam ativos.
 
-`npm run dev`: http://localhost:4200 com proxy `/api` para `127.0.0.1:3000`.
+Cadastro por link e teste de seletores recebem uma solicitação assíncrona: selecione-a na extensão, aguarde o resultado e confira a prévia. O frontend finaliza por POST com XSRF. Tokens e cookies do marketplace permanecem no Chrome. Fechar a janela de processamento permite reabertura explícita e continuação pela extensão.
 
-`npm run build` e `npm start`: servidor Node de produção com SSR e proxy de API da mesma origem. Defina `ALLOWED_HOSTS` para o domínio publicado.
+## Validação
 
-`npm run typecheck`: checagem de TypeScript e templates. `npm run test:e2e`: Playwright com Microsoft Edge. Os testes exigem o servidor isolado com banco em memória disponível em `test/preview-server.mjs` do backend; não execute contra seu banco real.
+`npm run typecheck`, `npm run build`, `npm run test:coverage` e `npm run test:e2e`. Os E2Es usam o servidor de fixture isolado do backend, nunca o banco pessoal. O CI executa SSR/Chromium real e coleta cobertura do navegador. O checkout backend é fixado em SHA compatível com a mesma entrega.
 
-Para testes de navegador, compile o backend e execute o servidor de teste no terminal dele:
+Plano e diário: ../PLANO-MIGRACAO-CATALOGO-EXTENSAO.md e cópia versionada em o-espertinho-backend/docs. Evidências anteriores estão em docs/history.
 
-```powershell
-npm run build
-$env:E2E_TEST_SERVER='1'
-node test/preview-server.mjs
-```
+## Revisão com IA
 
-Deixe livre a porta 3000 para esse servidor. Em outro terminal, execute o frontend normalmente e depois `npm run test:e2e`. A autenticação simulada existe exclusivamente no servidor de testes e não é usada pelo servidor de produção.
+A revisão possui uma aba Configurações de IA com tarefas e prompts independentes. A extensão cataloga primeiro e categoriza produtos novos depois, reutilizando o inventário completo. Decisões válidas são confirmadas automaticamente; ambiguidades e publicação permanecem na revisão. Consulte docs/REVISAO-IA.md no backend.
+
+Na revisão, selecione links aptos individualmente ou por página e use Publicar selecionados. A seleção permanece entre páginas e admite até 100 links por lote. A confirmação autoriza a divulgação de todos os selecionados; cada link é validado pelo backend com sua versão. O resultado informa publicações e motivos de recusa, sem duplicar ofertas no reenvio. Trocar filtros limpa a seleção.

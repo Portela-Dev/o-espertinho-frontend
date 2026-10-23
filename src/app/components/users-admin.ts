@@ -1,39 +1,543 @@
-import {Component,Input,OnChanges,inject,signal} from '@angular/core';
-import {FormsModule} from '@angular/forms';
-import {DatePipe} from '@angular/common';
-import {Api} from '../api.service';
-import {UserAvatar} from './user-avatar';
-interface Profile {id:string;name:string;description:string;permissions:string[];system:boolean;updated_at:string;user_count:number}
-interface ManagedUser {id:string;email:string;name:string;avatar:string|null;access_profile_id:string;profile_name:string;blocked:boolean;created_at:string}
-@Component({selector:'users-admin',imports:[FormsModule,DatePipe,UserAvatar],styles:`
- .user-name{display:flex;align-items:center;gap:12px}.user-name user-avatar{display:block;width:36px;height:36px;flex-shrink:0;border-radius:50%;overflow:hidden}.access-description{max-width:650px}.permission-list{display:grid;gap:12px;margin:20px 0}.access-search{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.access-search label{flex:1;min-width:160px}.access-search button{margin-bottom:16px}
- `,template:`
- @if(section==='users'){
- <p class="muted">Os usuários aparecem após entrar com Google. Gerencie o perfil e o acesso à conta sem alterar os dados da identidade Google.</p>
- <form class="panel access-search" (ngSubmit)="page=1;load()"><label>Buscar por nome ou e-mail<input name="search" [(ngModel)]="q" maxlength="160" placeholder="Nome ou e-mail"></label><label>Perfil<select name="profile" [(ngModel)]="profile"><option value="">Todos</option>@for(p of profiles();track p.id){<option [value]="p.id">{{p.name}}</option>}</select></label><label>Status<select name="status" [(ngModel)]="status"><option value="all">Todos</option><option value="active">Ativos</option><option value="blocked">Bloqueados</option></select></label><button class="button dark" [disabled]="loading()">Buscar</button></form>
- }
- @if(loading()){<div class="loading-panel" role="status">Carregando acessos…</div>}@else if(failed()){<div class="empty-state"><p>Não foi possível carregar os acessos.</p><button class="button outline" (click)="load()">Tentar novamente</button></div>}@else if(section==='users'){
- <p class="muted">{{total()}} usuário(s) encontrado(s).</p><div class="table-wrap panel"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Status</th><th>Cadastro</th><th>Ações</th></tr></thead><tbody>@for(u of users();track u.id){<tr><td><div class="user-name"><user-avatar [name]="u.name" [photo]="u.avatar"/><div><strong>{{u.name}}</strong><br><small>{{u.email}}</small></div></div></td><td>{{u.profile_name}}</td><td><span class="badge">{{u.blocked?'Bloqueado':'Ativo'}}</span></td><td>{{u.created_at|date:'dd/MM/yyyy'}}</td><td><button class="button outline small" [disabled]="u.id===api.user()?.id" (click)="editUser(u)">Gerenciar acesso</button>@if(u.id===api.user()?.id){<small> Sua conta</small>}</td></tr>}@empty{<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>}</tbody></table></div>
- <div class="pagination"><button class="button outline small" [disabled]="page===1" (click)="page=page-1;load()">← Anterior</button><span>Página {{page}}</span><button class="button outline small" [disabled]="page*25>=total()" (click)="page=page+1;load()">Próxima →</button></div>
- }@else{
- <div class="section-heading"><p class="muted access-description">Defina quais áreas cada perfil pode acessar. As permissões incluem consulta e alteração na área selecionada. Administrador tem acesso completo; Usuário acessa apenas a conta pessoal.</p><button class="button dark" (click)="editProfile()">＋ Novo perfil</button></div>
- <div class="table-wrap panel"><table><thead><tr><th>Perfil</th><th>Permissões</th><th>Usuários</th><th>Ações</th></tr></thead><tbody>@for(p of profiles();track p.id){<tr><td><strong>{{p.name}}</strong><p class="muted">{{p.description}}</p></td><td>{{permissionNames(p)}}</td><td>{{p.user_count}}</td><td>@if(p.system){<span class="muted">Perfil padrão</span>}@else{<div class="button-row"><button class="button outline small" (click)="editProfile(p)">Editar</button><button class="button danger small" [disabled]="p.user_count>0" (click)="deleting.set(p)">Excluir</button></div>@if(p.user_count>0){<small>Transfira os usuários antes de excluir.</small>}}</td></tr>}</tbody></table></div>
- }
- @if(editingUser();as u){<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="access-user-title"><button class="close-button" aria-label="Fechar" (click)="editingUser.set(null)">×</button><h2 id="access-user-title">Gerenciar acesso</h2><p>{{u.name}} · {{u.email}}</p><form (ngSubmit)="saveUser()"><label>Perfil<select name="userProfile" [(ngModel)]="userDraft.profileId">@for(p of profiles();track p.id){<option [value]="p.id">{{p.name}}</option>}</select></label><label class="checkbox-label"><input type="checkbox" name="blocked" [(ngModel)]="userDraft.blocked"> Bloquear conta</label><p class="info-box">Bloquear encerra as sessões e impede novos logins. Alterar o perfil passa a valer nas próximas requisições. Conceder gestão de usuários permite administrar os acessos de outras contas.</p><button class="button dark" [disabled]="busy()">Confirmar alteração de acesso</button></form></section></div>}
- @if(profileModal()){<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="access-profile-title"><button class="close-button" aria-label="Fechar" (click)="profileModal.set(false)">×</button><h2 id="access-profile-title">{{editingProfile?'Editar perfil':'Novo perfil'}}</h2><form (ngSubmit)="saveProfile()"><label>Nome<input name="profileName" [(ngModel)]="profileDraft.name" required maxlength="80"></label><label>Descrição<textarea name="profileDescription" [(ngModel)]="profileDraft.description" maxlength="400" rows="2"></textarea></label><fieldset class="permission-list"><legend>Áreas permitidas</legend>@for(p of permissions();track p.id){<label class="checkbox-label"><input type="checkbox" [name]="'permission-'+p.id" [ngModel]="profileDraft.permissions.includes(p.id)" (ngModelChange)="togglePermission(p.id,$event)"> {{p.name}}</label>}</fieldset><p class="muted">Sem permissões selecionadas, o perfil terá apenas acesso à conta pessoal.</p><button class="button dark" [disabled]="busy()||!profileDraft.name.trim()">Salvar perfil</button></form></section></div>}
- @if(deleting();as p){<div class="modal-backdrop"><section class="modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-profile-title"><h2 id="delete-profile-title">Excluir perfil?</h2><p>Excluir o perfil “{{p.name}}”?</p><div class="button-row"><button class="button outline" (click)="deleting.set(null)">Cancelar</button><button class="button danger" [disabled]="busy()" (click)="deleteProfile()">Excluir perfil</button></div></section></div>}
- `})
+import { ActionMenu } from './action-menu';
+import { DismissOnBackdrop } from './dismiss-on-backdrop';
+import { Pagination } from './pagination';
+import { Component, Input, OnChanges, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
+import { Api } from '../api.service';
+import { UserAvatar } from './user-avatar';
+interface Profile {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  system: boolean;
+  updated_at: string;
+  user_count: number;
+}
+interface ManagedUser {
+  id: string;
+  email: string;
+  name: string;
+  avatar: string | null;
+  access_profile_id: string;
+  profile_name: string;
+  blocked: boolean;
+  created_at: string;
+}
+@Component({
+  selector: 'users-admin',
+  imports: [
+    ActionMenu,
+    DismissOnBackdrop,
+    Pagination,
+    FormsModule,
+    DatePipe,
+    UserAvatar,
+  ],
+  styles: `
+    .user-name {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .user-name user-avatar {
+      display: block;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    .access-description {
+      max-width: 650px;
+    }
+    .permission-list {
+      display: grid;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .access-search {
+      display: flex;
+      gap: 12px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+    .access-search label {
+      flex: 1;
+      min-width: 160px;
+    }
+    .access-search button {
+      margin-bottom: 16px;
+    }
+  `,
+  template: `
+    @if (section === 'users') {
+      <p class="muted">
+        Os usuários aparecem após entrar com Google. Gerencie o perfil e o
+        acesso à conta sem alterar os dados da identidade Google.
+      </p>
+      <form
+        class="panel access-search"
+        (ngSubmit)="page = 1; profilePage = 1; profileTotal = 0; load()"
+      >
+        <label
+          >Buscar por nome ou e-mail<input
+            name="search"
+            [(ngModel)]="q"
+            maxlength="160"
+            placeholder="Nome ou e-mail" /></label
+        ><label
+          >Perfil<select name="profile" [(ngModel)]="profile">
+            <option value="">Todos</option>
+            @for (p of profiles(); track p.id) {
+              <option [value]="p.id">{{ p.name }}</option>
+            }
+          </select></label
+        ><label
+          >Status<select name="status" [(ngModel)]="status">
+            <option value="all">Todos</option>
+            <option value="active">Ativos</option>
+            <option value="blocked">Bloqueados</option>
+          </select></label
+        ><button class="button dark" [disabled]="loading()">Buscar</button>
+      </form>
+    }
+    @if (loading()) {
+      <output aria-live="polite" class="loading-panel"
+        >Carregando acessos…</output
+      >
+    } @else if (failed()) {
+      <div class="empty-state">
+        <p>Não foi possível carregar os acessos.</p>
+        <button class="button outline" (click)="load()">
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (section === 'users') {
+      <p class="muted">{{ total() }} usuário(s) encontrado(s).</p>
+      <div class="table-wrap panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Perfil</th>
+              <th>Status</th>
+              <th>Cadastro</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of users(); track u.id) {
+              <tr>
+                <td>
+                  <div class="user-name">
+                    <user-avatar [name]="u.name" [photo]="u.avatar" />
+                    <div>
+                      <strong>{{ u.name }}</strong
+                      ><br /><small>{{ u.email }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ u.profile_name }}</td>
+                <td>
+                  <span class="badge">{{
+                    u.blocked ? 'Bloqueado' : 'Ativo'
+                  }}</span>
+                </td>
+                <td>{{ u.created_at | date: 'dd/MM/yyyy' }}</td>
+                <td>
+                  <app-action-menu
+                    [menuId]="'user-actions-' + u.id"
+                    label="Ações do usuário"
+                    ><button
+                      type="button"
+                      [disabled]="busy() || u.id === api.user()?.id"
+                      (click)="editUser(u)"
+                    >
+                      Gerenciar acesso
+                    </button></app-action-menu
+                  >
+                  @if (u.id === api.user()?.id) {
+                    <small> Sua conta</small>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5">Nenhum usuário encontrado.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-pagination
+        [page]="page"
+        [total]="total()"
+        [size]="userSize"
+        [busy]="loading()"
+        (pageChange)="page = $event; load()"
+        (sizeChange)="userSize = $event; page = 1; load()"
+        label="Usuários"
+      />
+    } @else {
+      <div class="section-heading">
+        <p class="muted access-description">
+          Defina quais áreas cada perfil pode acessar. As permissões incluem
+          consulta e alteração na área selecionada. Administrador tem acesso
+          completo; Usuário acessa apenas a conta pessoal.
+        </p>
+        <button class="button dark" (click)="editProfile()">
+          ＋ Novo perfil
+        </button>
+      </div>
+      <div class="table-wrap panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Perfil</th>
+              <th>Permissões</th>
+              <th>Usuários</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of profiles(); track p.id) {
+              <tr>
+                <td>
+                  <strong>{{ p.name }}</strong>
+                  <p class="muted">{{ p.description }}</p>
+                </td>
+                <td>{{ permissionNames(p) }}</td>
+                <td>{{ p.user_count }}</td>
+                <td>
+                  @if (p.system) {
+                    <span class="muted">Perfil padrão</span>
+                  } @else {
+                    <app-action-menu
+                      [menuId]="'profile-actions-' + p.id"
+                      label="Ações do perfil"
+                      ><button
+                        type="button"
+                        [disabled]="busy()"
+                        (click)="editProfile(p)"
+                      >
+                        Editar</button
+                      ><button
+                        type="button"
+                        class="danger-text"
+                        [disabled]="busy() || p.user_count > 0"
+                        (click)="deleting.set(p)"
+                      >
+                        Excluir
+                      </button></app-action-menu
+                    >
+                    @if (p.user_count > 0) {
+                      <small>Transfira os usuários antes de excluir.</small>
+                    }
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-pagination
+        [page]="profilePage"
+        [total]="profileTotal"
+        [size]="profileSize"
+        [busy]="loading()"
+        (pageChange)="profilePage = $event; load()"
+        (sizeChange)="profileSize = $event; profilePage = 1; load()"
+        label="Perfis de acesso"
+      />
+    }
+    @if (editingUser(); as u) {
+      <div
+        class="modal-backdrop"
+        (dismissOnBackdrop)="!busy() && editingUser.set(null)"
+      >
+        <dialog
+          open
+          class="modal"
+          aria-modal="true"
+          aria-labelledby="access-user-title"
+        >
+          <button
+            class="close-button"
+            aria-label="Fechar"
+            (click)="editingUser.set(null)"
+          >
+            ×
+          </button>
+          <h2 id="access-user-title">Gerenciar acesso</h2>
+          <p>{{ u.name }} · {{ u.email }}</p>
+          <form (ngSubmit)="saveUser()">
+            <label
+              >Perfil<select
+                name="userProfile"
+                [(ngModel)]="userDraft.profileId"
+              >
+                @for (p of profiles(); track p.id) {
+                  <option [value]="p.id">{{ p.name }}</option>
+                }
+              </select></label
+            ><label class="checkbox-label"
+              ><input
+                type="checkbox"
+                name="blocked"
+                [(ngModel)]="userDraft.blocked"
+              />
+              Bloquear conta</label
+            >
+            <p class="info-box">
+              Bloquear encerra as sessões e impede novos logins. Alterar o
+              perfil passa a valer nas próximas requisições. Conceder gestão de
+              usuários permite administrar os acessos de outras contas.
+            </p>
+            <button class="button dark" [disabled]="busy()">
+              Confirmar alteração de acesso
+            </button>
+          </form>
+        </dialog>
+      </div>
+    }
+    @if (profileModal()) {
+      <div
+        class="modal-backdrop"
+        (dismissOnBackdrop)="!busy() && profileModal.set(false)"
+      >
+        <dialog
+          open
+          class="modal"
+          aria-modal="true"
+          aria-labelledby="access-profile-title"
+        >
+          <button
+            class="close-button"
+            aria-label="Fechar"
+            (click)="profileModal.set(false)"
+          >
+            ×
+          </button>
+          <h2 id="access-profile-title">
+            {{ editingProfile ? 'Editar perfil' : 'Novo perfil' }}
+          </h2>
+          <form (ngSubmit)="saveProfile()">
+            <label
+              >Nome<input
+                name="profileName"
+                [(ngModel)]="profileDraft.name"
+                required
+                maxlength="80" /></label
+            ><label
+              >Descrição<textarea
+                name="profileDescription"
+                [(ngModel)]="profileDraft.description"
+                maxlength="400"
+                rows="2"
+              ></textarea>
+            </label>
+            <fieldset class="permission-list">
+              <legend>Áreas permitidas</legend>
+              @for (p of permissions(); track p.id) {
+                <label class="checkbox-label"
+                  ><input
+                    type="checkbox"
+                    [name]="'permission-' + p.id"
+                    [ngModel]="profileDraft.permissions.includes(p.id)"
+                    (ngModelChange)="togglePermission(p.id, $event)"
+                  />
+                  {{ p.name }}</label
+                >
+              }
+            </fieldset>
+            <p class="muted">
+              Sem permissões selecionadas, o perfil terá apenas acesso à conta
+              pessoal.
+            </p>
+            <button
+              class="button dark"
+              [disabled]="busy() || !profileDraft.name.trim()"
+            >
+              Salvar perfil
+            </button>
+          </form>
+        </dialog>
+      </div>
+    }
+    @if (deleting(); as p) {
+      <div
+        class="modal-backdrop"
+        (dismissOnBackdrop)="!busy() && deleting.set(null)"
+      >
+        <section
+          class="modal"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="delete-profile-title"
+        >
+          <h2 id="delete-profile-title">Excluir perfil?</h2>
+          <p>Excluir o perfil “{{ p.name }}”?</p>
+          <div class="button-row">
+            <button class="button outline" (click)="deleting.set(null)">
+              Cancelar</button
+            ><button
+              class="button danger"
+              [disabled]="busy()"
+              (click)="deleteProfile()"
+            >
+              Excluir perfil
+            </button>
+          </div>
+        </section>
+      </div>
+    }
+  `,
+})
 export class UsersAdmin implements OnChanges {
- @Input() section='users';api=inject(Api);profiles=signal<Profile[]>([]);permissions=signal<{id:string;name:string}[]>([]);users=signal<ManagedUser[]>([]);loading=signal(false);failed=signal(false);busy=signal(false);total=signal(0);q='';profile='';status='all';page=1;
- editingUser=signal<ManagedUser|null>(null);userDraft={profileId:'user',blocked:false};profileModal=signal(false);editingProfile:Profile|null=null;deleting=signal<Profile|null>(null);profileDraft={name:'',description:'',permissions:[] as string[]};
- ngOnChanges(){void this.load();}
- async load(){this.loading.set(true);this.failed.set(false);try{const data=await this.api.get<{profiles:Profile[];permissions:{id:string;name:string}[]}>('/admin/access-profiles');this.profiles.set(data.profiles);this.permissions.set(data.permissions);if(this.section==='users'){const r=await this.api.get<{items:ManagedUser[];total:number}>('/admin/users',{q:this.q,profile:this.profile,status:this.status,page:this.page});this.users.set(r.items);this.total.set(r.total);}}catch(e){this.failed.set(true);this.api.fail(e);}finally{this.loading.set(false);}}
- permissionNames(p:Profile){return p.permissions.map(id=>this.permissions().find(v=>v.id===id)?.name||id).join(' · ')||'Conta pessoal';}
- editUser(u:ManagedUser){this.userDraft={profileId:u.access_profile_id,blocked:u.blocked};this.editingUser.set(u);}
- editProfile(p?:Profile){this.editingProfile=p??null;this.profileDraft={name:p?.name??'',description:p?.description??'',permissions:[...(p?.permissions??[])]};this.profileModal.set(true);}
- togglePermission(id:string,checked:boolean){this.profileDraft.permissions=checked?[...this.profileDraft.permissions,id]:this.profileDraft.permissions.filter(v=>v!==id);}
- async act(work:()=>Promise<void>,message:string){if(this.busy())return;this.busy.set(true);try{await work();this.api.success(message);await this.load();}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
- async saveUser(){const u=this.editingUser();if(!u)return;await this.act(async()=>{await this.api.send('PATCH','/admin/users/'+u.id,{...this.userDraft,expectedProfileId:u.access_profile_id,expectedBlocked:u.blocked});this.editingUser.set(null);},'Acesso atualizado.');}
- async saveProfile(){const p=this.editingProfile;await this.act(async()=>{await this.api.send(p?'PUT':'POST','/admin/access-profiles'+(p?'/'+p.id:''),{...this.profileDraft,...(p?{expectedUpdatedAt:p.updated_at}:{})});this.profileModal.set(false);},'Perfil salvo.');}
- async deleteProfile(){const p=this.deleting();if(!p)return;await this.act(async()=>{await this.api.send('DELETE','/admin/access-profiles/'+p.id);this.deleting.set(null);},'Perfil excluído.');}
+  @Input() section = 'users';
+  api = inject(Api);
+  profiles = signal<Profile[]>([]);
+  permissions = signal<{ id: string; name: string }[]>([]);
+  users = signal<ManagedUser[]>([]);
+  loading = signal(false);
+  failed = signal(false);
+  busy = signal(false);
+  total = signal(0);
+  q = '';
+  profile = '';
+  status = 'all';
+  userSize = 25;
+  profileSize = 20;
+  page = 1;
+  profilePage = 1;
+  profileTotal = 0;
+  editingUser = signal<ManagedUser | null>(null);
+  userDraft = { profileId: 'user', blocked: false };
+  profileModal = signal(false);
+  editingProfile: Profile | null = null;
+  deleting = signal<Profile | null>(null);
+  profileDraft = { name: '', description: '', permissions: [] as string[] };
+  ngOnChanges() {
+    void this.load();
+  }
+  async load() {
+    this.loading.set(true);
+    this.failed.set(false);
+    try {
+      const data = await this.api.get<{
+        profiles: Profile[];
+        permissions: { id: string; name: string }[];
+        total?: number;
+        page?: number;
+      }>(
+        '/admin/access-profiles',
+        this.section === 'profiles'
+          ? {
+              paginate: true,
+              page: this.profilePage,
+              pageSize: this.profileSize,
+            }
+          : {},
+      );
+      this.profiles.set(data.profiles);
+      this.profileTotal = data.total ?? data.profiles.length;
+      this.profilePage = data.page ?? 1;
+      this.permissions.set(data.permissions);
+      if (this.section === 'users') {
+        const r = await this.api.get<{
+          items: ManagedUser[];
+          total: number;
+          page: number;
+        }>('/admin/users', {
+          q: this.q,
+          profile: this.profile,
+          status: this.status,
+          page: this.page,
+          pageSize: this.userSize,
+        });
+        this.users.set(r.items);
+        this.total.set(r.total);
+        this.page = r.page;
+      }
+    } catch (e) {
+      this.failed.set(true);
+      this.api.fail(e);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+  permissionNames(p: Profile) {
+    return (
+      p.permissions
+        .map((id) => this.permissions().find((v) => v.id === id)?.name || id)
+        .join(' · ') || 'Conta pessoal'
+    );
+  }
+  editUser(u: ManagedUser) {
+    this.userDraft = { profileId: u.access_profile_id, blocked: u.blocked };
+    this.editingUser.set(u);
+  }
+  editProfile(p?: Profile) {
+    this.editingProfile = p ?? null;
+    this.profileDraft = {
+      name: p?.name ?? '',
+      description: p?.description ?? '',
+      permissions: [...(p?.permissions ?? [])],
+    };
+    this.profileModal.set(true);
+  }
+  togglePermission(id: string, checked: boolean) {
+    this.profileDraft.permissions = checked
+      ? [...this.profileDraft.permissions, id]
+      : this.profileDraft.permissions.filter((v) => v !== id);
+  }
+  async act(work: () => Promise<void>, message: string) {
+    if (this.busy()) return;
+    this.busy.set(true);
+    try {
+      await work();
+      this.api.success(message);
+      await this.load();
+    } catch (e) {
+      this.api.fail(e);
+    } finally {
+      this.busy.set(false);
+    }
+  }
+  async saveUser() {
+    const u = this.editingUser();
+    if (!u) return;
+    await this.act(async () => {
+      await this.api.send('PATCH', '/admin/users/' + u.id, {
+        ...this.userDraft,
+        expectedProfileId: u.access_profile_id,
+        expectedBlocked: u.blocked,
+      });
+      this.editingUser.set(null);
+    }, 'Acesso atualizado.');
+  }
+  async saveProfile() {
+    const p = this.editingProfile;
+    await this.act(async () => {
+      await this.api.send(
+        p ? 'PUT' : 'POST',
+        '/admin/access-profiles' + (p ? '/' + p.id : ''),
+        {
+          ...this.profileDraft,
+          ...(p ? { expectedUpdatedAt: p.updated_at } : {}),
+        },
+      );
+      this.profileModal.set(false);
+    }, 'Perfil salvo.');
+  }
+  async deleteProfile() {
+    const p = this.deleting();
+    if (!p) return;
+    await this.act(async () => {
+      await this.api.send('DELETE', '/admin/access-profiles/' + p.id);
+      this.deleting.set(null);
+    }, 'Perfil excluído.');
+  }
 }

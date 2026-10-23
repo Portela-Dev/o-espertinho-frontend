@@ -1,0 +1,45 @@
+<div class="page-width detail-page">
+ @if(loading()) {
+  <output aria-live="polite" class="loading-panel">Carregando produto…</output>
+ } @else if(product();as p) {
+  <category-breadcrumb [names]="p.category_path||[]" [ids]="p.category_ids||[]"/>
+  @if(primary();as o) {
+   <section class="detail-layout primary-offer" aria-label="Oferta principal">
+    <offer-card [offer]="o" placement="detail"/>
+    <div class="detail-copy">
+     <p class="eyebrow">MENOR PREÇO NA {{(o.marketplace_name||names[o.marketplace_id]||o.marketplace_id).toUpperCase()}}</p>
+     <h1>{{o.title}}</h1>
+     <review-rating [rating]="o.rating" [count]="o.review_count"/>
+     @if(o.seller_name){<p class="muted">Vendedor: {{o.seller_name}}</p>}
+     <div class="offer-purchase">
+      <p class="detail-price">{{o.price_cents/100|currency:'BRL'}}</p>
+      <a class="button dark" [href]="o.affiliate_url" target="_blank" rel="sponsored noopener" (click)="track(o)"><marketplace-logo [url]="o.marketplace_logo_url||''" [name]="o.marketplace_name||names[o.marketplace_id]||o.marketplace_id"/>Ver na {{o.marketplace_name||names[o.marketplace_id]||o.marketplace_id}} ↗</a>
+      <offer-share [offer]="o"/>
+     </div>
+     <expandable-description [text]="o.description||'Confira os detalhes completos do produto, o vendedor e as opções disponíveis na loja.'"/>
+     @if(o.images&&o.images.length>1){<offer-photo-gallery [images]="o.images" [title]="o.title"/>}
+     <a class="text-link" [routerLink]="['/oferta',o.id]">Ver detalhes desta oferta ↗</a>
+     <div class="info-box">
+      <h3>Antes de aproveitar</h3><p class="offer-conditions">{{conditions(o)}}</p>
+      <p>@if(o.refresh_status==='pending'){Atualização pendente.}@else{Atualizado em {{(o.data_updated_at||o.verified_at)|date:'dd/MM/yyyy HH:mm'}}.} Preços e disponibilidade podem mudar; as informações exibidas na loja no momento da compra prevalecem.</p>
+     </div>
+     <p class="muted">{{p.offer_count}} {{p.offer_count===1?'oferta disponível':'ofertas disponíveis'}} · Confira vendedor, frete e cupons na loja.</p>
+    </div>
+   </section>
+   @if(p.offer_count>1){
+    <section class="other-offers"><h2>Outras ofertas deste mesmo produto</h2>
+     <div class="offer-grid">@for(other of otherOffers();track other.id){<offer-card [offer]="other" placement="detail"/>}</div>
+     <app-infinite-scroll [busy]="feed.loading()" [failed]="feed.failed()" [hasMore]="feed.hasMore()" (more)="feed.next()"/>
+    </section>
+   }
+  } @else {
+   <section class="detail-layout"><div class="preview-main-image"><img [productImage]="p.display_image_url" [alt]="p.name" referrerpolicy="no-referrer"></div>
+    <div class="detail-copy"><h1>{{p.name}}</h1><p class="muted">{{p.brand}} {{p.model}}</p><expandable-description [text]="p.description||''"/>
+     <output aria-live="polite" class="info-box"><h2>Indisponível</h2><p>Este produto está no nosso catálogo, mas está sem ofertas disponíveis no momento.</p></output>
+    </div>
+   </section>
+  }
+ } @else {
+  <div class="empty-state"><h1>{{failed()?'Não foi possível carregar o produto':'Produto não encontrado'}}</h1><a routerLink="/" class="button dark">Explorar ofertas ↗</a></div>
+ }
+</div>
