@@ -1,3 +1,4 @@
+import {SharingAdmin} from '../components/sharing-admin';
 import {CatalogPurge} from '../components/catalog-purge';
 import {combineLatest} from 'rxjs';
 import {ProductPicker} from '../components/product-picker';
@@ -19,7 +20,7 @@ import {ProductsAdmin} from '../components/products-admin';
 import {CatalogAdmin} from '../components/catalog-admin';
 import {Api} from '../api.service';
 import {Offer,storeNames} from '../models';
-@Component({imports:[CatalogPurge,ActionMenu,CatalogOperations,EnrichmentAdmin,DismissOnBackdrop,DiscoveryAdmin,Pagination,ProductPicker,UsersAdmin,ProductsAdmin,CatalogAdmin,FormsModule,RouterLink,RouterLinkActive,DatePipe,CurrencyPipe],templateUrl:'./admin.page.html'})
+@Component({imports:[SharingAdmin,CatalogPurge,ActionMenu,CatalogOperations,EnrichmentAdmin,DismissOnBackdrop,DiscoveryAdmin,Pagination,ProductPicker,UsersAdmin,ProductsAdmin,CatalogAdmin,FormsModule,RouterLink,RouterLinkActive,DatePipe,CurrencyPipe],templateUrl:'./admin.page.html'})
 export class AdminPage implements OnInit {
   api=inject(Api);route=inject(ActivatedRoute);destroy=inject(DestroyRef);title=inject(Title);section=signal('overview');loading=signal(false);failed=signal(false);busy=signal(false);names=storeNames;
   stats=signal<any>(null);offerFeed=new PagedData<Offer>((page,pageSize)=>this.api.get('/admin/offers',{paginate:true,status:this.reviewStatus,page,pageSize}));offers=this.offerFeed.items;logFeed=new PagedData<any>((page,pageSize)=>this.api.get('/admin/audit',{paginate:true,page,pageSize}));logs=this.logFeed.items;
@@ -28,7 +29,7 @@ export class AdminPage implements OnInit {
   editDraft={title:'',description:'',category:'',subcategory:'',conditions:'',featured:false,price:0,originalPrice:null as number|null,expiresAt:''};
   marketTabs=[{id:'marketplaces',path:'/admin/marketplaces',label:'Cadastro'},{id:'discovery',path:'/admin/discovery',label:'Exploração'},{id:'selectors',path:'/admin/selectors',label:'Seletores'}];
   tabs(){return [
-   {label:'Visão geral',sections:['overview']},{label:'Revisão',sections:['offers']},{label:'Ofertas',sections:['links']},{label:'Produtos',sections:['products']},
+   {label:'Visão geral',sections:['overview']},{label:'Revisão',sections:['offers']},{label:'Ofertas',sections:['links','sharing']},{label:'Produtos',sections:['products']},
    {label:'Marketplaces',sections:['marketplaces','discovery','selectors']},{label:'Execuções',sections:['updates']},{label:'Acessos',sections:['users','profiles']},{label:'Manutenção',sections:['purge']},{label:'Atividade',sections:['activity']}
   ].flatMap(tab=>{const first=tab.sections.find(section=>this.api.adminSection(section));return first?[{...tab,path:first==='overview'?'/admin':'/admin/'+first}]:[];});}
   editingClassification=signal<Offer|null>(null);reassignProductId='';
@@ -37,8 +38,8 @@ export class AdminPage implements OnInit {
    await this.act(async()=>{await this.api.send('PUT','/admin/offers/'+offer.id+'/product',{productId:this.reassignProductId,expectedUpdatedAt:offer.updated_at});this.editingClassification.set(null);},'Produto vinculado. A oferta voltou para revisão.');
   }
   manualCreated(){this.manualOpen.set(false);this.reviewStatus='pending';void this.load();}
-  heading(){return ({purge:'Manutenção do catálogo',discovery:'Exploração de marketplaces',users:'Usuários',profiles:'Perfis de acesso',updates:'Execuções',products:'Produtos',overview:'Visão geral',marketplaces:'Marketplaces',selectors:'Seletores',links:'Ofertas',offers:'Revisão de ofertas',activity:'Atividade'} as Record<string,string>)[this.section()]||'Administração';}
-  ngOnInit(){combineLatest([this.route.paramMap,this.route.queryParamMap]).pipe(takeUntilDestroyed(this.destroy)).subscribe(([p,query])=>{const s=p.get('section')||'overview';this.topPage=1;this.metricPage=1;const status=query.get('status');if(status&&['all','pending','published','rejected','expired'].includes(status)){this.reviewStatus=status;}this.manualOpen.set(query.has('product')||query.get('new')==='1');this.section.set(['purge','discovery','users','profiles','updates','products','overview','marketplaces','offers','activity','selectors','links'].includes(s)?s:'overview');this.title.setTitle(this.heading()+' | Admin | O Espertinho');void this.load();});}
+  heading(){return ({sharing:'Compartilhamento de ofertas',purge:'Manutenção do catálogo',discovery:'Exploração de marketplaces',users:'Usuários',profiles:'Perfis de acesso',updates:'Execuções',products:'Produtos',overview:'Visão geral',marketplaces:'Marketplaces',selectors:'Seletores',links:'Ofertas',offers:'Revisão de ofertas',activity:'Atividade'} as Record<string,string>)[this.section()]||'Administração';}
+  ngOnInit(){combineLatest([this.route.paramMap,this.route.queryParamMap]).pipe(takeUntilDestroyed(this.destroy)).subscribe(([p,query])=>{const s=p.get('section')||'overview';this.topPage=1;this.metricPage=1;const status=query.get('status');if(status&&['all','pending','published','rejected','expired'].includes(status)){this.reviewStatus=status;}this.manualOpen.set(query.has('product')||query.get('new')==='1');this.section.set(['sharing','purge','discovery','users','profiles','updates','products','overview','marketplaces','offers','activity','selectors','links'].includes(s)?s:'overview');this.title.setTitle(this.heading()+' | Admin | O Espertinho');void this.load();});}
   async load(){this.loading.set(true);this.failed.set(false);try{switch(this.section()){
     case'overview':{const stats:any=await this.api.get('/admin/stats',{days:this.days,paginate:true,topPage:this.topPage,pageSize:this.topSize});this.stats.set(stats);this.topPage=stats.topPage;break;}
     case'links':await this.offerFeed.reset();if(this.offerFeed.failed())throw new Error('Não foi possível carregar as ofertas.');break;

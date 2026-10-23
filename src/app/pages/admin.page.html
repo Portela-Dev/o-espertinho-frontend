@@ -1,6 +1,7 @@
 <div class="page-width admin-page"><div class="admin-top"><div><p class="eyebrow">PAINEL ADMINISTRATIVO</p><h1>{{heading()}}</h1></div><span class="admin-identity">{{api.user()?.email}}</span></div>
 <nav class="tabs admin-tabs" aria-label="Administração">@for(tab of tabs();track tab.label){<a [routerLink]="tab.path" [class.selected]="tab.sections.includes(section())" [attr.aria-current]="tab.sections.includes(section())?'page':null">{{tab.label}}</a>}</nav>
 @if(['marketplaces','discovery','selectors'].includes(section())){<nav class="tabs" aria-label="Configurações de marketplaces">@for(tab of marketTabs;track tab.id){@if(api.adminSection(tab.id)){<a [routerLink]="tab.path" routerLinkActive="selected">{{tab.label}}</a>}}</nav>}
+@if(['links','sharing'].includes(section())){<nav class="tabs" aria-label="Configurações de ofertas"><a routerLink="/admin/links" routerLinkActive="selected">Ofertas cadastradas</a><a routerLink="/admin/sharing" routerLinkActive="selected">Compartilhamento</a></nav>}
 @if(['users','profiles'].includes(section())){<nav class="tabs" aria-label="Gestão de acessos"><a routerLink="/admin/users" routerLinkActive="selected">Usuários</a><a routerLink="/admin/profiles" routerLinkActive="selected">Perfis de acesso</a></nav>}
 @if(loading()){<div class="loading-panel" role="status">Carregando painel…</div>}@else if(failed()){<div class="empty-state"><h2>Não foi possível carregar o painel</h2><button class="button dark" (click)="load()">Tentar novamente</button></div>}@else{
 @switch(section()){
@@ -14,6 +15,7 @@
 @case('profiles'){<users-admin section="profiles"/>}
 @case('updates'){<catalog-operations/>}
 @case('products'){<products-admin/>}
+@case('sharing'){<sharing-admin/>}
 @case('purge'){<catalog-purge/>}
 @case('marketplaces'){<catalog-admin section="marketplaces"/>}
 @case('discovery'){<discovery-admin/>}
