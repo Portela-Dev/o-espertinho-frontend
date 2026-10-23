@@ -1,6 +1,6 @@
 <div class="page-width detail-page">
  @if(loading()) {
-  <div class="loading-panel" role="status">Carregando produto…</div>
+  <output aria-live="polite" class="loading-panel">Carregando produto…</output>
  } @else if(product();as p) {
   <category-breadcrumb [names]="p.category_path||[]" [ids]="p.category_ids||[]"/>
   @if(primary();as o) {
@@ -35,7 +35,7 @@
   } @else {
    <section class="detail-layout"><div class="preview-main-image"><img [productImage]="p.display_image_url" [alt]="p.name" referrerpolicy="no-referrer"></div>
     <div class="detail-copy"><h1>{{p.name}}</h1><p class="muted">{{p.brand}} {{p.model}}</p><expandable-description [text]="p.description||''"/>
-     <div class="info-box" role="status"><h2>Indisponível</h2><p>Este produto está no nosso catálogo, mas está sem ofertas disponíveis no momento.</p></div>
+     <output aria-live="polite" class="info-box"><h2>Indisponível</h2><p>Este produto está no nosso catálogo, mas está sem ofertas disponíveis no momento.</p></output>
     </div>
    </section>
   }
