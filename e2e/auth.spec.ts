@@ -29,6 +29,6 @@ test('sessão persiste ao reabrir; Google restaura sessão ausente; Sair bloquei
 
 test('falha no SDK do Google não bloqueia a vitrine nem cria login; entrada manual permite tentar de novo',async({page})=>{
  await page.addInitScript(()=>localStorage.setItem('espertinho-auth-returning','1'));await page.route('https://accounts.google.com/gsi/client',route=>route.abort());
- await page.goto('/');await expect(page.locator('product-card').first()).toBeVisible();await expect(page.getByRole('heading',{name:'Pequenos preços. Grandes achados.'})).toBeVisible();await expect(page.getByRole('link',{name:'Entrar',exact:false}).first()).toBeVisible();await expect(page.locator('.toast.error')).toHaveCount(0);
+ await page.goto('/');await expect(page.locator('product-card').first()).toBeVisible();await expect(page.getByRole('textbox',{name:'Buscar ofertas'})).toBeVisible();await expect(page.getByRole('link',{name:'Entrar',exact:false}).first()).toBeVisible();await expect(page.locator('.toast.error')).toHaveCount(0);
  await page.goto('/entrar');await expect(page.getByText('Não foi possível carregar o login Google. Confira bloqueadores e conexão.')).toBeVisible();await expect(page.getByRole('button',{name:'Tentar novamente',exact:true})).toBeVisible();
 });
