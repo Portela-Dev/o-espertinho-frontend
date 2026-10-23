@@ -29,7 +29,7 @@ import { UserAvatar } from './components/user-avatar';
         <a routerLink="/" class="brand" aria-label="O Espertinho início"
           ><span class="brand-mascot" aria-hidden="true"
             ><img
-              src="/brand/espertinho-mascote-raposa-v4-384.png"
+              src="/brand/espertinho-mascote-caramelo-v9-384.png"
               alt=""
               width="132"
               height="132" /></span
