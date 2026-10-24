@@ -18,8 +18,26 @@ test('mobile reúne busca e filtros no menu e mantém marketplaces acessíveis s
  await page.setViewportSize({width:390,height:844});
  await page.goto('/');
  await expect(page.locator('product-card')).toHaveCount(1);
+ await expect(page.getByRole('navigation',{name:'Navegação principal',exact:true})).toBeHidden();
+ const menuButton=page.getByRole('button',{name:'Abrir menu',exact:true});
+ await menuButton.click();
+ const navigation=page.getByRole('dialog',{name:'Menu',exact:true});
+ await expect(navigation).toBeVisible();
+ await expect(navigation.getByRole('link',{name:'Favoritos',exact:true})).toBeVisible();
+ await expect(navigation.getByRole('link',{name:'Meus catálogos',exact:true})).toBeVisible();
+ await navigation.getByRole('button',{name:'Escuro',exact:true}).click();
+ await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
+ await navigation.getByRole('button',{name:'Claro',exact:true}).click();
+ await expect(page.locator('html')).toHaveAttribute('data-theme','light');
+ await page.screenshot({path:'test-results/mobile-navigation.png'});
+ await navigation.getByRole('link',{name:'Explorar',exact:true}).click();
+ await expect(navigation).toBeHidden();
+ await menuButton.click();await page.keyboard.press('Escape');
+ await expect(navigation).toBeHidden();await expect(menuButton).toBeFocused();
  await expect(page.getByRole('textbox',{name:'Buscar ofertas'})).toBeHidden();
  await expect(page.getByLabel('Preço máximo (R$)',{exact:true})).toBeHidden();
+ await expect(page.locator('.home-category-navigation')).toBeHidden();
+ await expect(page.locator('.home-breadcrumb')).toBeHidden();
  const amazon=page.getByRole('button',{name:'Amazon',exact:true});
  await expect(amazon).toBeVisible();await expect(amazon.locator('.partner-name')).toBeHidden();
  await amazon.click();await expect(page).toHaveURL(/marketplace=amazon/);
@@ -28,6 +46,8 @@ test('mobile reúne busca e filtros no menu e mantém marketplaces acessíveis s
  await trigger.click();
  const dialog=page.getByRole('dialog',{name:'Pesquisar e filtrar'});
  await expect(dialog).toBeVisible();await expect(trigger).toHaveAttribute('aria-expanded','true');
+ await dialog.getByRole('combobox',{name:'Categoria',exact:true}).selectOption('phones');
+ await expect(page).toHaveURL(/categoryId=phones/);
  await dialog.getByRole('textbox',{name:'Buscar ofertas'}).fill('Celular');
  await expect(page).toHaveURL(/q=Celular/);
  await expect(dialog).toBeVisible();
@@ -36,6 +56,7 @@ test('mobile reúne busca e filtros no menu e mantém marketplaces acessíveis s
  await dialog.getByLabel('Ordenar por').selectOption('price_asc');
  await dialog.getByRole('button',{name:'Aplicar filtros'}).click();
  await expect(dialog).toBeHidden();
+ await expect(page.locator('.home-breadcrumb')).toBeVisible();
  await expect(page).toHaveURL(/marketplace=shopee/);await expect(page).toHaveURL(/maxPrice=150000/);await expect(page).toHaveURL(/sort=price_asc/);
  await trigger.click();await expect(dialog.getByLabel('Preço máximo (R$)',{exact:true})).toHaveValue('1500');
  await page.keyboard.press('Escape');await expect(dialog).toBeHidden();await expect(trigger).toBeFocused();
@@ -43,6 +64,9 @@ test('mobile reúne busca e filtros no menu e mantém marketplaces acessíveis s
  for(const width of [320,390,620]){
   await page.setViewportSize({width,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  expect(await page.locator('.header-inner').evaluate(e=>e.getBoundingClientRect().height)).toBeLessThan(85);
+  await expect(page.locator('.header-inner .theme-toggle')).toBeHidden();
+  await expect(page.getByRole('navigation',{name:'Navegação principal',exact:true})).toBeHidden();
   await trigger.click();
   expect(await dialog.evaluate(e=>e.getBoundingClientRect().width<=innerWidth)).toBe(true);
   await page.keyboard.press('Escape');
@@ -51,7 +75,9 @@ test('mobile reúne busca e filtros no menu e mantém marketplaces acessíveis s
  await page.screenshot({path:'test-results/mobile-storefront.png',fullPage:true});
  await trigger.click();await page.screenshot({path:'test-results/mobile-search-filters.png'});
  await dialog.getByRole('button',{name:'Fechar pesquisa e filtros'}).click();
- await page.getByRole('button',{name:'Tema escuro'}).click();
+ await menuButton.click();
+ await navigation.getByRole('button',{name:'Escuro',exact:true}).click();
+ await navigation.getByRole('button',{name:'Fechar menu',exact:true}).click();
  await trigger.click();await expect(dialog.getByRole('combobox',{name:'Loja',exact:true})).toBeVisible();
  await page.screenshot({path:'test-results/mobile-search-filters-dark.png'});
  await dialog.getByRole('button',{name:'Salvar este filtro'}).click();
@@ -64,6 +90,9 @@ test('desktop mantém busca, filtros laterais e nomes dos marketplaces',async({p
  await expect(page.getByRole('textbox',{name:'Buscar ofertas'})).toBeVisible();
  await expect(page.getByLabel('Preço máximo (R$)',{exact:true})).toBeVisible();
  await expect(page.getByRole('button',{name:'Pesquisar e filtrar'})).toBeHidden();
+ await expect(page.getByRole('navigation',{name:'Navegação principal',exact:true})).toBeVisible();
+ await expect(page.locator('.home-category-navigation')).toBeVisible();
+ await expect(page.getByRole('button',{name:'Abrir menu',exact:true})).toBeHidden();
  await expect(page.getByRole('button',{name:'Amazon',exact:true}).locator('.partner-name')).toBeVisible();
  await page.getByRole('textbox',{name:'Buscar ofertas'}).fill('Monitor');
  await expect(page).toHaveURL(/q=Monitor/);

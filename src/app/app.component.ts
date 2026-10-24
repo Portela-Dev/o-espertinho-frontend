@@ -1,4 +1,5 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ElementRef, viewChild, signal } from '@angular/core';
+import { DismissOnBackdrop } from './components/dismiss-on-backdrop';
 import {
   RouterLink,
   RouterLinkActive,
@@ -12,6 +13,7 @@ import { UserAvatar } from './components/user-avatar';
 @Component({
   selector: 'app-root',
   imports: [
+    DismissOnBackdrop,
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
@@ -35,7 +37,7 @@ import { UserAvatar } from './components/user-avatar';
               height="132" /></span
           >O Espertinho<span class="brand-dot">.</span></a
         >
-        <nav aria-label="Navegação principal">
+        <nav class="desktop-site-navigation" aria-label="Navegação principal">
           <a
             routerLink="/"
             [routerLinkActiveOptions]="{ exact: true }"
@@ -100,9 +102,37 @@ import { UserAvatar } from './components/user-avatar';
               >Entrar <span>↗</span></a
             >
           }
+          <button type="button" class="mobile-nav-toggle" (click)="openMobileNavigation()" aria-label="Abrir menu" aria-haspopup="dialog" aria-controls="mobile-site-navigation" [attr.aria-expanded]="mobileNavigationOpen()">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
         </div>
       </div>
     </header>
+    <dialog #mobileNavigation id="mobile-site-navigation" class="mobile-browse-menu mobile-navigation-dialog" aria-labelledby="mobile-navigation-title" (dismissOnBackdrop)="closeMobileNavigation()" (close)="mobileNavigationOpen.set(false)">
+      <div class="browse-menu-heading"><h2 id="mobile-navigation-title">Menu</h2><button type="button" class="button outline" (click)="closeMobileNavigation()" aria-label="Fechar menu">×</button></div>
+      <nav aria-label="Navegação mobile">
+        <a routerLink="/" (click)="closeMobileNavigation()" [routerLinkActiveOptions]="{exact:true}" routerLinkActive="active">Explorar</a>
+        <a routerLink="/favoritos" (click)="closeMobileNavigation()" routerLinkActive="active">Favoritos</a>
+        <a routerLink="/catalogos" (click)="closeMobileNavigation()" routerLinkActive="active">Meus catálogos</a>
+        @if(api.user()) {
+          <a routerLink="/minha-conta" (click)="closeMobileNavigation()">Minha conta</a>
+          @if(api.canAdmin()){<a routerLink="/admin" (click)="closeMobileNavigation()">Admin ↗</a>}
+        } @else {
+          <a routerLink="/entrar" (click)="closeMobileNavigation()">Entrar</a>
+        }
+      </nav>
+      <section class="mobile-menu-theme" aria-labelledby="mobile-theme-title">
+        <h3 id="mobile-theme-title">Aparência</h3>
+        <div class="mobile-theme-options" role="group" aria-label="Tema do site">
+          <button type="button" (click)="setTheme(false)" [attr.aria-pressed]="!theme.dark()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>Claro
+          </button>
+          <button type="button" (click)="setTheme(true)" [attr.aria-pressed]="theme.dark()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.9 13a9 9 0 0 1-9.9-9.9A9 9 0 1 0 20.9 13Z"/></svg>Escuro
+          </button>
+        </div>
+      </section>
+    </dialog>
     @if (api.error()) {
       <div class="toast error" role="alert">
         <span>{{ api.error() }}</span
@@ -151,6 +181,15 @@ import { UserAvatar } from './components/user-avatar';
   `,
 })
 export class AppComponent implements OnInit {
+  setTheme(dark: boolean) { if (this.theme.dark() !== dark) this.theme.toggle(); }
+  readonly mobileNavigation = viewChild<ElementRef<HTMLDialogElement>>('mobileNavigation');
+  readonly mobileNavigationOpen = signal(false);
+  openMobileNavigation() {
+    const dialog = this.mobileNavigation()?.nativeElement;
+    if(dialog && !dialog.open) { this.mobileNavigationOpen.set(true); dialog.showModal(); }
+  }
+  closeMobileNavigation() { this.mobileNavigation()?.nativeElement.close(); this.mobileNavigationOpen.set(false); }
+
   api = inject(Api);
   theme = inject(ThemeService);
   router = inject(Router);

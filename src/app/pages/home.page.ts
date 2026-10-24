@@ -58,13 +58,15 @@ import { ProductCard } from '../components/product-card';
           <a routerLink="/filtros" class="text-link desktop-saved-filters">Meus filtros salvos ↗</a>
         </div>
         <div class="desktop-search"><ng-container [ngTemplateOutlet]="searchControls" /></div>
+        <div class="home-breadcrumb" [class.has-category]="selectedCategory()">
         <category-breadcrumb
           [names]="selectedCategory()?.path || []"
           [ids]="breadcrumbIds()"
           [base]="breadcrumbBase()"
         />
+        </div>
         @if (childCategories().length) {
-          <nav class="category-navigation" aria-label="Categorias">
+          <nav class="category-navigation home-category-navigation" aria-label="Categorias">
             <div class="category-chips">
               @for (c of childCategories(); track c.id) {
                 <button type="button" (click)="category(c.id)">
@@ -174,6 +176,12 @@ import { ProductCard } from '../components/product-card';
               </button>
             </div>
             <form (ngSubmit)="submitFilters()">
+              <label class="mobile-category-filter">Categoria
+                <select name="categoryId" [ngModel]="selectedCategory()?.id || ''" (ngModelChange)="category($event)">
+                  <option value="">Todas as categorias</option>
+                  @for(c of categories();track c.id){<option [value]="c.id">{{c.path.join(' › ')}}</option>}
+                </select>
+              </label>
               <label
                 >Loja<select
                   name="marketplace"
