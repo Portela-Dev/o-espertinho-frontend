@@ -16,7 +16,7 @@ test.beforeEach(async({page})=>{
 
 test('mobile reúne busca e filtros no menu e mantém marketplaces acessíveis só com ícones',async({page})=>{
  await page.setViewportSize({width:390,height:844});
- await page.goto('/');
+ await page.goto('/sobre');await page.getByRole('link',{name:'O Espertinho início',exact:true}).click();
  await expect(page.locator('product-card')).toHaveCount(1);
  await expect(page.getByRole('navigation',{name:'Navegação principal',exact:true})).toBeHidden();
  const menuButton=page.getByRole('button',{name:'Abrir menu',exact:true});
@@ -86,7 +86,7 @@ test('mobile reúne busca e filtros no menu e mantém marketplaces acessíveis s
 });
 
 test('desktop mantém busca, filtros laterais e nomes dos marketplaces',async({page})=>{
- await page.setViewportSize({width:1440,height:1000});await page.goto('/');
+ await page.setViewportSize({width:1440,height:1000});await page.goto('/sobre');await page.getByRole('link',{name:'O Espertinho início',exact:true}).click();
  await expect(page.getByRole('textbox',{name:'Buscar ofertas'})).toBeVisible();
  await expect(page.getByLabel('Preço máximo (R$)',{exact:true})).toBeVisible();
  await expect(page.getByRole('button',{name:'Pesquisar e filtrar'})).toBeHidden();
@@ -105,7 +105,7 @@ test('menu mobile preserva foto, nome e acesso à conta do usuário conectado',a
  await page.route('**/api/auth/session',route=>route.fulfill({json:{user:{id:'test-user',name:'Pessoa de Teste',email:'teste@example.com',avatar:'https://example.com/profile.png',role:'user'}}}));
  await page.route('**/api/me/favorites',route=>route.fulfill({json:[]}));
  await page.route('https://example.com/profile.png',route=>route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><circle cx="24" cy="24" r="24" fill="#173a2b"/></svg>'}));
- await page.goto('/');
+ await page.goto('/sobre');await page.getByRole('link',{name:'O Espertinho início',exact:true}).click();
  await page.getByRole('button',{name:'Abrir menu',exact:true}).click();
  const menu=page.getByRole('dialog',{name:'Menu',exact:true});
  const account=menu.getByRole('link',{name:'Conta de Pessoa de Teste',exact:true});
