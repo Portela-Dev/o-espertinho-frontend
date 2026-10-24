@@ -110,12 +110,17 @@ import { UserAvatar } from './components/user-avatar';
     </header>
     <dialog #mobileNavigation id="mobile-site-navigation" class="mobile-browse-menu mobile-navigation-dialog" aria-labelledby="mobile-navigation-title" (dismissOnBackdrop)="closeMobileNavigation()" (close)="mobileNavigationOpen.set(false)">
       <div class="browse-menu-heading"><h2 id="mobile-navigation-title">Menu</h2><button type="button" class="button outline" (click)="closeMobileNavigation()" aria-label="Fechar menu">×</button></div>
+      @if(api.user(); as user) {
+        <a routerLink="/minha-conta" class="mobile-menu-profile" (click)="closeMobileNavigation()" [attr.aria-label]="'Conta de ' + user.name">
+          <span class="avatar"><user-avatar [name]="user.name" [photo]="user.avatar" /></span>
+          <span class="mobile-menu-profile-copy"><strong>{{user.name}}</strong><span>Minha conta ↗</span></span>
+        </a>
+      }
       <nav aria-label="Navegação mobile">
         <a routerLink="/" (click)="closeMobileNavigation()" [routerLinkActiveOptions]="{exact:true}" routerLinkActive="active">Explorar</a>
         <a routerLink="/favoritos" (click)="closeMobileNavigation()" routerLinkActive="active">Favoritos</a>
         <a routerLink="/catalogos" (click)="closeMobileNavigation()" routerLinkActive="active">Meus catálogos</a>
         @if(api.user()) {
-          <a routerLink="/minha-conta" (click)="closeMobileNavigation()">Minha conta</a>
           @if(api.canAdmin()){<a routerLink="/admin" (click)="closeMobileNavigation()">Admin ↗</a>}
         } @else {
           <a routerLink="/entrar" (click)="closeMobileNavigation()">Entrar</a>

@@ -173,3 +173,9 @@ body:has(.mobile-browse-menu[open]){overflow:hidden}
  .home-category-navigation,.home-breadcrumb:not(.has-category){display:none}
  .home-breadcrumb.has-category{margin:0 0 14px}
 }
+
+.mobile-menu-profile{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface-inset)}
+.mobile-menu-profile .avatar{width:48px;height:48px;flex-shrink:0}
+.mobile-menu-profile-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.mobile-menu-profile-copy strong{font-size:14px;overflow-wrap:anywhere}
+.mobile-menu-profile-copy>span{font-size:12px;color:var(--muted)}

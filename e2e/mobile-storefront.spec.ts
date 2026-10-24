@@ -98,3 +98,22 @@ test('desktop mantém busca, filtros laterais e nomes dos marketplaces',async({p
  await expect(page).toHaveURL(/q=Monitor/);
  await page.screenshot({path:'test-results/desktop-storefront.png',fullPage:true});
 });
+
+
+test('menu mobile preserva foto, nome e acesso à conta do usuário conectado',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.route('**/api/auth/session',route=>route.fulfill({json:{user:{id:'test-user',name:'Pessoa de Teste',email:'teste@example.com',avatar:'https://example.com/profile.png',role:'user'}}}));
+ await page.route('**/api/me/favorites',route=>route.fulfill({json:[]}));
+ await page.route('https://example.com/profile.png',route=>route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><circle cx="24" cy="24" r="24" fill="#173a2b"/></svg>'}));
+ await page.goto('/');
+ await page.getByRole('button',{name:'Abrir menu',exact:true}).click();
+ const menu=page.getByRole('dialog',{name:'Menu',exact:true});
+ const account=menu.getByRole('link',{name:'Conta de Pessoa de Teste',exact:true});
+ await expect(account).toBeVisible();
+ await expect(account.getByRole('img',{name:'Foto de perfil de Pessoa de Teste'})).toBeVisible();
+ await expect(account.locator('img')).toHaveAttribute('src','https://example.com/profile.png');
+ await expect(account).toContainText('Pessoa de Teste');
+ await expect(menu.getByRole('link',{name:'Entrar',exact:true})).toHaveCount(0);
+ await page.screenshot({path:'test-results/mobile-menu-profile.png'});
+ await account.click();await expect(page).toHaveURL(/minha-conta/);await expect(menu).toBeHidden();
+});
