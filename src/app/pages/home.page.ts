@@ -1,7 +1,8 @@
 import { DismissOnBackdrop } from '../components/dismiss-on-backdrop';
 import { PagedData } from '../paged-data';
 import { InfiniteScroll } from '../components/infinite-scroll';
-import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, signal, OnInit, DestroyRef, ElementRef, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -20,6 +21,7 @@ import { ProductCard } from '../components/product-card';
 @Component({
   standalone: true,
   imports: [
+    NgTemplateOutlet,
     DismissOnBackdrop,
     InfiniteScroll,
     CategoryBreadcrumb,
@@ -38,39 +40,33 @@ import { ProductCard } from '../components/product-card';
               type="button"
               class="partner"
               [attr.aria-pressed]="filters.marketplace === m.id"
+              [attr.aria-label]="m.name"
+              [title]="m.name"
               (click)="store(m.id)"
             >
-              <marketplace-logo [url]="m.logo_url" [name]="m.name" />{{
-                m.name
-              }}
+              <marketplace-logo [url]="m.logo_url" [name]="m.name" /><span class="partner-name">{{ m.name }}</span>
             </button>
           }
         </div>
       }
       <section id="ofertas" class="discovery" aria-label="Ofertas">
         <div class="discovery-tools">
-          <a routerLink="/filtros" class="text-link">Meus filtros salvos ↗</a>
-        </div>
-        <form class="search-bar" (ngSubmit)="apply()">
-          <span aria-hidden="true">⌕</span
-          ><input
-            aria-label="Buscar ofertas"
-            name="q"
-            [(ngModel)]="searchText"
-            (ngModelChange)="scheduleSearch()"
-            placeholder="O que você quer encontrar hoje?"
-            maxlength="160"
-          /><button class="button dark" type="submit">
-            Buscar <span>↗</span>
+          <button type="button" class="button outline mobile-browse-toggle" (click)="openBrowseMenu()" aria-haspopup="dialog" aria-controls="mobile-browse-menu" [attr.aria-expanded]="browseMenuOpen()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5M3 21h8m-5-3v6"/></svg>
+            Pesquisar e filtrar
           </button>
-        </form>
+          <a routerLink="/filtros" class="text-link desktop-saved-filters">Meus filtros salvos ↗</a>
+        </div>
+        <div class="desktop-search"><ng-container [ngTemplateOutlet]="searchControls" /></div>
+        <div class="home-breadcrumb" [class.has-category]="selectedCategory()">
         <category-breadcrumb
           [names]="selectedCategory()?.path || []"
           [ids]="breadcrumbIds()"
           [base]="breadcrumbBase()"
         />
+        </div>
         @if (childCategories().length) {
-          <nav class="category-navigation" aria-label="Categorias">
+          <nav class="category-navigation home-category-navigation" aria-label="Categorias">
             <div class="category-chips">
               @for (c of childCategories(); track c.id) {
                 <button type="button" (click)="category(c.id)">
@@ -81,58 +77,7 @@ import { ProductCard } from '../components/product-card';
           </nav>
         }
         <div class="browse-layout">
-          <aside class="filter-panel">
-            <div class="filter-title">
-              <h3>Do seu jeito</h3>
-              <button type="button" class="text-button" (click)="clear()">
-                Limpar
-              </button>
-            </div>
-            <form (ngSubmit)="apply()">
-              <label
-                >Loja<select
-                  name="marketplace"
-                  [(ngModel)]="filters.marketplace"
-                >
-                  <option value="">Todas as lojas</option>
-                  @for (m of marketplaces(); track m.id) {
-                    <option [value]="m.id">{{ m.name }}</option>
-                  }
-                </select></label
-              ><label
-                >Preço máximo (R$)<input
-                  name="price"
-                  type="number"
-                  min="0"
-                  max="1000000"
-                  [(ngModel)]="maxReais"
-                  placeholder="Sem limite" /></label
-              ><label
-                >Ordenar por<select name="sort" [(ngModel)]="filters.sort">
-                  <option value="recent">Mais recentes</option>
-                  <option value="price_asc">Menor preço</option>
-                  <option value="discount">Maior desconto</option>
-                </select></label
-              ><button type="submit" class="button outline full">
-                Aplicar filtros
-              </button>
-            </form>
-            <button
-              type="button"
-              class="text-button save-filter"
-              (click)="saveOpen.set(true)"
-            >
-              ＋ Salvar este filtro
-            </button>
-            <div class="filter-note">
-              <span>✦</span><strong>Gostou? Guarde.</strong>
-              <p>
-                Seus favoritos e catálogos deixam as boas escolhas sempre por
-                perto.
-              </p>
-              <a routerLink="/catalogos">Organizar meus achados ↗</a>
-            </div>
-          </aside>
+          <div class="desktop-filters"><ng-container [ngTemplateOutlet]="filterControls" /></div>
           <div class="results">
             <div class="results-top">
               <span>{{
@@ -207,6 +152,89 @@ import { ProductCard } from '../components/product-card';
         <a routerLink="/catalogos" class="button dark">Criar meu catálogo ↗</a>
       </section>
     </div>
+    <ng-template #searchControls>
+        <form class="search-bar" (ngSubmit)="submitFilters()">
+          <span aria-hidden="true">⌕</span
+          ><input
+            aria-label="Buscar ofertas"
+            name="q"
+            [(ngModel)]="searchText"
+            (ngModelChange)="scheduleSearch()"
+            placeholder="O que você quer encontrar hoje?"
+            maxlength="160"
+          /><button class="button dark" type="submit">
+            Buscar <span>↗</span>
+          </button>
+        </form>
+    </ng-template>
+    <ng-template #filterControls>
+          <aside class="filter-panel">
+            <div class="filter-title">
+              <h3>Do seu jeito</h3>
+              <button type="button" class="text-button" (click)="clear()">
+                Limpar
+              </button>
+            </div>
+            <form (ngSubmit)="submitFilters()">
+              <label class="mobile-category-filter">Categoria
+                <select name="categoryId" [ngModel]="selectedCategory()?.id || ''" (ngModelChange)="category($event)">
+                  <option value="">Todas as categorias</option>
+                  @for(c of categories();track c.id){<option [value]="c.id">{{c.path.join(' › ')}}</option>}
+                </select>
+              </label>
+              <label
+                >Loja<select
+                  name="marketplace"
+                  [(ngModel)]="filters.marketplace"
+                >
+                  <option value="">Todas as lojas</option>
+                  @for (m of marketplaces(); track m.id) {
+                    <option [value]="m.id">{{ m.name }}</option>
+                  }
+                </select></label
+              ><label
+                >Preço máximo (R$)<input
+                  name="price"
+                  type="number"
+                  min="0"
+                  max="1000000"
+                  [(ngModel)]="maxReais"
+                  placeholder="Sem limite" /></label
+              ><label
+                >Ordenar por<select name="sort" [(ngModel)]="filters.sort">
+                  <option value="recent">Mais recentes</option>
+                  <option value="price_asc">Menor preço</option>
+                  <option value="discount">Maior desconto</option>
+                </select></label
+              ><button type="submit" class="button outline full">
+                Aplicar filtros
+              </button>
+            </form>
+            <button
+              type="button"
+              class="text-button save-filter"
+              (click)="openSaveFilter()"
+            >
+              ＋ Salvar este filtro
+            </button>
+            <div class="filter-note">
+              <span>✦</span><strong>Gostou? Guarde.</strong>
+              <p>
+                Seus favoritos e catálogos deixam as boas escolhas sempre por
+                perto.
+              </p>
+              <a routerLink="/catalogos">Organizar meus achados ↗</a>
+            </div>
+          </aside>
+    </ng-template>
+    <dialog #browseMenu id="mobile-browse-menu" class="mobile-browse-menu" aria-labelledby="browse-menu-title" (dismissOnBackdrop)="closeBrowseMenu()" (close)="browseMenuOpen.set(false)">
+      <div class="browse-menu-heading"><h2 id="browse-menu-title">Pesquisar e filtrar</h2><button type="button" class="button outline" (click)="closeBrowseMenu()" aria-label="Fechar pesquisa e filtros">×</button></div>
+      @if(browseMenuOpen()) {
+        <ng-container [ngTemplateOutlet]="searchControls" />
+        <ng-container [ngTemplateOutlet]="filterControls" />
+        <a routerLink="/filtros" class="text-link" (click)="closeBrowseMenu()">Meus filtros salvos ↗</a>
+      }
+    </dialog>
     @if (saveOpen()) {
       <div
         class="modal-backdrop"
@@ -246,6 +274,19 @@ import { ProductCard } from '../components/product-card';
   `,
 })
 export class HomePage implements OnInit {
+  readonly browseMenu = viewChild<ElementRef<HTMLDialogElement>>('browseMenu');
+  readonly browseMenuOpen = signal(false);
+  openBrowseMenu() {
+    const dialog = this.browseMenu()?.nativeElement;
+    if (dialog && !dialog.open) {
+      this.browseMenuOpen.set(true);
+      dialog.showModal();
+    }
+  }
+  closeBrowseMenu() { this.browseMenu()?.nativeElement.close(); this.browseMenuOpen.set(false); }
+  submitFilters() { this.apply(); this.closeBrowseMenu(); }
+  openSaveFilter() { this.closeBrowseMenu(); this.saveOpen.set(true); }
+
   api = inject(Api);
   route = inject(ActivatedRoute);
   router = inject(Router);

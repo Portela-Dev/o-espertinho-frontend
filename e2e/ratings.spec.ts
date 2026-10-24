@@ -10,7 +10,7 @@ for(const mode of [{name:'desktop',width:1320,theme:'light'},{name:'mobile',widt
   await page.route('**/api/products/'+id+'?*',route=>route.fulfill({json:{...product,page:1,pageSize:24}}));
   // Enter through another route so SSR transfer cache cannot replace this fixture.
   await page.goto('/sobre');await page.evaluate(theme=>document.documentElement.dataset['theme']=theme,mode.theme);
-  await page.getByRole('link',{name:'Explorar',exact:true}).click();
+  await page.getByRole('link',{name:'O Espertinho início',exact:true}).click();
   const rated=page.locator('product-card').filter({hasText:'Celular avaliado'});
   await expect(rated.locator('review-rating')).toContainText('3.102 avaliações');
   await expect(rated.locator('.score')).toContainText('4,8');
