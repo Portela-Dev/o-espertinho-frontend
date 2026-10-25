@@ -19,14 +19,55 @@ export class CategoriesAdmin implements OnInit {
  editing=signal<Category|null>(null);action:Action='rename';names:Record<Action,string>={rename:'Renomear',move:'Mover',merge:'Unir',delete:'Excluir'};
  name='';destination='';options=signal<Category[]>([]);busy=signal(false);optionsFailed=signal(false);preview=signal<Preview|null>(null);
  ngOnInit(){void this.feed.reset();}
- destinations(){const source=this.editing();return this.options().filter(n=>!source||!source.path.every((part,i)=>part.toLowerCase()===n.path[i]?.toLowerCase()));}
+ destinations(){const source=this.editing();return this.options().filter(n=>!source?.path.every((part,i)=>part.toLowerCase()===n.path[i]?.toLowerCase()));}
  async open(category:Category,action:Action){
   this.editing.set(category);this.action=action;this.name=category.path.at(-1)||'';this.destination='';this.preview.set(null);await this.loadOptions();
  }
  async loadOptions(){this.busy.set(true);this.optionsFailed.set(false);try{this.options.set(await this.api.get<Category[]>('/admin/category-tree'));}catch(e){this.optionsFailed.set(true);this.api.fail(e);}finally{this.busy.set(false);}}
  close(){if(!this.busy()){this.editing.set(null);this.preview.set(null);}}
  changed(){this.preview.set(null);}
- operation(){return {action:this.action,sourceId:this.editing()!.id,...(this.action==='rename'?{name:this.name}:this.action==='move'?{parentId:this.destination||null}:{targetId:this.destination||null})};}
- async inspect(){if(this.busy())return;this.busy.set(true);this.preview.set(null);try{this.preview.set(await this.api.send<Preview>('POST','/admin/categories/preview',this.operation()));}catch(e){this.api.fail(e);}finally{this.busy.set(false);}}
- async confirm(){const p=this.preview();if(!p||this.busy())return;this.busy.set(true);try{await this.api.send('POST','/admin/categories/apply',{...this.operation(),revision:p.revision,confirm:true});this.editing.set(null);this.preview.set(null);this.api.success('Categorias atualizadas. Produtos e ofertas preservados.');await this.feed.reset();}catch(e){this.preview.set(null);this.api.fail(e);}finally{this.busy.set(false);}}
+ operation(){
+  const operation={action:this.action,sourceId:this.editing()!.id};
+  if(this.action==='rename'){
+   return {...operation,name:this.name};
+  }
+  if(this.action==='move'){
+   return {...operation,parentId:this.destination||null};
+  }
+  return {...operation,targetId:this.destination||null};
+ }
+ async inspect(){
+  if(this.busy()){
+   return;
+  }
+  this.busy.set(true);
+  this.preview.set(null);
+  try{
+   this.preview.set(await this.api.send<Preview>('POST','/admin/categories/preview',this.operation()));
+  }catch(e){
+   this.api.fail(e);
+  }finally{
+   this.busy.set(false);
+  }
+ }
+ async confirm(){
+  const preview=this.preview();
+  if(!preview||this.busy()){
+   return;
+  }
+  this.busy.set(true);
+  try{
+   await this.api.send('POST','/admin/categories/apply',{...this.operation(),revision:preview.revision,confirm:true});
+   this.editing.set(null);
+   this.preview.set(null);
+   this.api.success('Categorias atualizadas. Produtos e ofertas preservados.');
+   await this.feed.reset();
+  }catch(e){
+   this.preview.set(null);
+   this.api.fail(e);
+  }finally{
+   this.busy.set(false);
+  }
+ }
+
 }
