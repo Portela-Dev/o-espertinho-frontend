@@ -1,4 +1,5 @@
 import { ProductImage } from './product-image';
+import { reviewStatuses } from './review-status';
 import { ReviewAiSettings } from './review-ai-settings';
 import { RouterLink } from '@angular/router';
 import { ReviewRating } from './review-rating';
@@ -219,17 +220,11 @@ export class EnrichmentAdmin implements OnInit {
     );
   }
   canPublish(link: any) {
-    return (
-      !this.invalidReview(link) &&
-      link.status !== 'archived' &&
-      !link.published_offer_id &&
-      !!link.product_id &&
-      !!link.confirmed_category_id &&
-      !!link.affiliate_url &&
-      link.extraction_status === 'completed' &&
-      !!link.enrichment_data?.priceCents &&
-      !link.enrichment_data?.missing?.length
-    );
+    return link.review_status === 'ready';
+  }
+  readonly reviewStatuses = reviewStatuses;
+  statusLabel(link: any) {
+    return reviewStatuses.find(status => status.value === link.review_status)?.label || 'Atualize a lista';
   }
   clearSelection() {
     this.selectedLinks.set(new Map());
@@ -270,6 +265,7 @@ export class EnrichmentAdmin implements OnInit {
   async publishSelected() {
     const selected = [...this.selectedLinks().values()];
     if (!selected.length) return;
+    let summary = '';
     await this.act(async () => {
       const result = await this.api.send<{
         results: any[];
@@ -287,7 +283,8 @@ export class EnrichmentAdmin implements OnInit {
       );
       this.selectedLinks.set(new Map());
       this.bulkConfirm.set(false);
-    }, 'Publicação em massa concluída. Confira o resultado de cada link.');
+      summary = `Publicadas: ${result.published}. Não publicadas: ${result.failed}.`;
+    }, () => summary);
   }
   publishTarget = signal<any>(null);
   async publish() {
@@ -315,33 +312,18 @@ export class EnrichmentAdmin implements OnInit {
     this.bulkResults.set([]);
     await this.feed().reset();
   }
-  async act(work: () => Promise<unknown>, message: string) {
+  async act(work: () => Promise<unknown>, message: string | (() => string)) {
     if (this.busy()) return;
     this.busy.set(true);
     try {
       await work();
-      this.api.success(message);
+      this.api.success(typeof message === 'function' ? message() : message);
       await this.feed().go(this.feed().page() || 1);
     } catch (e) {
       this.api.fail(e);
     } finally {
       this.busy.set(false);
     }
-  }
-  label(status: string) {
-    return (
-      (
-        {
-          pending: 'Pendente',
-          queued: 'Aguardando extensão',
-          running: 'Em execução',
-          completed: 'Concluído',
-          failed: 'Falha técnica',
-          cancelled: 'Cancelado',
-          skipped: 'Ignorado',
-        } as Record<string, string>
-      )[status] || status
-    );
   }
   availabilityLabel(data: any) {
     if (data?.availability === 'unavailable') return 'Indisponível';
@@ -350,8 +332,7 @@ export class EnrichmentAdmin implements OnInit {
       : 'Não confirmada';
   }
   categoryState(link: any) {
-    if (this.invalidReview(link))
-      return 'Anúncio inválido — extraia novamente antes de reavaliar';
+    if (this.invalidReview(link)) return '—';
     if (link.product_draft_id && !link.product_id)
       return 'Rascunho aguardando categorização';
     if (link.confirmed_category_id) return 'Categoria confirmada';

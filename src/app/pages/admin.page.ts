@@ -1,4 +1,5 @@
 import {CategoriesAdmin} from '../components/categories-admin';
+import { MarketplaceLogo } from '../components/marketplace-logo';
 import { SharingAdmin } from '../components/sharing-admin';
 import { CatalogPurge } from '../components/catalog-purge';
 import { combineLatest } from 'rxjs';
@@ -23,6 +24,7 @@ import { Api } from '../api.service';
 import { Offer, storeNames } from '../models';
 @Component({
   imports: [
+    MarketplaceLogo,
     CategoriesAdmin,
     SharingAdmin,
     CatalogPurge,
@@ -43,6 +45,7 @@ import { Offer, storeNames } from '../models';
     CurrencyPipe,
   ],
   templateUrl: './admin.page.html',
+  styles: `.marketplace-summary-name{display:flex;gap:10px;align-items:center;min-width:0}.marketplace-summary-name span{overflow-wrap:anywhere}.metric-row .flex-between{gap:12px;margin-bottom:8px}`,
 })
 export class AdminPage implements OnInit {
   api = inject(Api);
@@ -72,6 +75,8 @@ export class AdminPage implements OnInit {
   topPage = 1;
   metricSize = 5;
   metricPage = 1;
+  publishedMetricSize = 5;
+  publishedMetricPage = 1;
   days = 30;
   reviewStatus = 'all';
   manualOpen = signal(false);
@@ -345,6 +350,13 @@ export class AdminPage implements OnInit {
       1,
       ...(this.stats()?.marketplaces || []).map((m: any) => m.clicks),
     );
+  }
+  marketplaceMetrics(metric: 'clicks' | 'publishedOffers') {
+    return [...(this.stats()?.marketplaces || [])].sort((a,b) =>
+      (b[metric] || 0) - (a[metric] || 0) || a.name.localeCompare(b.name, 'pt-BR'));
+  }
+  maxPublishedOffers() {
+    return Math.max(1, ...(this.stats()?.marketplaces || []).map((m:any) => m.publishedOffers || 0));
   }
   statusLabel(status: string) {
     return (
