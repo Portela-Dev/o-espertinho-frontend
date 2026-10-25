@@ -254,9 +254,7 @@ export class OfferCard {
   }
   track() {
     void this.api
-      .send('POST', `/offers/${this.offer().id}/click`, {
-        placement: this.placement(),
-      })
+      .trackAffiliateClick(this.offer().id, this.placement())
       .catch(() => {});
   }
   async openCatalog() {
