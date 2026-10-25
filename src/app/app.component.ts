@@ -23,7 +23,7 @@ import { UserAvatar } from './components/user-avatar';
   template: `
     <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
     <div class="topline">
-      Um bom achado começa com uma boa escolha.
+      Só é esperto que compara antes de comprar
       <span>Ofertas revisadas por pessoas, para pessoas.</span>
     </div>
     <header class="site-header">
@@ -168,7 +168,7 @@ import { UserAvatar } from './components/user-avatar';
       <div class="footer-inner">
         <div>
           <a routerLink="/" class="brand">O Espertinho.</a>
-          <p>Menos procura. Mais boas escolhas.</p>
+          <p>Só é esperto que compara antes de comprar</p>
         </div>
         <div class="footer-links">
           <a routerLink="/sobre">Sobre o Espertinho</a
