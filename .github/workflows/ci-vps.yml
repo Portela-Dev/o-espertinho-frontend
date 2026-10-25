@@ -77,7 +77,7 @@ jobs:
         with:
           repository: Portela-Dev/o-espertinho-backend
           # Pinned backend contract includes versioned Meta Pixel settings; override only for integration testing.
-          ref: ${{ vars.E2E_BACKEND_REF || 'e483cf26d9255c3e0a183644db3eeb2141b14102' }}
+          ref: ${{ vars.E2E_BACKEND_REF || '23c640bf9a6503495d679bff0d040333c7d2c607' }}
           path: .ci-backend
           persist-credentials: false
       - name: Preparar API de teste e Chromium

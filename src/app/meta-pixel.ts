@@ -55,7 +55,7 @@ export class MetaPixel {
     this.destroy.onDestroy(() => window.removeEventListener('storage', changed));
     try {
       const config = await firstValueFrom(this.http.get<PixelConfig>('/api/marketing'));
-      if (!config.enabled || !/^[0-9]{5,30}$/.test(config.pixelId ?? '') || config.allowedOrigin !== window.location.origin) return;
+      if (!config.enabled || !/^\d{5,30}$/.test(config.pixelId ?? '') || config.allowedOrigin !== window.location.origin) return;
       this.config = config;
       this.available.set(true);
       this.readConsent();
