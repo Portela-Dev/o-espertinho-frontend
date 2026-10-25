@@ -1,0 +1,32 @@
+<p class="section-intro">Gerencie categorias e subcategorias em até 10 níveis. Renomear e mover preservam a árvore; unir consolida categorias equivalentes. Nenhuma operação exclui produtos ou ofertas.</p>
+<form class="search-bar" (ngSubmit)="feed.reset()"><input name="categorySearch" aria-label="Pesquisar categorias" [(ngModel)]="query" maxlength="160" placeholder="Nome ou caminho da categoria"><button class="button outline" type="submit">Pesquisar</button></form>
+@if(feed.loading()){<output aria-live="polite" class="loading-panel">Carregando categorias…</output>}
+@else if(feed.failed()){<div class="empty-state"><p>Não foi possível carregar as categorias.</p><button type="button" class="button outline" (click)="feed.reset()">Tentar novamente</button></div>}
+@else{
+ <div class="panel table-wrap category-table-wrap"><table><thead><tr><th>Categoria / subcategoria</th><th class="category-extra">Nível</th><th>Produtos na árvore</th><th class="category-extra">Subcategorias</th><th>Ações</th></tr></thead><tbody>
+ @for(category of feed.items();track category.id){<tr><td class="category-path"><span class="category-path-text" [title]="category.path.join(' › ')">{{category.path.join(' › ')}}</span></td><td class="category-extra">{{category.depth}}</td><td>{{category.product_count}}</td><td class="category-extra">{{category.descendant_count}}</td><td><app-action-menu [menuId]="'category-'+category.id" [label]="'Ações de '+category.path.join(' › ')">
+ @for(action of actions;track action){<button type="button" [disabled]="busy()" [class.danger-text]="action==='delete'" (click)="open(category,action)">{{names[action]}}</button>}
+ </app-action-menu></td></tr>}
+ @empty{<tr><td colspan="5">Nenhuma categoria encontrada.</td></tr>}
+ </tbody></table></div>
+ <app-pagination [page]="feed.page()||1" [size]="feed.pageSize()" [total]="feed.total()" [busy]="feed.loading()" (pageChange)="feed.go($event)" (sizeChange)="feed.resize($event)" label="Categorias"/>
+}
+@if(editing();as category){
+ <div class="modal-backdrop" (dismissOnBackdrop)="close()"><dialog open class="modal" aria-modal="true" aria-labelledby="category-operation-title"><button type="button" class="close-button" aria-label="Fechar" [disabled]="busy()" (click)="close()">×</button>
+ <h2 id="category-operation-title">{{names[action]}} categoria</h2><p class="category-current-path">{{category.path.join(' › ')}}</p>
+ @if(action==='merge'){<p>Os produtos passam para a árvore de destino. Subcategorias com nomes equivalentes são unidas; as demais são mantidas.</p>}
+ @if(action==='delete'){<p class="notice">A categoria e todas as suas subcategorias serão excluídas. Se houver vínculos, escolha uma categoria para receber os produtos, revisões, mapeamentos e filtros. A estrutura interna excluída não será mantida.</p>}
+ <form (ngSubmit)="inspect()"><fieldset class="category-fields" [disabled]="busy()||optionsFailed()">
+ @if(action==='rename'){<label>Novo nome<input name="categoryName" [(ngModel)]="name" (ngModelChange)="changed()" maxlength="80" required></label>}
+ @else{<label>{{action==='move'?'Nova categoria pai (opcional)':'Categoria de destino'+(action==='delete'?' (obrigatória se houver vínculos)':'')}}
+ <select name="destination" [(ngModel)]="destination" (ngModelChange)="changed()" [required]="action==='merge'"><option value="">{{action==='move'?'Mover para a raiz':action==='delete'?'Sem destino — apenas árvore sem vínculos':'Selecione uma categoria'}}</option>@for(option of destinations();track option.id){<option [value]="option.id">{{option.path.join(' › ')}}</option>}</select></label>}
+ <button type="submit" class="button outline" [disabled]="busy()||optionsFailed()">{{busy()?'Aguarde…':'Gerar prévia'}}</button>
+ </fieldset></form>
+ @if(optionsFailed()){<p role="alert">Não foi possível carregar as opções de destino.</p><button type="button" class="button outline" (click)="loadOptions()">Carregar opções novamente</button>}
+ @if(preview();as p){<section class="category-confirmation" aria-label="Prévia da alteração"><h3>Confira antes de confirmar</h3><p class="category-current-path">{{p.sourcePath.join(' › ')}} → {{p.targetPath?.join(' › ')||'Excluir árvore vazia'}}</p>
+ <div class="category-impact"><span>{{p.impact.categories}} categorias afetadas</span><span>{{p.impact.removedCategories}} categorias excluídas</span><span>{{p.impact.products}} produtos preservados</span><span>{{p.impact.offers}} ofertas preservadas</span><span>{{p.impact.reviewLinks}} revisões preservadas</span><span>{{p.impact.mappings}} mapeamentos preservados</span><span>{{p.impact.savedFilters}} filtros salvos atualizados</span></div>
+ <ul class="category-changes">@for(change of p.changes;track $index){<li>{{change.from.join(' › ')}} → {{change.to?.join(' › ')||'Remover'}} @if(change.removed&&change.to){(unificada no destino)}</li>}</ul>
+ @if(p.impact.categories>p.changes.length){<p class="muted">Exibindo as primeiras {{p.changes.length}} alterações.</p>}
+ <div class="button-row"><button type="button" class="button" [class.danger]="action==='delete'" [class.dark]="action!=='delete'" [disabled]="busy()" (click)="confirm()">{{busy()?'Aplicando…':'Confirmar alteração'}}</button><button type="button" class="button outline" [disabled]="busy()" (click)="close()">Cancelar</button></div></section>}
+ </dialog></div>
+}
