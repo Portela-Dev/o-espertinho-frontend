@@ -44,7 +44,7 @@ test('anúncio inválido mostra conflito, filtra revisão e só oferece nova ext
   await route.fulfill({json:data});
  });
  await page.goto('/admin/offers');const panel=page.locator('enrichment-admin');await expect(panel.locator('tbody tr td').nth(2)).toHaveText('Anúncio inválido');await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await panel.getByRole('button',{name:'Detalhar',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('Título informa 128 GB; descrição informa 256 GB.');await page.getByRole('button',{name:'Fechar',exact:true}).click();
- await panel.getByLabel('Status',{exact:true}).selectOption('invalid');await expect.poll(()=>state).toBe('invalid');
+ await panel.getByRole('combobox',{name:'Status',exact:true}).selectOption('invalid');await expect.poll(()=>state).toBe('invalid');
  await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await expect(panel.getByRole('button',{name:'Publicar',exact:true})).toBeDisabled();await expect(panel.getByRole('button',{name:'Atribuir Produto',exact:true})).toBeDisabled();
  await panel.getByRole('button',{name:'Extrair novamente para reavaliar',exact:true}).click();await expect.poll(()=>retried).toBe(true);expect(mutations).toEqual(['/api/admin/discovery/enrichment/review/'+id+'/retry']);
 });
