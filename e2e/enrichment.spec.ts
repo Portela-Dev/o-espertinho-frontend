@@ -2,7 +2,7 @@ import {test,expect} from './coverage';
 test('enrichment review requires explicit category confirmation and exposes manual progress/cancel',async({page})=>{
  await page.addInitScript(()=>{(window as any).google={accounts:{id:{initialize(o:any){(window as any).callback=o.callback;},renderButton(el:HTMLElement){const b=document.createElement('button');b.textContent='Login de teste';b.onclick=()=>(window as any).callback({credential:'admin'});el.appendChild(b);}}}};});
  const category='6aca8907-fdb2-428f-a17e-299d817a5dd4',link='f1734200-4a7b-4df9-8fce-c9e0ba36f213';let confirmed=false,cancelled=false,unavailable=false;
- const item=()=>({id:link,url:'https://www.amazon.com.br/product/test',marketplace_id:'amazon',marketplace_name:'Amazon',extraction_status:'completed',source_category_path:['Eletrônicos','Fones'],enrichment_data:{title:'Fone enriquecido',description:'Descrição para revisão',priceCents:unavailable?null:10000,images:[],availability:unavailable?'unavailable':'available'},enrichment_version:1,suggested_category_id:category,suggested_category_path:['Tecnologia'],confirmed_category_id:confirmed?category:null,confirmed_category_path:confirmed?['Tecnologia']:null});
+ const item=()=>({id:link,url:'https://www.amazon.com.br/product/test',marketplace_id:'amazon',marketplace_name:'Amazon',extraction_status:'completed',review_status:unavailable?'unavailable':'awaiting_category',source_category_path:['Eletrônicos','Fones'],enrichment_data:{title:'Fone enriquecido',description:'Descrição para revisão',priceCents:unavailable?null:10000,images:[],availability:unavailable?'unavailable':'available'},enrichment_version:1,suggested_category_id:category,suggested_category_path:['Tecnologia'],confirmed_category_id:confirmed?category:null,confirmed_category_path:confirmed?['Tecnologia']:null});
  const paged=(items:any[])=>({items,total:items.length,page:1,pageSize:20});
  await page.route('**/api/admin/discovery/enrichment/**',async route=>{const request=route.request(),url=new URL(request.url()),path=url.pathname;
   if(path.endsWith('/categories'))return route.fulfill({json:[{id:category,path:['Tecnologia']}]});
@@ -21,7 +21,7 @@ test('enrichment review requires explicit category confirmation and exposes manu
  await page.keyboard.press('Escape');await expect(menu).toBeHidden();
  await actions.click();await panel.getByRole('heading',{name:'Enriquecimento e categorização dos links descobertos'}).click();await expect(menu).toBeHidden();
  await actions.click();await panel.getByRole('button',{name:'Categorizar',exact:true}).click();const dialog=page.getByRole('dialog');await expect(dialog.getByLabel('Categoria do O Espertinho')).toHaveValue(category);expect(confirmed).toBe(false);await dialog.getByLabel('Salvar também o mapeamento',{exact:false}).check();await dialog.getByRole('button',{name:'Confirmar categoria deste item'}).click();await expect(panel).toContainText('Categoria confirmada');
- unavailable=true;await panel.getByRole('button',{name:'Atualizar lista',exact:true}).click();await expect(row).toContainText('Produto indisponível no marketplace');
+ unavailable=true;await panel.getByRole('button',{name:'Atualizar lista',exact:true}).click();await expect(row).toContainText('Indisponível no marketplace');
  await actions.click();await panel.getByRole('button',{name:'Detalhar',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('Disponibilidade: Indisponível');
 
 });
@@ -70,7 +70,7 @@ test('floating review menu marks failed links pending without creating a legacy 
  const id='c6711a7d-7acf-410d-a0b5-39fc8195ee63';let pending=false;
  await page.route('**/api/admin/discovery/enrichment/**',route=>{
   const path=new URL(route.request().url()).pathname;
-  if(path.endsWith('/review'))return route.fulfill({json:{items:[{id,url:'https://example.com/product',marketplace_name:'Teste',extraction_status:pending?'pending':'failed',extraction_error:pending?'':'incomplete',source_category_path:[]}],total:1,page:1,pageSize:20}});
+  if(path.endsWith('/review'))return route.fulfill({json:{items:[{id,url:'https://example.com/product',marketplace_name:'Teste',review_status:pending?'pending':'failed',extraction_status:pending?'pending':'failed',extraction_error:pending?'':'incomplete',source_category_path:[]}],total:1,page:1,pageSize:20}});
   if(path.endsWith('/retry')){pending=true;return route.fulfill({status:202,json:{id,status:'pending',executor:'extension'}});}
   return route.fulfill({json:[]});
  });
@@ -78,5 +78,5 @@ test('floating review menu marks failed links pending without creating a legacy 
  const row=panel.locator('tbody tr').first(),height=(await row.boundingBox())!.height;
  await panel.getByRole('button',{name:'Ações do link',exact:true}).click();const menu=panel.getByRole('group',{name:'Ações do link',exact:true});await expect(menu).toBeVisible();expect((await row.boundingBox())!.height).toBe(height);await page.keyboard.press('Escape');
  await page.setViewportSize({width:390,height:844});await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await expect(menu).toBeVisible();await expect.poll(async()=>{const bounds=await menu.boundingBox();return !!bounds&&bounds.x>=0&&bounds.x+bounds.width<=390;}).toBe(true);
- await menu.getByRole('button',{name:'Retentar extração',exact:true}).click();await expect.poll(()=>pending).toBe(true);await expect(row).toContainText('Pendente');await expect(page.locator('.toast')).toContainText('passo 3');
+ await menu.getByRole('button',{name:'Retentar extração',exact:true}).click();await expect.poll(()=>pending).toBe(true);await expect(row).toContainText('Aguardando extração');await expect(page.locator('.toast')).toContainText('passo 3');
 });
