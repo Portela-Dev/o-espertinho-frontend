@@ -47,7 +47,7 @@ test('marketing is opt-in, rejection persists and withdrawal stops events and cl
   expect(await page.evaluate(() => document.cookie)).not.toContain('_fbc=');
   const total = (await calls(page)).filter((c: any[]) => c[0].startsWith('track')).length;
   await page.getByRole('link', { name: 'Privacidade', exact: true }).click();
-  expect((await calls(page)).filter((c: any[]) => c[0].startsWith('track')).length).toBe(total);
+  expect((await calls(page)).filter((c: any[]) => c[0].startsWith('track'))).toHaveLength(total);
 });
 
 test('valid consent survives reload, public content and affiliate clicks are distinct from purchases', async ({ page }) => {
