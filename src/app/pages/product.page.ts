@@ -23,7 +23,7 @@ export class ProductPage implements OnInit{
  otherOffers=computed(()=>this.feed.items().slice(1));
  names=storeNames;
  conditions(o:Offer){return formatOfferConditions(o.conditions||'',o.price_cents,o.original_price_cents??null);}
- track(o:Offer){void this.api.send('POST','/offers/'+o.id+'/click',{placement:'detail'}).catch(()=>{});}
+ track(o:Offer){void this.api.trackAffiliateClick(o.id,'detail').catch(()=>{});}
  ngOnInit(){this.route.paramMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(p=>void this.load(p.get('id')!));}
- async load(id:string){const seq=++this.sequence;this.loading.set(true);this.failed.set(false);try{this.productId=id;await this.feed.reset();if(this.feed.failed()){throw new Error('Product load failed');}const p=this.product()!;if(seq!==this.sequence){return;}this.product.set(p);const main=this.primary();this.title.setTitle((main?.title||p.name)+' | O Espertinho');this.meta.updateTag({name:'description',content:main?.description||main?.title||p.description||p.name});}catch(e:any){if(seq!==this.sequence){return;}this.product.set(null);this.failed.set(e?.status!==404);this.title.setTitle('Produto indisponível | O Espertinho');}finally{if(seq===this.sequence)this.loading.set(false);}}
+ async load(id:string){const seq=++this.sequence;this.loading.set(true);this.failed.set(false);try{this.productId=id;await this.feed.reset();if(this.feed.failed()){throw new Error('Product load failed');}const p=this.product()!;if(seq!==this.sequence){return;}this.product.set(p);this.api.pixel.viewContent('product',p.id);const main=this.primary();this.title.setTitle((main?.title||p.name)+' | O Espertinho');this.meta.updateTag({name:'description',content:main?.description||main?.title||p.description||p.name});}catch(e:any){if(seq!==this.sequence){return;}this.product.set(null);this.failed.set(e?.status!==404);this.title.setTitle('Produto indisponível | O Espertinho');}finally{if(seq===this.sequence)this.loading.set(false);}}
 }

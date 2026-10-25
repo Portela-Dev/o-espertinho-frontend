@@ -9,10 +9,13 @@ import {
 import { AdminReauth } from './components/admin-reauth';
 import { Api } from './api.service';
 import { ThemeService } from './theme.service';
+import { MetaPixel } from './meta-pixel';
+import { MarketingConsent } from './components/marketing-consent';
 import { UserAvatar } from './components/user-avatar';
 @Component({
   selector: 'app-root',
   imports: [
+    MarketingConsent,
     DismissOnBackdrop,
     RouterLink,
     RouterLinkActive,
@@ -183,6 +186,7 @@ import { UserAvatar } from './components/user-avatar';
         você.
       </div>
     </footer>
+    <marketing-consent />
   `,
 })
 export class AppComponent implements OnInit {
@@ -198,7 +202,9 @@ export class AppComponent implements OnInit {
   api = inject(Api);
   theme = inject(ThemeService);
   router = inject(Router);
+  pixel = inject(MetaPixel);
   ngOnInit() {
     void this.api.init();
+    void this.pixel.start();
   }
 }
