@@ -17,7 +17,7 @@ test('status único permite filtrar prontos e publicados e confirma transição 
   else if(path.endsWith('/ready/publish')){expect(req.postDataJSON()).toEqual({version:1,authorizedContent:true});published=true;data={offerId:'offer-new'};}
   await route.fulfill({json:data});
  });
- await page.goto('/admin/offers');const panel=page.locator('enrichment-admin'),status=panel.getByLabel('Status',{exact:true});
+ await page.goto('/admin/offers');const panel=page.locator('enrichment-admin'),status=panel.getByRole('combobox',{name:'Status',exact:true});
  await expect(panel.getByRole('columnheader',{name:'Status',exact:true})).toBeVisible();
  await expect(panel.getByRole('columnheader',{name:'Extração',exact:true})).toHaveCount(0);
  const invalid=panel.locator('tbody tr').filter({hasText:'Oferta inválida'});await expect(invalid.locator('td').nth(2)).toHaveText('Anúncio inválido');await expect(invalid).not.toContainText('Concluído');await expect(invalid.getByRole('checkbox')).toBeDisabled();
