@@ -13,9 +13,11 @@ import {
 } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { GoogleSignIn } from './google-sign-in.service';
+import { MetaPixel } from './meta-pixel';
 import type { User, Offer } from './models';
 @Injectable({ providedIn: 'root' })
 export class Api {
+  readonly pixel = inject(MetaPixel);
   private readonly http = inject(HttpClient);
   google = inject(GoogleSignIn);
   private readonly destroy = inject(DestroyRef);
@@ -148,6 +150,7 @@ export class Api {
   adminSection(section: string) {
     const permissions: Record<string, string> = {
       sharing: 'catalog',
+      marketing: 'catalog',
       purge: 'purge',
       discovery: 'discovery',
       overview: 'overview',
@@ -304,12 +307,17 @@ export class Api {
   async toggleFavorite(id: string) {
     const remove = this.favorites().has(id);
     await this.send(remove ? 'DELETE' : 'PUT', '/me/favorites/' + id);
+    if (!remove) this.pixel.favorite(id);
     const next = new Set(this.favorites());
     remove ? next.delete(id) : next.add(id);
     this.favorites.set(next);
     this.success(
       remove ? 'Oferta removida dos favoritos.' : 'Oferta salva nos favoritos.',
     );
+  }
+  trackAffiliateClick(id: string, placement: string) {
+    this.pixel.affiliateClick(id);
+    return this.send('POST', '/offers/' + id + '/click', { placement });
   }
   async logout() {
     this.suppressAutomaticLogin();

@@ -1,6 +1,7 @@
 import {CategoriesAdmin} from '../components/categories-admin';
 import { MarketplaceLogo } from '../components/marketplace-logo';
 import { SharingAdmin } from '../components/sharing-admin';
+import { MetaPixelAdmin } from '../components/meta-pixel-admin';
 import { CatalogPurge } from '../components/catalog-purge';
 import { combineLatest } from 'rxjs';
 import { ProductPicker } from '../components/product-picker';
@@ -27,6 +28,7 @@ import { Offer, storeNames } from '../models';
     MarketplaceLogo,
     CategoriesAdmin,
     SharingAdmin,
+    MetaPixelAdmin,
     CatalogPurge,
     ActionMenu,
     CatalogOperations,
@@ -107,7 +109,7 @@ export class AdminPage implements OnInit {
     return [
       { label: 'Visão geral', sections: ['overview'] },
       { label: 'Revisão', sections: ['offers'] },
-      { label: 'Ofertas', sections: ['links', 'sharing'] },
+      { label: 'Ofertas', sections: ['links', 'sharing', 'marketing'] },
       { label: 'Produtos', sections: ['products'] },
       { label: 'Categorias', sections: ['categories'] },
       {
@@ -159,6 +161,7 @@ export class AdminPage implements OnInit {
       (
         {
           sharing: 'Compartilhamento de ofertas',
+          marketing: 'Pixel Meta',
           purge: 'Manutenção do catálogo',
           discovery: 'Exploração de marketplaces',
           users: 'Usuários',
@@ -196,6 +199,7 @@ export class AdminPage implements OnInit {
         this.section.set(
           [
             'sharing',
+            'marketing',
             'purge',
             'discovery',
             'users',

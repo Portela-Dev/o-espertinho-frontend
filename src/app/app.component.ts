@@ -9,10 +9,13 @@ import {
 import { AdminReauth } from './components/admin-reauth';
 import { Api } from './api.service';
 import { ThemeService } from './theme.service';
+import { MetaPixel } from './meta-pixel';
+import { MarketingConsent } from './components/marketing-consent';
 import { UserAvatar } from './components/user-avatar';
 @Component({
   selector: 'app-root',
   imports: [
+    MarketingConsent,
     DismissOnBackdrop,
     RouterLink,
     RouterLinkActive,
@@ -23,7 +26,7 @@ import { UserAvatar } from './components/user-avatar';
   template: `
     <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
     <div class="topline">
-      Um bom achado começa com uma boa escolha.
+      Só é esperto que compara antes de comprar
       <span>Ofertas revisadas por pessoas, para pessoas.</span>
     </div>
     <header class="site-header">
@@ -168,7 +171,7 @@ import { UserAvatar } from './components/user-avatar';
       <div class="footer-inner">
         <div>
           <a routerLink="/" class="brand">O Espertinho.</a>
-          <p>Menos procura. Mais boas escolhas.</p>
+          <p>Só é esperto que compara antes de comprar</p>
         </div>
         <div class="footer-links">
           <a routerLink="/sobre">Sobre o Espertinho</a
@@ -183,6 +186,7 @@ import { UserAvatar } from './components/user-avatar';
         você.
       </div>
     </footer>
+    <marketing-consent />
   `,
 })
 export class AppComponent implements OnInit {
@@ -198,7 +202,9 @@ export class AppComponent implements OnInit {
   api = inject(Api);
   theme = inject(ThemeService);
   router = inject(Router);
+  pixel = inject(MetaPixel);
   ngOnInit() {
     void this.api.init();
+    void this.pixel.start();
   }
 }
