@@ -152,6 +152,7 @@ export class Api {
       discovery: 'discovery',
       overview: 'overview',
       products: 'catalog',
+      categories: 'catalog',
       links: 'catalog',
       offers: 'catalog',
       marketplaces: 'marketplaces',

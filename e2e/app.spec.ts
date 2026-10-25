@@ -858,23 +858,27 @@ test('hierarquia de dez níveis, sugestões por ramificação e breadcrumbs nave
   await expect(
     page.locator('product-card').filter({ hasText: p.name }),
   ).toHaveCount(1);
-  await expect(
-    page
-      .locator('.category-chips')
-      .getByRole('button', { name: 'Fones de ouvido', exact: true }),
-  ).toBeVisible();
+  await expect(page.locator('.home-category-navigation')).toBeHidden();
+  await page.getByRole('button', { name: 'Pesquisar e filtrar' }).click();
+  const mobileFilters = page.getByRole('dialog', { name: 'Pesquisar e filtrar' });
+  const categorySelect = mobileFilters.getByRole('combobox', { name: 'Categoria', exact: true });
+  await expect(categorySelect).toHaveValue(p.category_ids[2]);
+  await expect(categorySelect.locator('option', { hasText: path.slice(0, 4).join(' › ') }).first()).toHaveAttribute('value', p.category_ids[3]);
+  await categorySelect.selectOption(p.category_ids[3]);
+  await mobileFilters.getByRole('button', { name: 'Aplicar filtros' }).click();
+  await expect(page).toHaveURL(new RegExp('categoryId=' + p.category_ids[3]));
+  await expect(page.locator('product-card').filter({ hasText: p.name })).toHaveCount(1);
   await page
-    .locator('#ofertas > category-breadcrumb')
+    .locator('.home-breadcrumb category-breadcrumb')
     .getByRole('link', { name: 'Informática E2E', exact: true })
     .click();
   await expect(
     page.locator('product-card').filter({ hasText: p.name }),
   ).toHaveCount(1);
-  await expect(
-    page
-      .locator('.category-chips')
-      .getByRole('button', { name: 'Acessórios', exact: true }),
-  ).toBeVisible();
+  await page.getByRole('button', { name: 'Pesquisar e filtrar' }).click();
+  await expect(categorySelect).toHaveValue(p.category_ids[0]);
+  await expect(categorySelect.locator('option', { hasText: path.slice(0, 2).join(' › ') }).first()).toHaveAttribute('value', p.category_ids[1]);
+  await mobileFilters.getByRole('button', { name: 'Fechar pesquisa e filtros' }).click();
   await page.goto('/admin/products');
   await chooseAction(
     page.locator('tr').filter({ hasText: p.name }),

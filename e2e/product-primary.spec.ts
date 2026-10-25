@@ -12,7 +12,7 @@ for(const width of [1320,375])test(`produto destaca oferta mais barata e preserv
  await page.route('**/api/products*',route=>route.fulfill({json:{items:[product()],total:1,page:1,pageSize:24}}));
  await page.route('**/api/products/'+id+'?*',route=>route.fulfill({json:product()}));
  await page.route('**/api/offers/'+cheap.id,route=>route.fulfill({json:cheap}));
- const open=async()=>{await page.goto('/sobre');await page.getByRole('link',{name:'Explorar',exact:true}).click();const cta=page.locator('product-card .card-cta');await expect(cta.locator('marketplace-logo')).toHaveCount(2);await expect(cta.locator('marketplace-logo').first()).toHaveAttribute('title','Amazon');await expect(cta.locator('marketplace-logo img').first()).toHaveAttribute('src',cheap.marketplace_logo_url);await cta.click();};
+ const open=async()=>{await page.goto('/sobre');await page.getByRole('link',{name:'O Espertinho início',exact:true}).click();const cta=page.locator('product-card .card-cta');await expect(cta.locator('marketplace-logo')).toHaveCount(2);await expect(cta.locator('marketplace-logo').first()).toHaveAttribute('title','Amazon');await expect(cta.locator('marketplace-logo img').first()).toHaveAttribute('src',cheap.marketplace_logo_url);await cta.click();};
  await open();
  await expect(page.locator('.detail-copy .button marketplace-logo img')).toHaveAttribute('src',cheap.marketplace_logo_url);
  await expect(page.locator('offer-card .card-cta marketplace-logo img').first()).toHaveAttribute('src',cheap.marketplace_logo_url);

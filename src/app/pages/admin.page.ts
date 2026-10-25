@@ -1,3 +1,4 @@
+import {CategoriesAdmin} from '../components/categories-admin';
 import { SharingAdmin } from '../components/sharing-admin';
 import { CatalogPurge } from '../components/catalog-purge';
 import { combineLatest } from 'rxjs';
@@ -22,6 +23,7 @@ import { Api } from '../api.service';
 import { Offer, storeNames } from '../models';
 @Component({
   imports: [
+    CategoriesAdmin,
     SharingAdmin,
     CatalogPurge,
     ActionMenu,
@@ -102,6 +104,7 @@ export class AdminPage implements OnInit {
       { label: 'Revisão', sections: ['offers'] },
       { label: 'Ofertas', sections: ['links', 'sharing'] },
       { label: 'Produtos', sections: ['products'] },
+      { label: 'Categorias', sections: ['categories'] },
       {
         label: 'Marketplaces',
         sections: ['marketplaces', 'discovery', 'selectors'],
@@ -157,6 +160,7 @@ export class AdminPage implements OnInit {
           profiles: 'Perfis de acesso',
           updates: 'Execuções',
           products: 'Produtos',
+          categories: 'Categorias e subcategorias',
           overview: 'Visão geral',
           marketplaces: 'Marketplaces',
           selectors: 'Seletores',
@@ -193,6 +197,7 @@ export class AdminPage implements OnInit {
             'profiles',
             'updates',
             'products',
+            'categories',
             'overview',
             'marketplaces',
             'offers',
