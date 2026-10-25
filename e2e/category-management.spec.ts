@@ -30,7 +30,10 @@ test('gestão de categorias renomeia, move, une e exclui com realocação preser
  await dialog.getByRole('combobox').selectOption(third.category_ids[0]);await confirm(dialog);await expect(categoryRow(page,b)).toHaveCount(0);
  for(const product of [first,second]){const r=await page.request.get('/api/products/'+product.id);expect(r.status()).toBe(200);expect((await r.json()).category_path).toEqual([c]);}
  await create(page,Array.from({length:9},(_,i)=>prefix+' Nível '+i));await page.getByRole('textbox',{name:'Pesquisar categorias'}).fill(prefix);await page.locator('categories-admin form.search-bar button').click();
- await page.getByRole('navigation',{name:'Categorias',exact:true}).getByRole('combobox').selectOption('5');await expect(page.locator('categories-admin tbody tr')).toHaveCount(5);
+ await expect(page.locator('categories-admin tbody tr')).toHaveCount(11);
+ const pageSize=page.getByRole('navigation',{name:'Categorias',exact:true}).getByRole('combobox');
+ await expect(pageSize).toBeEnabled();
+ await pageSize.selectOption('5');await expect(page.locator('categories-admin tbody tr')).toHaveCount(5);
  await page.getByRole('navigation',{name:'Categorias',exact:true}).getByRole('button',{name:'Próxima →'}).click();await expect(page.locator('categories-admin tbody tr')).toHaveCount(5);
  await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'test-results/categories-mobile.png',fullPage:true});
