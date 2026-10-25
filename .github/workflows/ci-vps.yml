@@ -77,7 +77,7 @@ jobs:
         with:
           repository: Portela-Dev/o-espertinho-backend
           # Pinned backend contract includes operational review status and publication; override only for integration testing.
-          ref: ${{ vars.E2E_BACKEND_REF || 'e0be3137823a697e6d0f357a80cc0118c47cad72' }}
+          ref: ${{ vars.E2E_BACKEND_REF || '377208a6e52e199c86fe8de892c9ad3ecf5affe9' }}
           path: .ci-backend
           persist-credentials: false
       - name: Preparar API de teste e Chromium
