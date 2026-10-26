@@ -245,6 +245,7 @@ test('marketplaces e seletores podem ser cadastrados e testados sem criar oferta
   await page
     .getByRole('button', { name: 'Adicionar regra', exact: false })
     .click();
+  const price=page.locator('.selector-rule').nth(1);await expect(price.getByLabel('Leitura do preço')).toHaveValue('single');await price.getByLabel('Leitura do preço').selectOption('first_in_range');
   const images = page.locator('.selector-rule').nth(2);
   await images.getByLabel('Obter valor de').selectOption('json');
   await page
@@ -266,6 +267,7 @@ test('marketplaces e seletores podem ser cadastrados e testados sem criar oferta
   await expect(page.locator('.toast[aria-live=polite]')).toContainText(
     'Seletores salvos',
   );
+  await page.reload();await expect(page.locator('.selector-rule').nth(1).getByLabel('Leitura do preço')).toHaveValue('first_in_range');
   await page
     .getByLabel('URL para teste')
     .fill('https://www.example.com/produto/123');

@@ -15,7 +15,7 @@ import {ProductPicker} from './product-picker';
 import {MarketplaceLogo} from './marketplace-logo';
 import {storeNames} from '../models';
 interface Market {id:string;name:string;website_url:string;logo_url:string;allowed_hosts:string[];scraping_enabled:boolean;url_normalization_rules?:{type:string;marker:string}[]}
-interface Rule {imageSource:string;attributesText:string;jsonMarker:string;jsonPath:string;imagePropertiesText:string;wholeSelector?:string;fractionSelector?:string;field:string;selectorsText:string;mode:string;attribute:string;required:boolean;nameSelector:string;valueSelector:string}
+interface Rule {priceSelection:string;imageSource:string;attributesText:string;jsonMarker:string;jsonPath:string;imagePropertiesText:string;wholeSelector?:string;fractionSelector?:string;field:string;selectorsText:string;mode:string;attribute:string;required:boolean;nameSelector:string;valueSelector:string}
 @Component({selector:'catalog-admin',imports:[ProductImage,ReviewRating,ActionMenu,ExtensionCatalogSettings,DismissOnBackdrop,Pagination,InfiniteScroll,FormsModule,CurrencyPipe,DatePipe,RouterLink,ProductPicker,MarketplaceLogo],templateUrl:'./catalog-admin.html'})
 export class CatalogAdmin implements OnChanges,OnDestroy {
  @Input() section='marketplaces';api=inject(Api);route=inject(ActivatedRoute);loading=signal(false);busy=signal(false);failed=signal(false);markets=signal<Market[]>([]);marketFeed=new PagedData<Market>(page=>this.api.get('/admin/catalog-marketplaces',{paginate:true,page}));preview=signal<any>(null);marketModal=signal(false);deleting=signal<Market|null>(null);
@@ -55,9 +55,9 @@ await new Promise(resolve=>setTimeout(resolve,2000));}throw new Error('Espera en
  clearPreview(){this.specPage=1;this.evidencePage=1;this.preview.set(null);this.authorized=false;}
  async selectMarket(){this.clearPreview();if(this.section==='selectors')await this.act(()=>this.loadProfile(),'Seletores carregados.');
 }
- async loadProfile(){const p=await this.api.get<any>('/admin/selectors/'+this.selected);this.version=p.version;this.waitSeconds=p.wait_timeout_ms/1000;this.validityMinutes=p.validity_minutes;this.rules=p.rules.map((r:any)=>({...r,selectorsText:r.selectors.join('\n'),imageSource:r.imageSource||'append',attributesText:(r.attributes||[]).join('\n'),jsonMarker:r.jsonMarker||'',jsonPath:r.jsonPath||'',imagePropertiesText:(r.imageProperties||[]).join('\n'),attribute:r.attribute||'',nameSelector:r.nameSelector||'th',valueSelector:r.valueSelector||'td'}));if(!this.rules.length)this.rules=[this.newRule('title'),this.newRule('price')];
+ async loadProfile(){const p=await this.api.get<any>('/admin/selectors/'+this.selected);this.version=p.version;this.waitSeconds=p.wait_timeout_ms/1000;this.validityMinutes=p.validity_minutes;this.rules=p.rules.map((r:any)=>({...r,selectorsText:r.selectors.join('\n'),priceSelection:r.priceSelection||'single',imageSource:r.imageSource||'append',attributesText:(r.attributes||[]).join('\n'),jsonMarker:r.jsonMarker||'',jsonPath:r.jsonPath||'',imagePropertiesText:(r.imageProperties||[]).join('\n'),attribute:r.attribute||'',nameSelector:r.nameSelector||'th',valueSelector:r.valueSelector||'td'}));if(!this.rules.length)this.rules=[this.newRule('title'),this.newRule('price')];
 }
- newRule(field='title'):Rule{return {field,selectorsText:'',imageSource:'append',attributesText:'',jsonMarker:'',jsonPath:'',imagePropertiesText:'',mode:'text',attribute:'',required:field==='title'||field==='price',nameSelector:'th',valueSelector:'td'};}
+ newRule(field='title'):Rule{return {field,selectorsText:'',priceSelection:'single',imageSource:'append',attributesText:'',jsonMarker:'',jsonPath:'',imagePropertiesText:'',mode:'text',attribute:'',required:field==='title'||field==='price',nameSelector:'th',valueSelector:'td'};}
  addRule(){this.rules.push(this.newRule('images'));this.clearPreview();}
  moveRule(index:number,offset:number){const target=index+offset;if(target<0||target>=this.rules.length)return;
 [this.rules[index],this.rules[target]]=[this.rules[target],this.rules[index]];this.clearPreview();}
