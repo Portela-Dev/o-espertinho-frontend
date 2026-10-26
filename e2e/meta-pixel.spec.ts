@@ -27,21 +27,21 @@ test('marketing is opt-in, rejection persists and withdrawal stops events and cl
   await configure(page);
   let scripts = 0; page.on('request', request => { if (request.url().includes('connect.facebook.net')) scripts++; });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Cookies de marketing' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Cookies e privacidade' })).toBeVisible();
   expect(scripts).toBe(0); expect(await calls(page)).toEqual([]);
-  await page.getByRole('button', { name: 'Recusar marketing' }).click();
-  await page.reload(); await expect(page.getByRole('button', { name: 'Preferências de privacidade' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Cookies de marketing' })).toHaveCount(0); expect(scripts).toBe(0);
-  await page.getByRole('button', { name: 'Preferências de privacidade' }).click();
-  await page.getByRole('button', { name: 'Aceitar marketing' }).click();
+  await page.getByRole('button', { name: 'Recusar cookies opcionais' }).click();
+  await page.reload(); await expect(page.getByRole('button', { name: 'Preferências de cookies' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Cookies e privacidade' })).toHaveCount(0); expect(scripts).toBe(0);
+  await page.getByRole('button', { name: 'Preferências de cookies' }).click();
+  await page.getByRole('button', { name: 'Aceitar cookies' }).click();
   await expect.poll(() => calls(page)).toContainEqual(['trackSingle', pixelId, 'PageView', {}]);
   expect(scripts).toBe(1);
   const recorded = await calls(page);
   expect(recorded).toContainEqual(['set', 'autoConfig', false, pixelId]);
   expect(recorded).toContainEqual(['init', pixelId]);
   await page.evaluate(() => { document.cookie = '_fbp=test; path=/'; document.cookie = '_fbc=test; path=/'; });
-  await page.getByRole('button', { name: 'Preferências de privacidade' }).click();
-  await page.getByRole('button', { name: 'Recusar marketing' }).click();
+  await page.getByRole('button', { name: 'Preferências de cookies' }).click();
+  await page.getByRole('button', { name: 'Recusar cookies opcionais' }).click();
   expect(await calls(page)).toContainEqual(['consent', 'revoke']);
   expect(await page.evaluate(() => document.cookie)).not.toContain('_fbp=');
   expect(await page.evaluate(() => document.cookie)).not.toContain('_fbc=');
@@ -78,7 +78,7 @@ for (const path of ['/entrar', '/privacidade', '/?q=segredo', '/?token=segredo',
     await configure(page);
     await page.addInitScript(key => localStorage.setItem(key, JSON.stringify({ granted: true, at: Date.now() })), consentKey);
     let scripts = 0; page.on('request', request => { if (request.url().includes('connect.facebook.net')) scripts++; });
-    await page.goto(path); await expect(page.getByRole('button', { name: 'Preferências de privacidade' })).toBeVisible();
+    await page.goto(path); await expect(page.getByRole('button', { name: 'Preferências de cookies' })).toBeVisible();
     expect(scripts).toBe(0); expect(await calls(page)).toEqual([]);
   });
 }
@@ -90,7 +90,7 @@ test('wrong origin and disabled settings fail closed; expired consent asks again
   await page.reload(); await expect(page.locator('marketing-consent .preferences')).toHaveCount(0);
   await configure(page);
   await page.addInitScript(key => localStorage.setItem(key, JSON.stringify({ granted: true, at: 1 })), consentKey);
-  await page.reload(); await expect(page.getByRole('heading', { name: 'Cookies de marketing' })).toBeVisible();
+  await page.reload(); await expect(page.getByRole('heading', { name: 'Cookies e privacidade' })).toBeVisible();
   expect(await calls(page)).toEqual([]);
 });
 
@@ -107,7 +107,7 @@ test('admin configures only a numeric pixel ID with versioned save', async ({ pa
 
 test('withdrawal in another tab stops tracking in the existing document', async ({ page }) => {
   await configure(page); await page.goto('/');
-  await page.getByRole('button', { name: 'Aceitar marketing' }).click();
+  await page.getByRole('button', { name: 'Aceitar cookies' }).click();
   await expect.poll(() => calls(page)).toContainEqual(['trackSingle', pixelId, 'PageView', {}]);
   await page.evaluate(key => {
     localStorage.setItem(key, JSON.stringify({ granted: false, at: Date.now() }));
@@ -118,7 +118,7 @@ test('withdrawal in another tab stops tracking in the existing document', async 
     localStorage.removeItem(key);
     window.dispatchEvent(new StorageEvent('storage', { key }));
   }, consentKey);
-  await expect(page.getByRole('heading', { name: 'Cookies de marketing' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Cookies e privacidade' })).toBeVisible();
 });
 
 test('settings failure and invalid ID do not interrupt the catalog or load a tracker', async ({ page }) => {

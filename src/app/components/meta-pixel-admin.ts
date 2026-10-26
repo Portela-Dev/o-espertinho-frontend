@@ -11,7 +11,7 @@ interface Settings { enabled: boolean; pixelId: string; version: number }
         <label class="checkbox-label"><input type="checkbox" [(ngModel)]="value.enabled" name="enabled" [disabled]="busy()"/>Habilitar Pixel Meta</label>
         <label for="meta-pixel-id">Identificação do pixel</label>
         <input id="meta-pixel-id" name="pixelId" [(ngModel)]="value.pixelId" inputmode="numeric" pattern="[0-9]{5,30}" required maxlength="30" [disabled]="busy()"/>
-        <p class="muted">Funciona no domínio de produção, após consentimento de marketing. Registra visitas públicas, visualização de produto/oferta, favoritos e cliques para lojas. Não registra compras nem envia dados da conta.</p>
+        <p class="muted">Funciona no domínio de produção, após o aceite dos cookies opcionais. Registra visitas públicas, visualização de produto/oferta, favoritos e cliques para lojas. Não registra compras nem envia dados da conta.</p>
         <button class="button dark" type="submit" [disabled]="busy()">Salvar configurações</button>
       </form>
     }@else{<output aria-live="polite">Carregando Pixel Meta…</output>}
