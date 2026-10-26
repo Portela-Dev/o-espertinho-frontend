@@ -72,6 +72,13 @@ import { DismissOnBackdrop } from './dismiss-on-backdrop';
       white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
+    .assignment-source { display: flex; gap: 16px; padding: 16px; margin: 16px 0; border: 1px solid var(--line); border-radius: 8px; }
+    .assignment-source > div { min-width: 0; flex: 1; }
+    .assignment-source h3 { margin: 0 0 8px; font-size: 16px; }
+    .assignment-source p { margin: 8px 0; }
+    .assignment-source img { width: 96px; height: 96px; flex-shrink: 0; }
+    .assignment-source summary { cursor: pointer; }
+    @media(max-width:480px) { .assignment-source { flex-direction: column; } }
     .notice {
       color: var(--muted);
       font-size: 12px;
@@ -343,7 +350,7 @@ export class EnrichmentAdmin implements OnInit {
   categorize(link: any) {
     this.categoryId =
       link.confirmed_category_id || link.suggested_category_id || '';
-    this.saveMapping = false;
+    this.saveMapping = !!link.source_category_path.length;
     this.creatingCategory.set(false);
     this.newCategoryPath = [''];
     if (link.ai_category) {
