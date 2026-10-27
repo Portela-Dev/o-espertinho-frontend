@@ -339,7 +339,6 @@ export class EnrichmentAdmin implements OnInit {
       : 'Não confirmada';
   }
   categoryState(link: any) {
-    if (this.invalidReview(link)) return '—';
     if (link.product_draft_id && !link.product_id)
       return 'Rascunho aguardando categorização';
     if (link.confirmed_category_id) return 'Categoria confirmada';
