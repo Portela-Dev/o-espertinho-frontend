@@ -31,7 +31,7 @@ test('decisões de IA chegam aplicadas, rascunhos aguardam categoria e publicaç
  await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await panel.getByRole('button',{name:'Publicar',exact:true}).click();expect(published).toBe(false);await page.getByRole('button',{name:'Confirmar e publicar',exact:true}).click();await expect.poll(()=>published).toBe(true);
 });
 
-test('anúncio inválido mostra conflito, filtra revisão e só oferece nova extração, sem publicar',async({page})=>{
+test('anúncio inválido permite revisão manual e mantém publicação desabilitada antes da confirmação',async({page})=>{
  const id='670e75cd-4da6-482a-87ee-18350ac21e4e';let retried=false;const mutations:any[]=[];let state='';
  await page.route('**/api/**',async route=>{
   const req=route.request(),url=new URL(req.url()),path=url.pathname;let data:any=[];
@@ -45,6 +45,33 @@ test('anúncio inválido mostra conflito, filtra revisão e só oferece nova ext
  });
  await page.goto('/admin/offers');const panel=page.locator('enrichment-admin');await expect(panel.locator('tbody tr td').nth(2)).toHaveText('Anúncio inválido');await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await panel.getByRole('button',{name:'Detalhar',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('Título informa 128 GB; descrição informa 256 GB.');await page.getByRole('button',{name:'Fechar',exact:true}).click();
  await panel.getByRole('combobox',{name:'Status',exact:true}).selectOption('invalid');await expect.poll(()=>state).toBe('invalid');
- await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await expect(panel.getByRole('button',{name:'Publicar',exact:true})).toBeDisabled();await expect(panel.getByRole('button',{name:'Atribuir Produto',exact:true})).toBeDisabled();
+ await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await expect(panel.getByRole('button',{name:'Publicar',exact:true})).toBeDisabled();await expect(panel.getByRole('button',{name:'Atribuir Produto',exact:true})).toBeEnabled();await expect(panel.getByRole('button',{name:'Categorizar',exact:true})).toBeEnabled();
  await panel.getByRole('button',{name:'Extrair novamente para reavaliar',exact:true}).click();await expect.poll(()=>retried).toBe(true);expect(mutations).toEqual(['/api/admin/discovery/enrichment/review/'+id+'/retry']);
 });
+
+
+for(const task of ['category','product']){
+ test('confirmação manual de '+task+' substitui invalidez e recalcula o status',async({page})=>{
+  const id='975233e4-a03d-45bc-a8fe-c307a66edca7',category='975233e4-a03d-45bc-a8fe-c307a66edca8',product='975233e4-a03d-45bc-a8fe-c307a66edca9';let confirmed=false;
+  await page.route('**/api/**',async route=>{
+   const req=route.request(),path=new URL(req.url()).pathname;let data:any=[];
+   if(path==='/api/auth/session')data={user:{id:'admin',name:'Admin',role:'admin',permissions:['catalog','discovery']},autoSignInAllowed:false};
+   else if(path==='/api/config')data={googleClientId:''};
+   else if(path==='/api/admin/catalog-marketplaces')data=[{id:'amazon',name:'Amazon'}];
+   else if(path.endsWith('/enrichment/categories'))data=[{id:category,path:['Tecnologia']}];
+   else if(path.endsWith('/enrichment/review'))data={items:[{id,status:'pending',url:'https://example.test/p',extraction_status:'completed',review_status:confirmed?(task==='product'?'ready':'awaiting_product'):'invalid',enrichment_version:confirmed?3:2,source_category_path:[],enrichment_data:{title:'Produto revisado',description:'Descrição da oferta',priceCents:10000},ai_resolution:{product:{action:confirmed?'manual_confirmed':'invalid'}},confirmed_category_id:confirmed?category:null,confirmed_category_path:confirmed?['Tecnologia']:null,product_id:confirmed&&task==='product'?product:null}],total:1,page:1,pageSize:20};
+   else if(path.endsWith('/products'))data={items:[{id:product,name:'Produto do catálogo',brand:'Marca',sku:'ESP-teste',category_path:['Tecnologia']}],total:1,page:1,pageSize:20};
+   else if(path.endsWith('/'+task)&&req.method()==='POST'){
+    expect(req.postDataJSON()).toEqual(task==='product'?{mode:'existing',productId:product,version:2}:{categoryId:category,version:2,saveMapping:false});confirmed=true;data={ok:true};
+   }
+   await route.fulfill({json:data});
+  });
+  await page.goto('/admin/offers');const panel=page.locator('enrichment-admin');await expect(panel.locator('tbody tr td').nth(2)).toHaveText('Anúncio inválido');
+  await panel.getByRole('button',{name:'Ações do link',exact:true}).click();await panel.getByRole('button',{name:task==='product'?'Atribuir Produto':'Categorizar',exact:true}).click();
+  const dialog=page.getByRole('dialog');await expect(dialog).toContainText('sua revisão manual substituirá a marcação de anúncio inválido');expect(confirmed).toBe(false);
+  if(task==='product')await dialog.getByRole('radio',{name:'Selecionar Produto do catálogo',exact:true}).check();else await dialog.getByLabel('Categoria do O Espertinho').selectOption(category);
+  await dialog.getByRole('button',{name:task==='product'?'Confirmar atribuição':'Confirmar categoria',exact:true}).click();await expect(dialog).toBeHidden();
+  await expect(panel.locator('tbody tr td').nth(2)).not.toHaveText('Anúncio inválido');expect(confirmed).toBe(true);
+  await panel.getByRole('button',{name:'Ações do link',exact:true}).click();if(task==='product')await expect(panel.getByRole('button',{name:'Publicar',exact:true})).toBeEnabled();else await expect(panel.getByRole('button',{name:'Publicar',exact:true})).toBeDisabled();
+ });
+}
