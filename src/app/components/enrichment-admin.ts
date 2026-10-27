@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { ReviewRating } from './review-rating';
 import { ActionMenu } from './action-menu';
 import { CategoryFields } from './category-fields';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 import { Api } from '../api.service';
@@ -113,6 +113,19 @@ export class EnrichmentAdmin implements OnInit {
   deleteTarget = signal<any>(null);
   archiveTarget = signal<any>(null);
   categoryId = '';
+  categoryQuery = signal('');
+  matchingCategories = computed(() => {
+    const normalize = (value: string) => value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('pt-BR');
+    const terms = normalize(this.categoryQuery()).trim().split(/\s+/u).filter(Boolean);
+    return this.categories().filter((category) => {
+      const path = normalize(category.path.join(' › '));
+      return terms.every((term) => path.includes(term));
+    });
+  });
+  selectedCategoryOutsideSearch() {
+    return this.categories().find((category) => category.id === this.categoryId &&
+      !this.matchingCategories().some((match) => match.id === category.id));
+  }
   saveMapping = false;
   links = new PagedData<any>((page, pageSize) =>
     this.api.get(this.base + '/review', {
@@ -347,6 +360,7 @@ export class EnrichmentAdmin implements OnInit {
     return 'Aguardando categorização';
   }
   categorize(link: any) {
+    this.categoryQuery.set('');
     this.categoryId =
       link.confirmed_category_id || link.suggested_category_id || '';
     this.saveMapping = !!link.source_category_path.length;
@@ -379,6 +393,7 @@ export class EnrichmentAdmin implements OnInit {
           ).values(),
         ].sort((a, b) => a.path.join(' › ').localeCompare(b.path.join(' › '))),
       );
+      this.categoryQuery.set('');
       this.categoryId = node.id;
       this.creatingCategory.set(false);
       this.newCategoryPath = [''];
@@ -407,6 +422,7 @@ export class EnrichmentAdmin implements OnInit {
     }, 'Categoria do produto atualizada. Os vínculos relacionados foram preservados.');
   }
   editMapping(row: any) {
+    this.categoryQuery.set('');
     this.mappingTarget.set(row);
     this.categoryId = row.category_id;
   }
