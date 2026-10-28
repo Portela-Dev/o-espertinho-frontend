@@ -76,8 +76,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Portela-Dev/o-espertinho-backend
-          # Pinned backend contract allows manual correction of invalid AI reviews; override only for integration testing.
-          ref: ${{ vars.E2E_BACKEND_REF || '733a2bc56c099a3c55af9bb528f9cb6ead163602' }}
+          # Pinned backend contract supports optional price reveal interactions; override only for integration testing.
+          ref: ${{ vars.E2E_BACKEND_REF || '7c09c624828470d67666e7bba85b87d160e9b96b' }}
           path: .ci-backend
           persist-credentials: false
       - name: Preparar API de teste e Chromium

@@ -246,6 +246,7 @@ test('marketplaces e seletores podem ser cadastrados e testados sem criar oferta
     .getByRole('button', { name: 'Adicionar regra', exact: false })
     .click();
   const price=page.locator('.selector-rule').nth(1);await expect(price.getByLabel('Leitura do preço')).toHaveValue('single');await price.getByLabel('Leitura do preço').selectOption('first_in_range');
+  await price.getByRole('checkbox',{name:'Clicar para revelar preço somente se nenhum preço válido for encontrado'}).check();await price.getByLabel('Seletor CSS do botão').fill('#show-options');await price.getByLabel('Espera após o clique (ms)').fill('1200');
   const images = page.locator('.selector-rule').nth(2);
   await images.getByLabel('Obter valor de').selectOption('json');
   await page
@@ -268,6 +269,7 @@ test('marketplaces e seletores podem ser cadastrados e testados sem criar oferta
     'Seletores salvos',
   );
   await page.reload();await expect(page.locator('.selector-rule').nth(1).getByLabel('Leitura do preço')).toHaveValue('first_in_range');
+  await expect(page.locator('.selector-rule').nth(1).getByLabel('Seletor CSS do botão')).toHaveValue('#show-options');await expect(page.locator('.selector-rule').nth(1).getByLabel('Espera após o clique (ms)')).toHaveValue('1200');
   await page
     .getByLabel('URL para teste')
     .fill('https://www.example.com/produto/123');
