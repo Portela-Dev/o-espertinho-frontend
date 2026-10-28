@@ -179,9 +179,9 @@ export class EnrichmentAdmin implements OnInit {
       name: link.draft_name || data.title || '',
       description: link.draft_description || data.description || '',
       brand: link.draft_brand || data.brand || '',
-      imageUrl:
-        (data.images || []).find((url: string) => url.startsWith('https://')) ||
-        '',
+      imageUrl: link.product_draft_id
+        ? link.draft_image_url || ''
+        : (data.images || []).find((url: string) => url.startsWith('https://')) || '',
     };
     if (link.ai_product?.action === 'link_existing') {
       this.selectedProductId = link.ai_product.productId;
@@ -211,13 +211,23 @@ export class EnrichmentAdmin implements OnInit {
                 imageUrl: this.productDraft.imageUrl.trim() || null,
               },
             };
-      await this.api.send(
+      const result = await this.api.send<any>(
         'POST',
         this.base + '/review/' + link.id + '/product',
         body,
       );
       this.productTarget.set(null);
-    }, 'Produto atribuído. Revise o anúncio antes de publicar.');
+      if (result.draft && result.link) {
+        this.categorize({
+          ...link, ...result.link,
+          draft_name: result.draft.name,
+          draft_description: result.draft.description,
+          draft_brand: result.draft.brand,
+          draft_image_url: result.draft.image_url,
+          ai_category: null, ai_product: null,
+        });
+      }
+    }, 'Catalogação salva. Confirme a categoria quando necessário e revise antes de publicar.');
   }
   selectedLinks = signal<
     Map<string, { id: string; version: number; title: string }>
