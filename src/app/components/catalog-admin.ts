@@ -58,7 +58,14 @@ await new Promise(resolve=>setTimeout(resolve,2000));}throw new Error('Espera en
  async loadProfile(){const p=await this.api.get<any>('/admin/selectors/'+this.selected);this.version=p.version;this.waitSeconds=p.wait_timeout_ms/1000;this.validityMinutes=p.validity_minutes;this.rules=p.rules.map((r:any)=>({...r,selectorsText:r.selectors.join('\n'),priceRevealEnabled:!!r.priceReveal,priceRevealClickSelector:r.priceReveal?.clickSelector||'',priceRevealWaitMs:r.priceReveal?.waitTimeoutMs||8000,priceSelection:r.priceSelection||'single',imageSource:r.imageSource||'append',attributesText:(r.attributes||[]).join('\n'),jsonMarker:r.jsonMarker||'',jsonPath:r.jsonPath||'',imagePropertiesText:(r.imageProperties||[]).join('\n'),attribute:r.attribute||'',nameSelector:r.nameSelector||'th',valueSelector:r.valueSelector||'td'}));if(!this.rules.length)this.rules=[this.newRule('title'),this.newRule('price')];
 }
  newRule(field='title'):Rule{return {field,selectorsText:'',priceRevealEnabled:false,priceRevealClickSelector:'',priceRevealWaitMs:8000,priceSelection:'single',imageSource:'append',attributesText:'',jsonMarker:'',jsonPath:'',imagePropertiesText:'',mode:'text',attribute:'',required:field==='title'||field==='price',nameSelector:'th',valueSelector:'td'};}
- togglePriceReveal(rule:Rule){if(rule.priceRevealEnabled)for(const other of this.rules)if(other!==rule)other.priceRevealEnabled=false;this.clearPreview();}
+ togglePriceReveal(rule:Rule){
+  if(rule.priceRevealEnabled){
+   for(const other of this.rules){
+    if(other!==rule){other.priceRevealEnabled=false;}
+   }
+  }
+  this.clearPreview();
+ }
  addRule(){this.rules.push(this.newRule('images'));this.clearPreview();}
  moveRule(index:number,offset:number){const target=index+offset;if(target<0||target>=this.rules.length)return;
 [this.rules[index],this.rules[target]]=[this.rules[target],this.rules[index]];this.clearPreview();}
