@@ -45,8 +45,9 @@ import { Offer, Collection, storeNames } from '../models';
           aria-hidden="true"
           ><img
             [productImage]="offer().image_url"
-            alt=""
-            loading="lazy"
+            [alt]="offer().title"
+            [attr.loading]="priority()?'eager':'lazy'"
+            [attr.fetchpriority]="priority()?'high':null" width="480" height="480"
             referrerpolicy="no-referrer"
         /></a>
         @if (
@@ -220,6 +221,7 @@ import { Offer, Collection, storeNames } from '../models';
 export class OfferCard {
   offer = input.required<Offer>();
   placement = input('home');
+  priority = input(false);
   api = inject(Api);
   router = inject(Router);
   names = storeNames;

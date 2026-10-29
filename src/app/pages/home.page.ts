@@ -1,3 +1,5 @@
+import {Seo} from '../seo.service';
+import {HOME_TITLE, HOME_DESCRIPTION, listingPath, pageNumber, indexableListing, breadcrumbs} from '../seo-data';
 import { DismissOnBackdrop } from '../components/dismiss-on-backdrop';
 import { PagedData } from '../paged-data';
 import { InfiniteScroll } from '../components/infinite-scroll';
@@ -6,7 +8,6 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Title, Meta } from '@angular/platform-browser';
 import { Api } from '../api.service';
 import {
   CategoryNode,
@@ -30,6 +31,7 @@ import { ProductCard } from '../components/product-card';
     ProductCard,
     MarketplaceLogo,
   ],
+  styles: `.browse-heading{font-size:clamp(1.15rem,2.5vw,1.6rem);margin:16px 0 8px}.crawl-pagination{display:flex;gap:16px;justify-content:center;margin:12px 0}.crawl-pagination a{font-size:.85rem;color:var(--muted);text-decoration:underline}`,
   template: `
     <div class="page-width">
       @if (marketplaces().length) {
@@ -50,6 +52,7 @@ import { ProductCard } from '../components/product-card';
         </div>
       }
       <section id="ofertas" class="discovery" aria-label="Ofertas">
+        <h1 class="browse-heading">{{heading()}}</h1>
         <div class="discovery-tools">
           <button type="button" class="button outline mobile-browse-toggle" (click)="openBrowseMenu()" aria-haspopup="dialog" aria-controls="mobile-browse-menu" [attr.aria-expanded]="browseMenuOpen()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5M3 21h8m-5-3v6"/></svg>
@@ -69,9 +72,9 @@ import { ProductCard } from '../components/product-card';
           <nav class="category-navigation home-category-navigation" aria-label="Categorias">
             <div class="category-chips">
               @for (c of childCategories(); track c.id) {
-                <button type="button" (click)="category(c.id)">
+                <a routerLink="/" [queryParams]="categoryQuery(c.id)" fragment="ofertas">
                   {{ c.path[c.path.length - 1] }}
-                </button>
+                </a>
               }
             </div>
           </nav>
@@ -96,9 +99,13 @@ import { ProductCard } from '../components/product-card';
             } @else if (offers().length) {
               <div class="offer-grid">
                 @for (o of offers(); track o.id) {
-                  <product-card [product]="o" />
+                  <product-card [product]="o" [priority]="$index===0" />
                 }
               </div>
+              <nav class="crawl-pagination" aria-label="Páginas de produtos">
+                @if(browsePage>1){<a [routerLink]="pageLink(browsePage-1)" rel="prev">Página anterior</a>}
+                @if(feed.hasMore()){<a [routerLink]="pageLink(feed.page()+1)" rel="next">Próxima página</a>}
+              </nav>
               <app-infinite-scroll
                 [busy]="feed.loading()"
                 [failed]="feed.failed()"
@@ -291,8 +298,9 @@ export class HomePage implements OnInit {
   route = inject(ActivatedRoute);
   router = inject(Router);
   destroy = inject(DestroyRef);
-  title = inject(Title);
-  meta = inject(Meta);
+  seo = inject(Seo);
+  browsePage=1;
+  private active=true;
   searchText = '';
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
   marketplaces = signal<MarketplaceSummary[]>([]);
@@ -310,15 +318,15 @@ export class HomePage implements OnInit {
   saving = signal(false);
   filterName = '';
   ngOnInit() {
-    this.destroy.onDestroy(() => this.cancelSearch());
+    this.destroy.onDestroy(() => {this.cancelSearch();this.active=false;});
     void this.api
       .get<MarketplaceSummary[]>('/marketplaces')
       .then((m) => this.marketplaces.set(m))
       .catch(() => {});
-    this.title.setTitle('O Espertinho');
+
     void this.api
       .get<CategoryNode[]>('/category-tree')
-      .then((c) => this.categories.set(c))
+      .then((c) => {this.categories.set(c);this.updateSeo();})
       .catch(() => {});
     this.route.queryParams
       .pipe(takeUntilDestroyed(this.destroy))
@@ -336,6 +344,7 @@ export class HomePage implements OnInit {
         this.maxReais = this.filters.maxPrice
           ? this.filters.maxPrice / 100
           : null;
+        this.browsePage=pageNumber(p['page']);
         void this.load();
       });
   }
@@ -367,8 +376,27 @@ export class HomePage implements OnInit {
   breadcrumbBase() {
     return { ...this.filters, category: '', categoryId: '', page: 1 };
   }
-  load() {
-    return this.feed.reset();
+  async load() {
+    if(!this.browsePage){this.seo.failure(404);return;}
+    await this.feed.reset(this.browsePage);
+    this.updateSeo();
+  }
+  heading(){const path=this.selectedCategory()?.path;return path?.length?path.at(-1)+' — compare preços':'Compare preços e encontre ofertas';}
+  pagePath(page:number){return listingPath({...this.filters,...(this.selectedCategory()?{categoryId:this.selectedCategory()!.id}: {})},page);}
+  pageLink(page:number){return this.router.parseUrl(this.pagePath(page));}
+  categoryQuery(id:string){return {...this.filters,category:'',categoryId:id,page:1};}
+  updateSeo(){
+    if(!this.active)return;
+    if(!this.browsePage){this.seo.failure(404);return;}
+    if(this.feed.failed()){this.seo.failure(this.feed.errorStatus());return;}
+    const category=this.selectedCategory(),path=category?.path||[];
+    const name=path.at(-1);
+    const pageSuffix=this.browsePage>1?' — página '+this.browsePage:'';
+    const title=name?name+' — compare preços'+pageSuffix+' | O Espertinho':HOME_TITLE.replace(' |',''+pageSuffix+' |');
+    const description=name?'Compare preços de '+name.toLowerCase()+' nas lojas monitoradas. Veja ofertas, condições e histórico de preços no Espertinho.':HOME_DESCRIPTION;
+    this.seo.set({title,description,path:this.pagePath(this.browsePage),indexable:indexableListing(this.filters)&&this.feed.total()>0,schemas:name?[breadcrumbs(path,this.breadcrumbIds())]:[{'@type':'WebSite',name:'O Espertinho',url:'https://oespertinho.com.br/'}]});
+    if(this.browsePage>1&&!this.offers().length) this.seo.failure(404);
+    if(this.categories().length&&this.filters.categoryId&&!category) this.seo.failure(404);
   }
 
   private cancelSearch() {
