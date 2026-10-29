@@ -76,8 +76,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Portela-Dev/o-espertinho-backend
-          # Pinned backend contract supports product-first manual review; override only for integration testing.
-          ref: ${{ vars.E2E_BACKEND_REF || '1145a7a0efb63d3879a5dfce43c210a5cc5c0ef0' }}
+          # Pinned backend contract includes public sitemap inventory and isolated SEO fixtures.
+          ref: ${{ vars.E2E_BACKEND_REF || 'a715e46d0ac25fb73329dc6d6d933fb7fb1f4037' }}
           path: .ci-backend
           persist-credentials: false
       - name: Preparar API de teste e Chromium

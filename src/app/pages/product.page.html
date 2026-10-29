@@ -5,7 +5,7 @@
   <category-breadcrumb [names]="p.category_path||[]" [ids]="p.category_ids||[]"/>
   @if(primary();as o) {
    <section class="detail-layout primary-offer" aria-label="Oferta principal">
-    <offer-card [offer]="o" placement="detail"/>
+    <offer-card [offer]="o" placement="detail" [priority]="true"/>
     <div class="detail-copy">
      <p class="eyebrow">MENOR PREÇO NA {{(o.marketplace_name||names[o.marketplace_id]||o.marketplace_id).toUpperCase()}}</p>
      <h1>{{o.title}}</h1>
@@ -26,9 +26,21 @@
      <p class="muted">{{p.offer_count}} {{p.offer_count===1?'oferta disponível':'ofertas disponíveis'}} · Confira vendedor, frete e cupons na loja.</p>
     </div>
    </section>
+   <section class="comparison-summary" aria-label="Comparação de preços">
+    <h2>Compare antes de comprar</h2>
+    <p>Encontramos {{p.offer_count}} {{p.offer_count===1?'oferta disponível':'ofertas disponíveis'}} para este produto.
+     @if(p.min_price_cents!==p.max_price_cents){Os preços vão de {{p.min_price_cents!/100|currency:'BRL'}} até {{p.max_price_cents!/100|currency:'BRL'}}.}
+     @else{O preço disponível é {{p.min_price_cents!/100|currency:'BRL'}}.}
+     Confira frete, vendedor e condições de pagamento na loja para comparar o valor final da compra.
+    </p>
+   </section>
    @if(p.offer_count>1){
     <section class="other-offers"><h2>Outras ofertas deste mesmo produto</h2>
      <div class="offer-grid">@for(other of otherOffers();track other.id){<offer-card [offer]="other" placement="detail"/>}</div>
+     <nav class="crawl-pagination" aria-label="Páginas de ofertas">
+      @if(offerPage>1){<a [routerLink]="offerLink(offerPage-1)" rel="prev">Página anterior</a>}
+      @if(feed.hasMore()){<a [routerLink]="offerLink(feed.page()+1)" rel="next">Próxima página</a>}
+     </nav>
      <app-infinite-scroll [busy]="feed.loading()" [failed]="feed.failed()" [hasMore]="feed.hasMore()" (more)="feed.next()"/>
     </section>
    }
