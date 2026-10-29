@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, ElementRef, viewChild, signal } from '@angular/core';
+import { Seo } from './seo.service';
 import { DismissOnBackdrop } from './components/dismiss-on-backdrop';
 import {
   RouterLink,
@@ -199,6 +200,7 @@ export class AppComponent implements OnInit {
   }
   closeMobileNavigation() { this.mobileNavigation()?.nativeElement.close(); this.mobileNavigationOpen.set(false); }
 
+  readonly seo = inject(Seo);
   api = inject(Api);
   theme = inject(ThemeService);
   router = inject(Router);

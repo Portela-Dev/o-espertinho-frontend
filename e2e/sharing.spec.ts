@@ -4,7 +4,7 @@ for(const width of [1320,390])test(`compartilhar oferta usa permalink, texto con
  await page.setViewportSize({width,height:950});
  await page.addInitScript(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async(text:string)=>{(window as any).__copied=text;}}});});
  const products=await (await page.request.get('/api/products')).json();const details=await (await page.request.get('/api/products/'+products.items[0].id)).json();const offer=details.offers[0];
- await page.goto('/oferta/'+offer.id);await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content',offer.title+' | O Espertinho');const trigger=page.locator('.detail-copy offer-share button');await expect(trigger).toBeVisible();await trigger.click();
+ await page.goto('/oferta/'+offer.id);await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content',offer.title+' na '+(offer.marketplace_name||offer.marketplace_id)+' | O Espertinho');const trigger=page.locator('.detail-copy offer-share button');await expect(trigger).toBeVisible();await trigger.click();
  const dialog=page.getByRole('dialog',{name:'Compartilhar oferta'}),networks=dialog.getByRole('group',{name:'Redes sociais'});
  await expect(networks.getByRole('button')).toHaveText(['WhatsApp','Telegram','Facebook','X','LinkedIn','Instagram']);await expect(networks.locator('social-logo img')).toHaveCount(6);
  const permalink=new URL('/oferta/'+offer.id,page.url()).href;
