@@ -3,7 +3,7 @@ export const SITE_URL = 'https://oespertinho.com.br';
 export const HOME_TITLE = 'Compare preços e encontre ofertas | O Espertinho';
 export const HOME_DESCRIPTION = 'Compare preços de produtos na Amazon, Mercado Livre e Shopee. Consulte ofertas, condições de compra e o histórico de preços no Espertinho.';
 export function summary(text: string, limit = 160): string {
- const clean = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+ const clean = text.replace(/<[^<>]*>/g, ' ').replace(/\s+/g, ' ').trim();
  if (clean.length <= limit) return clean;
  const cut = clean.slice(0, limit - 1);
  const end = cut.lastIndexOf(' ');
@@ -48,4 +48,4 @@ export function productSchema(product: Product) {
 export function offerProductSchema(offer: Offer) {
  return {'@type':'Product',name:offer.title,description:summary(offer.description||offer.title,500),image:imageUrl(offer.image_url),url:absolute('/oferta/'+offer.id),offers:offerSchema(offer)};
 }
-export function safeJson(value: unknown): string { return JSON.stringify(value).replaceAll('<', '\\u003c'); }
+export function safeJson(value: unknown): string { return JSON.stringify(value).replaceAll('<', String.raw`\u003c`); }

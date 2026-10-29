@@ -7,7 +7,7 @@ function productLinks(html:string){return [...new Set([...html.matchAll(/href="(
 test('SSR exposes distinct paginated products, canonical, heading and crawlable category links',async({request})=>{
  const first=await request.get('/');expect(first.status()).toBe(200);const a=await first.text();
  expect(a).toContain('<h1');expect(a).toContain('Compare preços e encontre ofertas');expect(a).toMatch(/rel="canonical" href="https:\/\/oespertinho.com.br\/"/);expect(a).toMatch(/href="\/\?page=2"/);
- const second=await request.get('/?page=2');expect(second.status()).toBe(200);const b=await second.text();expect(b).toContain(origin+'/?page=2');expect(productLinks(a).length).toBe(24);expect(productLinks(b).length).toBeGreaterThan(0);expect(productLinks(a).filter(id=>productLinks(b).includes(id))).toEqual([]);
+ const second=await request.get('/?page=2');expect(second.status()).toBe(200);const b=await second.text();expect(b).toContain(origin+'/?page=2');expect(productLinks(a)).toHaveLength(24);expect(productLinks(b).length).toBeGreaterThan(0);expect(productLinks(a).filter(id=>productLinks(b).includes(id))).toEqual([]);
  const tree=await(await request.get('/api/category-tree')).json(),category=tree.find((c:any)=>c.path[0]==='SEO Teste');
  expect(a).toContain('categoryId='+category.id);const categoryResponse=await request.get('/?categoryId='+category.id);const html=await categoryResponse.text();expect(html).toContain('SEO Teste — compare preços');expect(html).toContain(origin+'/?categoryId='+category.id);expect(html).toContain('BreadcrumbList');
  expect((await request.get('/?page=9999')).status()).toBe(404);expect((await request.get('/?page=bad')).status()).toBe(404);
