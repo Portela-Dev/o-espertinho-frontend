@@ -13,6 +13,8 @@ test('SEO normalizes canonical filters, pages and summaries without HTML',()=>{
  for(const value of ['0','-1','1.5','10001','bad'])assert.equal(pageNumber(value),0);
  assert.equal(pageNumber(null),1);assert.equal(pageNumber('2'),2);
  assert.equal(summary('<b>Nome</b>   seguro'),'Nome seguro');assert.ok(summary('palavra '.repeat(100)).length<=160);
+ assert.equal(summary('<'.repeat(50000)+'sem fechamento').length,160);
+ assert.equal(summary('<b>Nome</b><i>seguro</i>'),'Nome seguro');
  assert.equal(indexableListing({q:'',marketplace:'',maxPrice:0,sort:'recent'}),true);
  assert.equal(indexableListing({q:'busca',marketplace:'',maxPrice:0,sort:'recent'}),false);
  assert.ok(!safeJson({text:'</script><script>alert(1)</script>'}).includes('<'));
@@ -39,8 +41,8 @@ test('sitemap index and shards use bounded cached API requests, not request Host
  let calls=0;const api=createServer((_req,res)=>{calls++;res.setHeader('Content-Type','application/json');res.end(JSON.stringify({totalPages:2,items:[{type:'product',id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',updated_at:'2026-10-29'}]}));});
  const origin=await listen(api),app=express();registerSitemaps(app,origin);const web=createServer(app),base=await listen(web);
  try{
-  const index=await fetch(base+'/sitemap.xml',{headers:{Host:'attacker.example'}});assert.match(index.headers.get('content-type'),/xml/);const xml=await index.text();assert.match(xml,/catalog-2.xml/);assert.doesNotMatch(xml,/attacker/);
-  const shard=await fetch(base+'/sitemaps/catalog-1.xml');assert.match(await shard.text(),/produto\/aaaaaaaa/);assert.equal(calls,1);
+  const index=await fetch(base+'/sitemap.xml',{headers:{Host:'attacker.example'}});assert.match(index.headers.get('content-type'),/xml/);const xml=await index.text();assert.match(xml,/catalog-2.xml/);assert.ok(xml.includes('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'));assert.doesNotMatch(xml,/attacker/);
+  const shard=await fetch(base+'/sitemaps/catalog-1.xml');const content=await shard.text();assert.match(content,/produto\/aaaaaaaa/);assert.ok(content.includes('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'));assert.equal(calls,1);
   assert.equal((await fetch(base+'/sitemaps/catalog-3.xml')).status,404);
   assert.equal((await fetch(base+'/sitemaps/catalog-0.xml')).status,404);
   assert.match(await(await fetch(base+'/robots.txt')).text(),/Sitemap: https:\/\/oespertinho.com.br\/sitemap.xml/);

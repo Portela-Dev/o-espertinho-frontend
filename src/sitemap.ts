@@ -10,7 +10,7 @@ export function sitemapEntry(entry: Entry): string {
  return '<url><loc>'+xmlEscape(SITE_URL+path)+'</loc>'+(Number.isNaN(date.getTime())?'':'<lastmod>'+date.toISOString()+'</lastmod>')+'</url>';
 }
 const declaration='<?xml version="1.0" encoding="UTF-8"?>';
-const namespace='http://www.sitemaps.org/schemas/sitemap/0.9';
+const namespace='http://www.sitemaps.org/schemas/sitemap/0.9'; // NOSONAR -- Required XML namespace identifier, never fetched. See https://www.sitemaps.org/protocol.html
 export function registerSitemaps(app: Express, api: string) {
  // A bounded cache collapses concurrent crawler requests without serving failures as XML.
  const cache=new Map<number,{until:number;promise:Promise<SitemapPage>}>();

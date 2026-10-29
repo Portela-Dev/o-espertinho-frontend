@@ -37,7 +37,9 @@ export class ProductPage implements OnInit{
  private rejectProduct(status:number|null){this.product.set(null);this.failed.set(status!==404&&status!==400);this.seo.failure(status);}
  private describe(p:Product,page:number){
   const count=p.offer_count;
-  this.seo.set({title:p.name+' — compare preços'+(page>1?' — página '+page:'')+' | O Espertinho',description:count?'Compare '+count+' '+(count===1?'oferta':'ofertas')+' de '+p.name+'. Confira preços, condições de compra e histórico no Espertinho.':p.name+' está sem ofertas disponíveis no momento. Consulte os detalhes e outras opções no Espertinho.',path:this.offerPath(page),image:this.primary()?.image_url||p.display_image_url,indexable:count>0,schemas:[productSchema(p),...(p.category_path?.length?[breadcrumbs(p.category_path,p.category_ids||[])]:[])]});
+  const offerLabel=count===1?'oferta':'ofertas';
+  const description=count?'Compare '+count+' '+offerLabel+' de '+p.name+'. Confira preços, condições de compra e histórico no Espertinho.':p.name+' está sem ofertas disponíveis no momento. Consulte os detalhes e outras opções no Espertinho.';
+  this.seo.set({title:p.name+' — compare preços'+(page>1?' — página '+page:'')+' | O Espertinho',description,path:this.offerPath(page),image:this.primary()?.image_url||p.display_image_url,indexable:count>0,schemas:[productSchema(p),...(p.category_path?.length?[breadcrumbs(p.category_path,p.category_ids||[])]:[])]});
  }
  async load(id:string,page=1){
   const seq=++this.sequence;this.loading.set(true);this.failed.set(false);this.primaryOffer.set(null);this.productId=id;this.offerPage=page;

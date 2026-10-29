@@ -23,7 +23,7 @@ export class OfferPage implements OnInit {
  async load(id:string){
   const seq=++this.sequence;this.loading.set(true);this.offer.set(null);
   try{
-   const o=await this.api.get<Offer>('/offers/'+id);if(seq!==this.sequence)return;this.offer.set(o);this.api.pixel.viewContent('offer',o.id);
+   const o=await this.api.get<Offer>('/offers/'+id);if(seq!==this.sequence){return;}this.offer.set(o);this.api.pixel.viewContent('offer',o.id);
    const store=o.marketplace_name||o.marketplace_id;
    this.seo.set({title:o.title+' na '+store+' | O Espertinho',description:'Confira a oferta de '+o.title+' na '+store+'. Veja preço, vendedor, condições de compra e compare outras ofertas no Espertinho.',path:'/oferta/'+o.id,image:o.image_url,schemas:[offerProductSchema(o),...(o.category_path?.length?[breadcrumbs(o.category_path,o.category_ids||[])]:[])]});
   }catch(error){if(seq===this.sequence)this.seo.failure((error as {status?:number}).status??null);}

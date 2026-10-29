@@ -35,3 +35,5 @@ Publicar o backend com o novo endpoint antes do frontend. Não há migrations, s
 Após o deploy, enviar `/sitemap.xml` ao Google Search Console e inspecionar home, categoria, produto, oferta e página 2. Verificar indexação e Core Web Vitals com dados de campo; testes locais não comprovam posicionamento nem melhoria de métricas reais.
 
 Referências: [paginação](https://developers.google.com/search/docs/specialty/ecommerce/pagination-and-incremental-page-loading), [URLs canônicas](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls), [produtos](https://developers.google.com/search/docs/appearance/structured-data/product-snippet), [avaliações](https://developers.google.com/search/docs/appearance/structured-data/review-snippet).
+
+O namespace XML `http://www.sitemaps.org/schemas/sitemap/0.9` é o identificador obrigatório do protocolo, não uma requisição HTTP. A exceção Sonar está restrita a essa constante, com referência à especificação e testes do namespace exato no índice e no urlset. Todas as URLs de páginas no sitemap permanecem HTTPS.
