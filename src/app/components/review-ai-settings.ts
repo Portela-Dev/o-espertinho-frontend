@@ -1,17 +1,19 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { CatalogResolverSettings } from './catalog-resolver-settings';
 import { FormsModule } from '@angular/forms';
 import { Api } from '../api.service';
 @Component({
   selector: 'review-ai-settings',
-  imports: [FormsModule],
+  imports: [FormsModule, CatalogResolverSettings],
   template: `
-    <h3>IA na revisão de ofertas</h3>
+    <catalog-resolver-settings />
+    <h3>Prompts e habilitação da IA</h3>
     <p>
       As tarefas são independentes. A extensão usa a conta ChatGPT conectada no
       painel e aplica automaticamente decisões válidas de catálogo e categoria.
-      Casos ambíguos ficam em revisão; anúncios inconsistentes ficam inválidos e
-      precisam de nova extração antes da reanálise. A publicação é sempre
-      manual.
+      No modo estruturado, ambiguidades são excluídas com motivo e falhas
+      técnicas têm repetição limitada. O fluxo anterior continua disponível no
+      seletor de modo. A publicação é sempre manual.
     </p>
     @if (loading()) {
       <output aria-live="polite">Carregando configurações…</output>
