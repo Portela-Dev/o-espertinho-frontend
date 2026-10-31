@@ -97,9 +97,10 @@ import { ActionMenu } from './action-menu';
     <details>
       <summary>Políticas de identidade por tipo</summary>
       <p>
-        Cadastre os tipos atendidos e os atributos obrigatórios que distinguem
-        produtos. Tipos sem política ou evidências insuficientes são excluídos
-        automaticamente, com motivo. Nomes de modelo, RAM física, armazenamento
+        A IA identifica tipos sem política e cria regras reutilizáveis,
+        validadas pelo backend. O título tem prioridade sobre descrições
+        conflitantes. Dados ausentes não impedem o cadastro e não são inventados.
+        Nomes de modelo, RAM física, armazenamento
         e tela podem distinguir; cor, tensão e tamanho de roupa isoladamente não
         devem distinguir. Use prioridade maior para acessórios e kits, evitando
         confundir compatibilidade com o produto principal.
@@ -308,12 +309,11 @@ import { ActionMenu } from './action-menu';
         Amostra avaliada: {{ current.stats?.evaluated || 0 }} · vínculos
         incorretos: {{ current.stats?.false_merges || 0 }} · duplicatas:
         {{ current.stats?.duplicates || 0 }} · categorias incorretas:
-        {{ current.stats?.wrong_categories || 0 }} · exclusões indevidas:
-        {{ current.stats?.excluded_valid || 0 }}
+        {{ current.stats?.wrong_categories || 0 }}
       </p>
       <p>
         {{ current.stats?.accepted || 0 }} aceitos ·
-        {{ current.stats?.excluded || 0 }} excluídos ·
+        {{ current.stats?.skipped || 0 }} já tratados ·
         {{ current.stats?.failed || 0 }} falhas técnicas ·
         {{ current.stats?.calls || 0 }} chamadas de IA ·
         {{ current.stats?.tokens || 0 }} tokens informados ·
@@ -326,7 +326,7 @@ import { ActionMenu } from './action-menu';
         >
           <option value="">Todos</option>
           <option value="accepted">Aceitos</option>
-          <option value="excluded">Excluídos</option>
+          <option value="skipped">Já tratados</option>
           <option value="failed">Falhas técnicas</option>
           <option value="queued">Aguardando</option>
           <option value="leased">Em processamento</option>
@@ -347,7 +347,7 @@ import { ActionMenu } from './action-menu';
             @for (i of items.items; track i.id) {
               <tr>
                 <td>{{ i.title || 'Preparação de produto existente' }}</td>
-                <td>{{ i.status }}</td>
+                <td>{{ resultStatus(i.status) }}</td>
                 <td class="reason">
                   {{ i.decision?.outcome }} {{ i.decision?.reason }}
                 </td>
@@ -364,9 +364,7 @@ import { ActionMenu } from './action-menu';
                       Produto duplicado</button
                     ><button (click)="evaluate(i, 'wrong_category')">
                       Categoria incorreta</button
-                    ><button (click)="evaluate(i, 'excluded_valid')">
-                      Exclusão indevida
-                    </button></app-action-menu
+                    ></app-action-menu
                   >
                 </td>
               </tr>
@@ -385,6 +383,10 @@ import { ActionMenu } from './action-menu';
   `,
 })
 export class CatalogResolverSettings implements OnInit {
+  resultStatus(status: string) {
+    const labels: Record<string,string> = { accepted:'Concluído', skipped:'Já tratado', failed:'Falha técnica', queued:'Aguardando processamento', leased:'Em processamento', excluded:'Liberado para reprocessar' };
+    return labels[status] ?? status;
+  }
   categorySearch = '';
   categories: any[] = [];
   api = inject(Api);
