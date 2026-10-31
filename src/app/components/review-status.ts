@@ -2,7 +2,6 @@ export const reviewStatuses = [
   {value:'ready',label:'Pronto para publicar'},
   {value:'published',label:'Publicado'},
   {value:'invalid',label:'Anúncio inválido'},
-  {value:'excluded',label:'Excluído da resolução automática'},
   {value:'needs_review',label:'Revisão manual necessária'},
   {value:'awaiting_product',label:'Aguardando produto'},
   {value:'awaiting_category',label:'Aguardando categoria'},
