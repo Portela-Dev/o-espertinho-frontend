@@ -77,7 +77,7 @@ jobs:
         with:
           repository: Portela-Dev/o-espertinho-backend
           # Pinned backend contract includes structured resolver and isolated browser fixtures.
-          ref: ${{ vars.E2E_BACKEND_REF || '11d6caf9134676c189a022f178d4c85891818aef' }}
+          ref: ${{ vars.E2E_BACKEND_REF || '6adf4b7d66fd99e3bbb74cba27aa8975ce1c3707' }}
           path: .ci-backend
           persist-credentials: false
       - name: Preparar API de teste e Chromium
