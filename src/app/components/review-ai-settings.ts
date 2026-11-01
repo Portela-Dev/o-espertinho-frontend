@@ -11,9 +11,9 @@ import { Api } from '../api.service';
     <p>
       As tarefas são independentes. A extensão usa a conta ChatGPT conectada no
       painel e aplica automaticamente decisões válidas de catálogo e categoria.
-      No modo estruturado, ambiguidades são excluídas com motivo e falhas
-      técnicas têm repetição limitada. O fluxo anterior continua disponível no
-      seletor de modo. A publicação é sempre manual.
+      Todas as ofertas elegíveis são catalogadas e categorizadas. Se a IA não
+      fornecer uma decisão utilizável, o sistema conclui pelos dados da oferta
+      e registra o motivo. A publicação é sempre manual.
     </p>
     @if (loading()) {
       <output aria-live="polite">Carregando configurações…</output>
