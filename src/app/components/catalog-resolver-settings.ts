@@ -62,7 +62,6 @@ import { ActionMenu } from './action-menu';
           <legend>Modo de operação</legend>
           <label
             >Modo<select name="resolverMode" [(ngModel)]="settings.mode">
-              <option value="legacy">Fluxo anterior</option>
               <option value="shadow">
                 Simulação (recomendado antes de ativar)
               </option>
@@ -71,14 +70,6 @@ import { ActionMenu } from './action-menu';
               </option>
             </select></label
           >
-          <label
-            >Tentativas técnicas máximas<input
-              name="attempts"
-              type="number"
-              min="1"
-              max="5"
-              [(ngModel)]="settings.max_attempts"
-          /></label>
           <label
             >Análises simultâneas<select
               name="concurrency"
@@ -313,6 +304,7 @@ import { ActionMenu } from './action-menu';
       </p>
       <p>
         {{ current.stats?.accepted || 0 }} aceitos ·
+        {{ current.stats?.fallback || 0 }} concluídos pelos dados da oferta ·
         {{ current.stats?.skipped || 0 }} já tratados ·
         {{ current.stats?.failed || 0 }} falhas técnicas ·
         {{ current.stats?.calls || 0 }} chamadas de IA ·
@@ -327,7 +319,7 @@ import { ActionMenu } from './action-menu';
           <option value="">Todos</option>
           <option value="accepted">Aceitos</option>
           <option value="skipped">Já tratados</option>
-          <option value="failed">Falhas técnicas</option>
+          <option value="failed">Falhas técnicas históricas</option>
           <option value="queued">Aguardando</option>
           <option value="leased">Em processamento</option>
         </select></label
@@ -494,7 +486,6 @@ export class CatalogResolverSettings implements OnInit {
       this.settings = await this.api.send('PUT', this.base + '/settings', {
         version: this.settings.version,
         mode: this.settings.mode,
-        maxAttempts: this.settings.max_attempts,
         concurrency: this.settings.concurrency,
       });
     });
