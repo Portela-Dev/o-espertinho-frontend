@@ -27,3 +27,26 @@ test('status único permite filtrar prontos e publicados e confirma transição 
  await status.selectOption('published');await expect(panel.locator('tbody tr')).toHaveCount(2);await expect(panel.locator('tbody tr td .badge')).toHaveText(['Publicado','Publicado']);
  await expect(status.locator('option[value="completed"]')).toHaveCount(0);
 });
+
+test('publicação remove duplicatas da lista e informa o resultado individual e em massa',async({page})=>{
+ const removed=new Set<string>();
+ const rows=['single','batch'].map(id=>({id,review_status:'ready',url:'https://example.com/'+id,marketplace_name:'Loja',extraction_status:'completed',source_category_path:[],enrichment_version:1,enrichment_data:{title:'Duplicata '+id,priceCents:12300}}));
+ await page.route('**/api/**',async route=>{
+  const path=new URL(route.request().url()).pathname;let data:any=[];
+  if(path==='/api/auth/session')data={user:{id:'admin',name:'Admin',role:'admin',permissions:['catalog','discovery']},autoSignInAllowed:false};
+  else if(path==='/api/config')data={googleClientId:''};
+  else if(path.endsWith('/catalog-marketplaces'))data=[{id:'test',name:'Loja'}];
+  else if(path.endsWith('/review')){const items=rows.filter(r=>!removed.has(r.id));data={items,total:items.length,page:1,pageSize:20};}
+  else if(path.endsWith('/single/publish')){removed.add('single');data={offerId:'existing',alreadyPublished:true,duplicateRemoved:true};}
+  else if(path.endsWith('/publish-batch')){removed.add('batch');data={results:[{id:'batch',ok:true,offerId:'existing',alreadyPublished:true,duplicateRemoved:true}],published:0,deduplicated:1,failed:0};}
+  await route.fulfill({json:data});
+ });
+ await page.goto('/admin/offers');const panel=page.locator('enrichment-admin');
+ const single=panel.locator('tbody tr').filter({hasText:'Duplicata single'});
+ await single.getByRole('button',{name:'Ações do link',exact:true}).click();await panel.getByRole('button',{name:'Publicar',exact:true}).click();await page.getByRole('alertdialog').getByRole('button',{name:'Confirmar e publicar'}).click();
+ await expect(panel.locator('tbody tr')).toHaveCount(1);await expect(page.getByText('A oferta já existe. Duplicação removida da revisão.',{exact:true})).toBeVisible();
+ await panel.locator('tbody tr').getByRole('checkbox').check();await panel.getByRole('button',{name:'Publicar selecionados',exact:true}).click();await page.getByRole('button',{name:'Confirmar publicação em massa'}).click();
+ await expect(panel.locator('tbody tr')).toHaveCount(0);
+ await expect(panel.getByText('Duplicata batch: Duplicação removida; oferta existente preservada',{exact:true})).toBeVisible();
+ await expect(page.getByText('Publicadas: 0. Duplicações removidas: 1. Não publicadas: 0.',{exact:true})).toBeVisible();
+});
