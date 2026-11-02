@@ -301,6 +301,7 @@ export class EnrichmentAdmin implements OnInit {
         results: any[];
         published: number;
         failed: number;
+        deduplicated?: number;
       }>('POST', this.base + '/review/publish-batch', {
         items: selected.map(({ id, version }) => ({ id, version })),
         authorizedContent: true,
@@ -313,20 +314,22 @@ export class EnrichmentAdmin implements OnInit {
       );
       this.selectedLinks.set(new Map());
       this.bulkConfirm.set(false);
-      summary = `Publicadas: ${result.published}. Não publicadas: ${result.failed}.`;
+      summary = `Publicadas: ${result.published}. Duplicações removidas: ${result.deduplicated ?? 0}. Não publicadas: ${result.failed}.`;
     }, () => summary);
   }
   publishTarget = signal<any>(null);
   async publish() {
     const link = this.publishTarget();
+    let message = 'Oferta publicada.';
     await this.act(async () => {
-      await this.api.send(
+      const result = await this.api.send<{duplicateRemoved?: boolean}>(
         'POST',
         this.base + '/review/' + link.id + '/publish',
         { version: link.enrichment_version, authorizedContent: true },
       );
+      if (result.duplicateRemoved) message = 'A oferta já existe. Duplicação removida da revisão.';
       this.publishTarget.set(null);
-    }, 'Oferta publicada.');
+    }, () => message);
   }
   async selectView(view: 'review' | 'mappings' | 'ai') {
     this.selectedLinks.set(new Map());
