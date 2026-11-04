@@ -24,5 +24,15 @@ export class PriceHistoryPlot {
  selected=computed(()=>{const p=this.points()[this.active()];return p?.priceCents!=null?p:this.valid().at(-1);});
  x(i:number){return this.points().length<=1?180:10+i/(this.points().length-1)*340;}
  y(price:number){const min=this.minimum(),max=this.maximum(),pad=Math.max((max-min)*.1,max*.02,1);return 105-(price-min+pad)/(max-min+2*pad)*90;}
- line=computed(()=>{let connected=false;return this.points().map((p,i)=>{if(p.priceCents===null){connected=false;return '';}const command=connected?'L':'M';connected=true;return command+this.x(i).toFixed(2)+' '+this.y(p.priceCents).toFixed(2);}).join(' ');});
+ line=computed(()=>{
+  let connected=false;
+  return this.points().map((p,i)=>{
+   if(p.priceCents===null){
+    return '';
+   }
+   const command=connected?'L':'M';
+   connected=true;
+   return command+this.x(i).toFixed(2)+' '+this.y(p.priceCents).toFixed(2);
+  }).join(' ');
+ });
 }
