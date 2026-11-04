@@ -248,17 +248,6 @@ import { PriceHistoryPlot } from './price-history-plot';
           <div class="details-plot">
             <price-history-plot [points]="history.series.points" />
           </div>
-          <p class="note">
-            {{
-              kind() === 'product'
-                ? 'Em cada dia, consideramos o menor preço observado entre os links vinculados ao produto.'
-                : 'Preços observados neste link.'
-            }}
-            Cada ponto mostra o último dia registrado no intervalo. Lacunas
-            indicam falta de observação ou indisponibilidade; não são
-            preenchidas com preços presumidos. Passe sobre um ponto ou use Tab
-            para consultar seu valor.
-          </p>
           <details>
             <summary>
               Ver registros diários ({{ history.series.daily?.length || 0 }})
